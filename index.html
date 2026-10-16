@@ -1,0 +1,2786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MIMIC PARTY 3D 🎤🔥 - O Jogo da Imitação da Voz Online</title>
+  
+  <!-- CDNs Oficiais: Three.js para o 3D e PeerJS para Multiplayer Online P2P -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       ESTILOS GERAIS - UI INSPIRADA DIRETAMENTE EM MIMIC PARTY (FOLIESAPP)
+       ========================================================================== */
+    :root {
+      --bg-dark: #120b18;
+      --card-bg: rgba(26, 18, 38, 0.92);
+      --primary: #ff0077;
+      --secondary: #ffb703;
+      --accent-cyan: #00f0ff;
+      --accent-green: #00f576;
+      --accent-purple: #7b2cbf;
+      --accent-blue: #0077b6;
+      --border-dark: #000000;
+      --shadow-btn: 3px 3px 0px #000000;
+      --shadow-btn-hover: 5px 5px 0px #000000;
+      --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-display: 'Impact', 'Arial Black', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #ffffff;
+      font-family: var(--font-main);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Container do Canvas WebGL 3D */
+    #canvas3d-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Overlay de Interface 2D do Jogo */
+    #ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none; /* Deixa cliques passarem pro 3D quando não houver botão */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    /* Elementos com interação dentro do overlay */
+    .interactive {
+      pointer-events: auto;
+    }
+
+    /* Screen Shake em Vine Boom e Impactos */
+    @keyframes screenShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      15% { transform: translate(-8px, 6px) rotate(-1.5deg); }
+      30% { transform: translate(7px, -7px) rotate(1.5deg); }
+      45% { transform: translate(-6px, -4px) rotate(-1deg); }
+      60% { transform: translate(5px, 5px) rotate(1deg); }
+      75% { transform: translate(-3px, 2px) rotate(-0.5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    .shake {
+      animation: screenShake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    /* Barra Superior estilo Mimic Party */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .round-badge-box {
+      background: rgba(0, 0, 0, 0.75);
+      border: 3px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 8px 16px;
+      box-shadow: var(--shadow-btn);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .round-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      color: #ff3366;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .round-subtitle {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #ffb703;
+      text-transform: uppercase;
+    }
+
+    /* Cards de Jogadores Flutuantes no Topo (como na screenshot 2!) */
+    .players-top-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .player-card-top {
+      background: #ffffff;
+      color: #000000;
+      border: 3px solid #000000;
+      border-radius: 12px;
+      box-shadow: 2px 2px 0px #000;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 82px;
+      position: relative;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .player-card-top.active-turn {
+      border-color: #00f0ff;
+      background: #e0faff;
+      transform: scale(1.1) translateY(4px);
+      box-shadow: 0 0 14px #00f0ff;
+    }
+
+    .player-card-top .p-avatar {
+      font-size: 1.7rem;
+      line-height: 1;
+    }
+
+    .player-card-top .p-name {
+      font-weight: 900;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 76px;
+      margin: 2px 0;
+    }
+
+    .player-card-top .p-score {
+      background: #ff7700;
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      padding: 1px 10px;
+      border-radius: 12px;
+      border: 1.5px solid #000;
+    }
+
+    /* Botões Padrão Brutalistas de Mimic Party */
+    .btn {
+      font-family: var(--font-main);
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 12px 24px;
+      border-radius: 14px;
+      border: 3px solid var(--border-dark);
+      box-shadow: var(--shadow-btn);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.1s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-btn-hover);
+    }
+
+    .btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000;
+    }
+
+    .btn-play { background: #ffb703; color: #000; font-size: 1.3rem; padding: 14px 32px; }
+    .btn-create { background: #00b4d8; color: #fff; }
+    .btn-join { background: #7209b7; color: #fff; }
+    .btn-pink { background: #ff0077; color: #fff; }
+    .btn-green { background: #00f576; color: #000; }
+    .btn-neutral { background: #2b2038; color: #fff; }
+    .btn-sm { padding: 6px 14px; font-size: 0.85rem; border-radius: 10px; }
+
+    /* Modais / Painéis Centrais */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: auto;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 4px solid var(--border-dark);
+      border-radius: 20px;
+      box-shadow: 8px 8px 0px #000;
+      padding: 26px;
+      max-width: 580px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      text-align: center;
+      position: relative;
+      animation: popIn 0.25s ease-out;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      letter-spacing: 1px;
+      color: #ffdd00;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    /* Inputs estilizados */
+    .input-box {
+      width: 100%;
+      padding: 12px 16px;
+      border: 3px solid #000;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: #ffffff;
+      color: #000000;
+      text-align: center;
+      text-transform: uppercase;
+      box-shadow: 3px 3px 0px #000;
+    }
+
+    .input-box:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+    }
+
+    /* VU Meter ao vivo */
+    .vu-bar-wrapper {
+      height: 20px;
+      background: #111;
+      border: 2px solid #000;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .vu-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #00f576 60%, #ffb703 85%, #ff0077 100%);
+      transition: width 0.05s linear;
+    }
+
+    /* Menu Principal Overlay (quando na tela inicial como na Screenshot 1) */
+    .main-menu-overlay {
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 320px;
+      pointer-events: auto;
+    }
+
+    .logo-container {
+      position: absolute;
+      left: 40px;
+      top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      pointer-events: auto;
+    }
+
+    .logo-box {
+      background: #ff0077;
+      border: 4px solid #000;
+      border-radius: 16px;
+      padding: 8px 18px;
+      box-shadow: 4px 4px 0px #000;
+      transform: rotate(-3deg);
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      color: #ffffff;
+      text-shadow: 3px 3px 0px #000;
+      line-height: 1;
+    }
+
+    .logo-sub {
+      background: #ffdd00;
+      color: #000;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 2px solid #000;
+      box-shadow: 2px 2px 0px #000;
+      transform: rotate(3deg);
+      margin-top: -6px;
+      margin-left: 20px;
+    }
+
+    /* Estágio de Gravação: Contagem regressiva gigante */
+    .record-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      pointer-events: auto;
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .countdown-huge {
+      font-family: var(--font-display);
+      font-size: 7.5rem;
+      color: #ffdd00;
+      text-shadow: 6px 6px 0px #000;
+      animation: pulsePop 0.4s ease;
+    }
+
+    @keyframes pulsePop {
+      0% { transform: scale(0.7); }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .rec-bar {
+      width: 450px;
+      max-width: 90%;
+      height: 24px;
+      background: #222;
+      border: 3px solid #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 3px 3px 0px #000;
+    }
+
+    .rec-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: #ff0077;
+      transition: width 0.05s linear;
+    }
+
+    /* Painel do Julgamento / Playback dos Takes */
+    .judgement-card {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      border: 4px solid #000;
+      border-radius: 20px;
+      box-shadow: 6px 6px 0px #000;
+      padding: 18px 28px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-width: 680px;
+      width: 90%;
+      pointer-events: auto;
+    }
+
+    .score-circle {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      border: 4px solid #000;
+      box-shadow: 4px 4px 0px #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      margin: -60px auto 0 auto;
+    }
+
+    .score-number {
+      font-family: var(--font-display);
+      font-size: 3.2rem;
+      line-height: 1;
+    }
+
+    .narrator-quote-box {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffdd00;
+      text-shadow: 1px 1px 0px #000;
+      text-align: center;
+    }
+
+    /* Gráfico Canvas sobreposto */
+    #contourCanvas {
+      width: 100%;
+      max-width: 580px;
+      height: 130px;
+      background: #14101e;
+      border: 2px solid #000;
+      border-radius: 10px;
+    }
+
+    /* Roleta Canvas */
+    .wheel-modal-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      width: 320px;
+      height: 320px;
+    }
+
+    #wheelCanvas {
+      border: 4px solid #000;
+      border-radius: 50%;
+      box-shadow: 6px 6px 0px #000;
+      background: #fff;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 30px solid #ff0077;
+      filter: drop-shadow(2px 2px 0px #000);
+      z-index: 5;
+    }
+
+    /* Canvas de Confetes Global */
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .main-menu-overlay {
+        right: 50%;
+        transform: translate(50%, -50%);
+        width: 85%;
+        max-width: 320px;
+      }
+      .logo-container {
+        left: 50%;
+        transform: translateX(-50%);
+        align-items: center;
+      }
+      .logo-text { font-size: 2.2rem; }
+      .players-top-row { overflow-x: auto; justify-content: flex-start; }
+      .player-card-top { min-width: 65px; }
+      .countdown-huge { font-size: 5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas WebGL para Renderização 3D (Three.js) -->
+  <div id="canvas3d-container"></div>
+
+  <!-- Canvas de Confetes Global -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Canvas Oculto para Baixar Card PNG -->
+  <canvas id="shareCardCanvas" width="1080" height="1350" style="display:none;"></canvas>
+
+  <!-- OVERLAY DE INTERFACE DE USUÁRIO (2D) -->
+  <div id="ui-overlay">
+
+    <!-- Top Bar estilo Mimic Party -->
+    <div class="top-bar">
+      <!-- Indicador de Rodada -->
+      <div id="roundBadgeBox" class="round-badge-box interactive" style="display:none;">
+        <span id="roundTitleText" class="round-title">RODADA 1 / 5</span>
+        <span id="roundSubtitleText" class="round-subtitle">INTRODUÇÃO</span>
+      </div>
+
+      <!-- Fileira de Cards de Jogadores (Foto + Nome + Pontos) -->
+      <div id="playersTopRow" class="players-top-row interactive" style="display:none;">
+        <!-- Injetado dinamicamente via JavaScript -->
+      </div>
+
+      <!-- Controles Gerais (Áudio, Mudo, Sair) -->
+      <div class="interactive" style="display:flex; align-items:center; gap:8px;">
+        <button id="btnMuteToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleMasterMute()" title="Mudo">
+          🔊
+        </button>
+        <button id="btnBgmToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleBgm()" title="Trilha Sonora">
+          🎵 BGM
+        </button>
+        <button id="btnLeaveGame" class="btn btn-neutral btn-sm" style="display:none;" onclick="GameModule.returnToMenu()" title="Sair da Partida">
+          🚪 SAIR
+        </button>
+      </div>
+    </div>
+
+    <!-- LOGO MIMIC PARTY NA TELA INICIAL (Screenshot 1) -->
+    <div id="mainLogoContainer" class="logo-container">
+      <div class="logo-box">
+        <div class="logo-text">MIMIC PARTY</div>
+      </div>
+      <div class="logo-sub">ONLINE 3D 🌐🔥</div>
+    </div>
+
+    <!-- MENU PRINCIPAL LATERAL (Screenshot 1) -->
+    <div id="mainMenuOverlay" class="main-menu-overlay">
+      <button class="btn btn-play" onclick="UIModule.openCreateRoomModal()">
+        🔨 CRIAR SALA
+      </button>
+
+      <button class="btn btn-join" onclick="UIModule.openJoinRoomModal()">
+        🚪 ENTRAR EM SALA
+      </button>
+
+      <button class="btn btn-pink" onclick="GameModule.startSoloBotsMode()">
+        🤖 JOGAR SOLO (BOTS)
+      </button>
+
+      <button class="btn btn-green" onclick="UIModule.openCustomizeModal()">
+        🎨 MEU PERSONAGEM 3D
+      </button>
+
+      <button class="btn btn-neutral" onclick="UIModule.openSoundPacksModal()">
+        📦 PACOTES DE SONS
+      </button>
+    </div>
+
+    <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO (Screenshot 1) -->
+    <div id="localPlayerProfileCard" class="interactive" style="position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.8); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;">
+      <div id="localAvatarFaceIcon" style="font-size:2.2rem; background:#ffdd00; border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border:2px solid #000;">
+        🧔
+      </div>
+      <div>
+        <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST)</div>
+        <div style="font-size:0.8rem; font-weight:800; color:#00f576;">MICROFONE PRONTO 🎙️</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       MODAIS E TELAS DO JOGO
+       ========================================================================= -->
+
+  <!-- MODAL: CRIAR SALA ONLINE -->
+  <div id="modalCreateRoom" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h2 class="modal-title">CRIAR SALA ONLINE 🌐</h2>
+      <p style="font-weight:700; opacity:0.85;">Passe o código ou link para seus amigos no WhatsApp ou Discord!</p>
+
+      <div style="background:#111; border:3px solid #000; border-radius:12px; padding:12px;">
+        <span style="font-size:0.8rem; font-weight:800; color:#ffdd00;">CÓDIGO DA SALA:</span>
+        <div id="displayRoomCode" style="font-family:var(--font-display); font-size:3rem; color:#00f576; letter-spacing:3px;">
+          CONECTANDO...
+        </div>
+      </div>
+
+      <button class="btn btn-create" onclick="NetworkModule.copyRoomLink()">
+        📋 COPIAR LINK DE CONVITE
+      </button>
+
+      <div style="text-align:left;">
+        <span style="font-weight:900; font-size:0.9rem;">AMIGOS NA SALA (<span id="waitingPlayerCount">1</span>/5):</span>
+        <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+          <!-- Lista de jogadores conectados -->
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:10px; margin-top:10px;">
+        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalCreateRoom')">
+          CANCELAR
+        </button>
+        <button id="btnStartOnlineGame" class="btn btn-play" onclick="NetworkModule.hostStartGame()">
+          INICIAR PARTIDA! 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ENTRAR EM SALA -->
+  <div id="modalJoinRoom" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h2 class="modal-title">ENTRAR EM UMA SALA 🚪</h2>
+      <p style="font-weight:700;">Digite o código da sala de 5 letras fornecido pelo seu amigo:</p>
+
+      <input type="text" id="inputRoomCode" class="input-box" placeholder="EX: MP842" maxlength="10">
+
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalJoinRoom')">
+          VOLTAR
+        </button>
+        <button class="btn btn-join" onclick="NetworkModule.joinRoomFromInput()">
+          ENTRAR NA SALA ➡️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PERSONALIZAÇÃO DO PERSONAGEM 3D -->
+  <div id="modalCustomize" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h2 class="modal-title">MEU PERSONAGEM 3D 🎨</h2>
+
+      <div>
+        <label style="font-weight:900; display:block; text-align:left; margin-bottom:4px;">Seu Nome de Jogador:</label>
+        <input type="text" id="inputPlayerName" class="input-box" value="Mestre Vocal" maxlength="14" onchange="GameModule.updateLocalPlayerName(this.value)">
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; text-align:left;">
+        <div>
+          <label style="font-weight:900; font-size:0.9rem;">Cabelo:</label>
+          <select id="selectHairStyle" class="input-box" style="padding:8px; font-size:0.9rem;" onchange="GameModule.updateLocalSkin()">
+            <option value="brown_parted">Cabelo Castanho Partido (Screenshot)</option>
+            <option value="bald">Careca Reluzente (Cap/MrFall)</option>
+            <option value="black_spiky">Espetado Preto</option>
+            <option value="blond">Loiro Surfista</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-weight:900; font-size:0.9rem;">Cor da Camisa:</label>
+          <select id="selectShirtColor" class="input-box" style="padding:8px; font-size:0.9rem;" onchange="GameModule.updateLocalSkin()">
+            <option value="#0066ff">Azul Royal</option>
+            <option value="#ff0044">Vermelho Vibrante</option>
+            <option value="#00e676">Verde Limão</option>
+            <option value="#ffdd00">Amarelo Mostarda</option>
+            <option value="#9d4edd">Roxo Neon</option>
+            <option value="#111111">Preto Noturno</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; margin-top:8px;">
+        <button class="btn btn-green" onclick="UIModule.closeModal('modalCustomize')">
+          SALVAR PERSONAGEM ✅
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PACOTES DE SONS & DRAG AND DROP -->
+  <div id="modalPacks" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:620px;">
+      <h2 class="modal-title">PACOTES DE SONS 📦</h2>
+      <p style="font-weight:700; opacity:0.85;">18 sons sintetizados com Web Audio + arquivos locais!</p>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px;">
+        <div class="btn btn-neutral" style="border-color:#00f576; cursor:pointer;" onclick="PacksModule.togglePack('animais')">
+          🐓 ANIMAIS (5 SONS)
+        </div>
+        <div class="btn btn-neutral" style="border-color:#ffb703; cursor:pointer;" onclick="PacksModule.togglePack('maquinas')">
+          🚜 MÁQUINAS (4 SONS)
+        </div>
+        <div class="btn btn-neutral" style="border-color:#ff0077; cursor:pointer;" onclick="PacksModule.togglePack('memes')">
+          💥 MEMES BR (9 SONS)
+        </div>
+      </div>
+
+      <!-- Drag & Drop de Arquivos de Áudio Locais -->
+      <div id="customDropZone" style="border:3px dashed #ffdd00; border-radius:14px; padding:20px; cursor:pointer; background:rgba(0,0,0,0.3);" onclick="document.getElementById('customAudioInput').click()">
+        <input type="file" id="customAudioInput" accept="audio/*" multiple style="display:none;" onchange="PacksModule.handleCustomFiles(this.files)">
+        <div style="font-size:2rem;">📂</div>
+        <strong style="font-size:1.05rem;">Arraste e solte seus próprios áudios (MP3, WAV, OGG)</strong>
+        <p style="font-size:0.8rem; opacity:0.75; margin-top:4px;">100% processado no seu navegador sem enviar nada pra internet!</p>
+        <span id="customFilesBadge" style="display:none; color:#00f576; font-weight:900;">0 arquivos carregados</span>
+      </div>
+
+      <button class="btn btn-green" onclick="UIModule.closeModal('modalPacks')">
+        CONCLUÍDO
+      </button>
+    </div>
+  </div>
+
+  <!-- ESTÁGIO DE GRAVAÇÃO (3, 2, 1, VAI!) -->
+  <div id="recordOverlay" class="record-overlay">
+    <div id="recordingCharacterBanner" style="font-family:var(--font-display); font-size:2rem; background:#ffb703; color:#000; padding:6px 22px; border:3px solid #000; border-radius:24px; box-shadow:4px 4px 0 #000;">
+      VEZ DE: JOGADOR 1 🎤
+    </div>
+    <div id="countdownNumber" class="countdown-huge">3</div>
+    <div class="rec-bar">
+      <div id="recBarFill" class="rec-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- ROLETA DA DISCÓRDIA ENTRE RODADAS (CANVAS MODAL) -->
+  <div id="modalRoulette" class="modal-overlay" style="display:none;">
+    <div class="modal-box wheel-modal-content">
+      <h2 class="modal-title">ROLETA DA DISCÓRDIA! 🎡</h2>
+      <p style="font-weight:700;">Bônus milagrosos ou sabotagens hilárias para o próximo take!</p>
+
+      <div class="wheel-wrap">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheelCanvas" width="320" height="320"></canvas>
+      </div>
+
+      <button id="btnSpinWheel" class="btn btn-play" onclick="WheelModule.spin()">
+        GIRAR A ROLETA! 🎰
+      </button>
+
+      <div id="wheelResultBox" style="display:none; background:#ffdd00; color:#000; border:3px solid #000; border-radius:12px; padding:12px; font-weight:900;">
+        <h3 id="wheelResultTitle" style="font-family:var(--font-display); font-size:1.5rem;">+20 PONTOS!</h3>
+        <p id="wheelResultDesc">Você recebeu uma bonificação direta!</p>
+      </div>
+
+      <button id="btnProceedAfterWheel" class="btn btn-green" style="display:none;" onclick="GameModule.proceedAfterRoulette()">
+        AVANÇAR PARA A PRÓXIMA RODADA ➡️
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ESCOLHA DE VÍTIMA DE SABOTAGEM -->
+  <div id="modalSabotageVictim" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h2 class="modal-title">😈 ESCOLHA A VÍTIMA!</h2>
+      <p id="sabotageModalDesc" style="font-weight:800;">Quem vai sofrer as consequências na próxima rodada?</p>
+      <div id="sabotageVictimsList" style="display:flex; flex-direction:column; gap:8px;">
+        <!-- Lista de vítimas -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL DE JULGAMENTO / PLAYBACK DOS TAKES -->
+  <div id="judgementCard" class="judgement-card">
+    <div class="score-circle">
+      <span id="scoreAnimatedNumber" class="score-number">0</span>
+      <span style="font-weight:900; font-size:0.75rem;">PONTOS</span>
+    </div>
+
+    <!-- Sabotagem Ativa (se houver) -->
+    <div id="sabotageBanner" style="display:none; background:#ff0077; color:#fff; font-family:var(--font-display); font-size:1.1rem; padding:4px 14px; border:2px solid #000; border-radius:20px; box-shadow:2px 2px 0 #000;">
+      💩 SABOTADO COM PUM! (-15 pts)
+    </div>
+
+    <div id="narratorQuoteBox" class="narrator-quote-box">
+      "Analisando a perícia criminal da voz..."
+    </div>
+
+    <!-- Gráfico Comparativo YIN Pitch / Envelope Canvas -->
+    <canvas id="contourCanvas" width="580" height="130"></canvas>
+
+    <div style="display:flex; justify-content:space-between; width:100%; font-size:0.8rem; font-weight:800;">
+      <span style="color:#00f0ff;">■ Som de Referência</span>
+      <span style="color:#ff0077;">■ Voz do Personagem</span>
+      <span style="color:#ffdd00;">● Ataques / Onsets</span>
+    </div>
+
+    <button id="btnNextTake" class="btn btn-pink btn-sm" onclick="GameModule.advanceTakePlayback()">
+      PRÓXIMO TAKE ➡️
+    </button>
+  </div>
+
+  <!-- MODAL: PODIUM FINAL E TIER LIST -->
+  <div id="modalFinalPodium" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:650px;">
+      <h2 class="modal-title">👑 FIM DE JOGO! TEMOS O CAMPEÃO 👑</h2>
+      
+      <!-- Podium Visual 1º, 2º e 3º -->
+      <div id="podiumVisualContainer" style="display:flex; align-items:flex-end; justify-content:center; gap:14px; min-height:220px; margin:16px 0;">
+        <!-- Injetado via JS -->
+      </div>
+
+      <!-- Tier List S a F -->
+      <div id="finalTierList" style="display:flex; flex-direction:column; gap:4px; text-align:left;">
+        <!-- Injetado via JS -->
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:12px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn btn-pink" onclick="UIModule.downloadShareCard()">
+          📸 BAIXAR CARD DO CAMPEÃO (PNG)
+        </button>
+        <button class="btn btn-neutral" onclick="GameModule.returnToMenu()">
+          🔄 NOVO JOGO
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       SCRIPTS: CÓDIGO DO JOGO 3D ONLINE COMPLETO
+       ========================================================================= -->
+  <script>
+    /**
+     * MIMIC PARTY 3D ONLINE (FOLIESAPP INSPIRED)
+     * Módulos:
+     * - Scene3DModule: Motor 3D Three.js, iluminação de palco, props e câmera dinâmica
+     * - Character3D: Personagens 3D procedurais em estilo cartoon com rig e animações
+     * - AudioModule: Web Audio API, sintetizadores de som, captação sem filtros e master volume
+     * - ScoringModule: Algoritmo YIN para pitch relativo, envelopes RMS e DTW
+     * - PacksModule: Banco de 18 sons sintetizados + upload de arquivos locais
+     * - NetworkModule: Multiplayer P2P WebRTC via PeerJS (Criação de salas, sincronia)
+     * - GameModule: Máquina de estados, regras, bots, fases de gravação e julgamento
+     * - WheelModule: Roleta animada em Canvas com física de rotação
+     * - UIModule: Gerenciamento de modais, narração meme e exportação PNG
+     */
+
+    const TWO_PI = Math.PI * 2;
+
+    /* ==========================================================================
+       1. SCENE3DMODULE: AMBIENTE 3D, PALCO, ILUMINAÇÃO E CÂMERA DINÂMICA
+       ========================================================================== */
+    const Scene3DModule = {
+      scene: null,
+      camera: null,
+      renderer: null,
+      clock: new THREE.Clock(),
+      props: {},
+      characters: [], // Instâncias de Character3D
+      cameraTargetPos: new THREE.Vector3(0, 2.2, 7.5),
+      cameraTargetLookAt: new THREE.Vector3(0, 1.4, 0),
+
+      init() {
+        const container = document.getElementById('canvas3d-container');
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+
+        // Cena
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x1a0f1d);
+        this.scene.fog = new THREE.FogExp2(0x1a0f1d, 0.045);
+
+        // Câmera com FOV acolhedor de palco
+        this.camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+        this.camera.position.copy(this.cameraTargetPos);
+
+        // Renderer WebGL
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        this.renderer.setSize(W, H);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(this.renderer.domElement);
+
+        // Iluminação de Palco Calorosa
+        this.setupLighting();
+
+        // Construção do Palco / Sala de Festa
+        this.buildStageRoom();
+
+        // Redimensionamento de Janela
+        window.addEventListener('resize', () => this.onWindowResize());
+
+        // Inicia Loop de Renderização
+        this.animate();
+      },
+
+      setupLighting() {
+        // Luz Ambiente Acolhedora
+        const ambient = new THREE.AmbientLight(0xffeedd, 0.65);
+        this.scene.add(ambient);
+
+        // Spotlight Central no Microfone
+        const centerSpot = new THREE.SpotLight(0xfff0dd, 1.8, 20, Math.PI / 4, 0.4, 1);
+        centerSpot.position.set(0, 6.5, 3.5);
+        centerSpot.target.position.set(0, 0, 0);
+        centerSpot.castShadow = true;
+        centerSpot.shadow.mapSize.width = 1024;
+        centerSpot.shadow.mapSize.height = 1024;
+        this.scene.add(centerSpot);
+        this.scene.add(centerSpot.target);
+
+        // Luzes Coloridas de Preenchimento (Neon Roxo e Ciano nas laterais)
+        const leftNeon = new THREE.PointLight(0xff0077, 1.2, 12);
+        leftNeon.position.set(-6, 3, 1);
+        this.scene.add(leftNeon);
+
+        const rightNeon = new THREE.PointLight(0x00f0ff, 1.2, 12);
+        rightNeon.position.set(6, 3, 1);
+        this.scene.add(rightNeon);
+      },
+
+      buildStageRoom() {
+        // 1. Chão de Tábuas de Madeira
+        const floorGeo = new THREE.PlaneGeometry(24, 20);
+        const floorMat = new THREE.MeshStandardMaterial({
+          color: 0x6e3b22,
+          roughness: 0.6,
+          metalness: 0.1
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+
+        // 2. Parede de Fundo de Festa (Bordeaux / Chocolate)
+        const wallGeo = new THREE.PlaneGeometry(24, 10);
+        const wallMat = new THREE.MeshStandardMaterial({
+          color: 0x3d1728,
+          roughness: 0.8
+        });
+        const backWall = new THREE.Mesh(wallGeo, wallMat);
+        backWall.position.set(0, 5, -5);
+        backWall.receiveShadow = true;
+        this.scene.add(backWall);
+
+        // 3. Guirlanda de Lâmpadas de Palco Suspensa (String Lights)
+        const bulbCount = 14;
+        for (let i = 0; i < bulbCount; i++) {
+          const bulbGeo = new THREE.SphereGeometry(0.12, 12, 12);
+          const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffdd44 });
+          const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+          const x = -7 + (i * 14) / (bulbCount - 1);
+          const y = 4.6 + Math.sin((i / (bulbCount - 1)) * Math.PI) * 0.45;
+          bulb.position.set(x, y, -4.5);
+          this.scene.add(bulb);
+        }
+
+        // 4. Caixas de Som Gigantes (Esquerda e Direita)
+        this.createSpeakerBox(-5.5, 1.6, -3);
+        this.createSpeakerBox(5.5, 1.6, -3);
+
+        // 5. Poltrona Vermelha Aconchegante no lado esquerdo (Screenshot 1)
+        this.createArmchair(-4.2, 0, -2.5);
+
+        // 6. Sofá no lado direito (Screenshot 2)
+        this.createSofa(4.5, 0, -2.5);
+
+        // 7. Microfone Central Cromado no Pedestal
+        this.createMicrophone(0, 0, 0);
+      },
+
+      createSpeakerBox(x, y, z) {
+        const group = new THREE.Group();
+        // Gabinete
+        const boxGeo = new THREE.BoxGeometry(1.4, 2.6, 1.2);
+        const boxMat = new THREE.MeshStandardMaterial({ color: 0x223355, roughness: 0.5 });
+        const box = new THREE.Mesh(boxGeo, boxMat);
+        box.castShadow = true;
+        box.receiveShadow = true;
+        group.add(box);
+
+        // Cones de Alto-falante
+        const coneMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
+        const cone1 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.35, 0.1, 16), coneMat);
+        cone1.rotation.x = Math.PI / 2;
+        cone1.position.set(0, 0.45, 0.6);
+        group.add(cone1);
+
+        const cone2 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.35, 0.1, 16), coneMat);
+        cone2.rotation.x = Math.PI / 2;
+        cone2.position.set(0, -0.45, 0.6);
+        group.add(cone2);
+
+        group.position.set(x, y, z);
+        this.scene.add(group);
+      },
+
+      createArmchair(x, y, z) {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ color: 0xb51735, roughness: 0.7 });
+        // Assento
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 1.4), mat);
+        seat.position.y = 0.5;
+        seat.castShadow = true;
+        group.add(seat);
+        // Encosto
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.5, 0.4), mat);
+        back.position.set(0, 1.3, -0.5);
+        back.castShadow = true;
+        group.add(back);
+        group.position.set(x, y, z);
+        group.rotation.y = 0.3;
+        this.scene.add(group);
+      },
+
+      createSofa(x, y, z) {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.7 });
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 1.2), mat);
+        seat.position.y = 0.5;
+        seat.castShadow = true;
+        group.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.3, 0.35), mat);
+        back.position.set(0, 1.2, -0.45);
+        back.castShadow = true;
+        group.add(back);
+        group.position.set(x, y, z);
+        group.rotation.y = -0.3;
+        this.scene.add(group);
+      },
+
+      createMicrophone(x, y, z) {
+        const group = new THREE.Group();
+        const metalMat = new THREE.MeshStandardMaterial({ color: 0xddeeff, metalness: 0.9, roughness: 0.2 });
+        // Base redonda no chão
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.38, 0.05, 24), metalMat);
+        base.position.y = 0.025;
+        base.receiveShadow = true;
+        group.add(base);
+        // Haste vertical fina
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.45, 12), metalMat);
+        pole.position.y = 0.75;
+        pole.castShadow = true;
+        group.add(pole);
+        // Cápsula do Microfone
+        const micHead = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), metalMat);
+        micHead.position.y = 1.48;
+        micHead.castShadow = true;
+        group.add(micHead);
+
+        group.position.set(x, y, z);
+        this.scene.add(group);
+        this.props.microphone = group;
+      },
+
+      setCameraView(viewMode) {
+        if (viewMode === 'menu') {
+          // Visão frontal focada no personagem da frente
+          this.cameraTargetPos.set(0, 1.9, 4.2);
+          this.cameraTargetLookAt.set(0, 1.3, 0);
+        } else if (viewMode === 'stage_lineup') {
+          // Visão ampla mostrando todos os 5 jogadores enfileirados (Screenshot 2)
+          this.cameraTargetPos.set(0, 2.4, 7.8);
+          this.cameraTargetLookAt.set(0, 1.3, -1);
+        } else if (viewMode === 'close_singer') {
+          // Close dinâmico no microfone e no personagem que está cantando
+          this.cameraTargetPos.set(0, 1.6, 2.6);
+          this.cameraTargetLookAt.set(0, 1.4, 0);
+        }
+      },
+
+      onWindowResize() {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        this.camera.aspect = W / H;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(W, H);
+      },
+
+      animate() {
+        requestAnimationFrame(() => this.animate());
+        const delta = this.clock.getDelta();
+        const time = this.clock.getElapsedTime();
+
+        // Interpolação suave de Câmera
+        this.camera.position.lerp(this.cameraTargetPos, 0.06);
+        const currentLookAt = new THREE.Vector3();
+        this.camera.getWorldDirection(currentLookAt);
+        // Suave lookAt
+        this.camera.lookAt(this.cameraTargetLookAt);
+
+        // Atualiza animações de todos os personagens 3D
+        this.characters.forEach(char => char.update(time, delta));
+
+        this.renderer.render(this.scene, this.camera);
+      }
+    };
+
+    /* ==========================================================================
+       2. CHARACTER3D: MODELAGEM PROCEDURAL CARTOON E ANIMAÇÕES
+       ========================================================================== */
+    class Character3D {
+      constructor(data = {}) {
+        this.id = data.id || 'p_' + Math.random();
+        this.name = data.name || 'Jogador';
+        this.hairType = data.hair || 'brown_parted'; // 'brown_parted', 'bald', 'black_spiky', 'blond'
+        this.shirtColor = data.shirtColor || '#0066ff';
+        this.pantsColor = data.pantsColor || '#223366';
+        this.skinColor = 0xf8c291;
+
+        this.group = new THREE.Group();
+        this.isSinging = false;
+        this.audioAmplitude = 0;
+        this.lineupPosition = new THREE.Vector3(0, 0, -2.5);
+        this.targetPosition = new THREE.Vector3(0, 0, -2.5);
+
+        this.buildMesh();
+      }
+
+      buildMesh() {
+        // Material Toon Acolhedor
+        const skinMat = new THREE.MeshStandardMaterial({ color: this.skinColor, roughness: 0.5 });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: this.shirtColor, roughness: 0.6 });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: this.pantsColor, roughness: 0.7 });
+        const gloveMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }); // Luvas brancas
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 });
+
+        // 1. Cabeça Redonda Expressiva
+        this.headGroup = new THREE.Group();
+        const headGeo = new THREE.SphereGeometry(0.48, 24, 24);
+        this.headMesh = new THREE.Mesh(headGeo, skinMat);
+        this.headMesh.castShadow = true;
+        this.headGroup.add(this.headMesh);
+
+        // Olhos Cartoon (Esclera Branca + Pupila Preta)
+        const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const eyePupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+
+        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeWhiteMat);
+        eyeL.position.set(-0.16, 0.08, 0.42);
+        const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), eyePupilMat);
+        pupilL.position.set(-0.16, 0.08, 0.49);
+        this.headGroup.add(eyeL);
+        this.headGroup.add(pupilL);
+
+        const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeWhiteMat);
+        eyeR.position.set(0.16, 0.08, 0.42);
+        const pupilR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), eyePupilMat);
+        pupilR.position.set(0.16, 0.08, 0.49);
+        this.headGroup.add(eyeR);
+        this.headGroup.add(pupilR);
+
+        // Boca Expressiva que abre com o áudio
+        const mouthMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
+        this.mouthMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.06), mouthMat);
+        this.mouthMesh.position.set(0, -0.2, 0.45);
+        this.headGroup.add(this.mouthMesh);
+
+        // Cabelo Estilizado
+        this.buildHair();
+
+        this.headGroup.position.y = 1.6;
+        this.group.add(this.headGroup);
+
+        // 2. Tronco / Camisa Cartoon
+        this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.72, 0.42), shirtMat);
+        this.torso.position.y = 1.05;
+        this.torso.castShadow = true;
+        this.group.add(this.torso);
+
+        // 3. Braços com Luvas Brancas (Screenshot 1 & 2)
+        this.armL = new THREE.Group();
+        const armLMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.55), shirtMat);
+        armLMesh.position.y = -0.25;
+        armLMesh.castShadow = true;
+        const gloveL = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), gloveMat);
+        gloveL.position.y = -0.55;
+        this.armL.add(armLMesh);
+        this.armL.add(gloveL);
+        this.armL.position.set(-0.42, 1.35, 0);
+        this.group.add(this.armL);
+
+        this.armR = new THREE.Group();
+        const armRMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.55), shirtMat);
+        armRMesh.position.y = -0.25;
+        armRMesh.castShadow = true;
+        const gloveR = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), gloveMat);
+        gloveR.position.y = -0.55;
+        this.armR.add(armRMesh);
+        this.armR.add(gloveR);
+        this.armR.position.set(0.42, 1.35, 0);
+        this.group.add(this.armR);
+
+        // 4. Pernas e Tênis
+        this.legL = new THREE.Group();
+        const legLMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.1, 0.65), pantsMat);
+        legLMesh.position.y = -0.32;
+        legLMesh.castShadow = true;
+        const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.36), shoeMat);
+        shoeL.position.set(0, -0.65, 0.06);
+        shoeL.castShadow = true;
+        this.legL.add(legLMesh);
+        this.legL.add(shoeL);
+        this.legL.position.set(-0.2, 0.68, 0);
+        this.group.add(this.legL);
+
+        this.legR = new THREE.Group();
+        const legRMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.1, 0.65), pantsMat);
+        legRMesh.position.y = -0.32;
+        legRMesh.castShadow = true;
+        const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.36), shoeMat);
+        shoeR.position.set(0, -0.65, 0.06);
+        shoeR.castShadow = true;
+        this.legR.add(legRMesh);
+        this.legR.add(shoeR);
+        this.legR.position.set(0.2, 0.68, 0);
+        this.group.add(this.legR);
+
+        Scene3DModule.scene.add(this.group);
+      }
+
+      buildHair() {
+        if (this.hairMesh) this.headGroup.remove(this.hairMesh);
+
+        if (this.hairType === 'bald') {
+          // Careca reluzente: sem malha extra de cabelo
+          return;
+        }
+
+        let hairColor = 0x3d2314; // Castanho
+        if (this.hairType === 'blond') hairColor = 0xd4a373;
+        if (this.hairType === 'black_spiky') hairColor = 0x111111;
+
+        const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
+        const hairGeo = new THREE.SphereGeometry(0.51, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+        this.hairMesh = new THREE.Mesh(hairGeo, hairMat);
+        this.hairMesh.position.y = 0.02;
+
+        if (this.hairType === 'brown_parted') {
+          // Cabelo Partido com Franja Lateral (Screenshot 1 e 2 - Sangras/Tigrezo)
+          const fringe = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.18, 0.18), hairMat);
+          fringe.position.set(-0.06, 0.42, 0.38);
+          fringe.rotation.z = -0.15;
+          this.hairMesh.add(fringe);
+        }
+
+        this.headGroup.add(this.hairMesh);
+      }
+
+      setSkin(hair, shirtColor) {
+        this.hairType = hair;
+        this.shirtColor = shirtColor;
+        this.buildHair();
+        this.torso.material.color.set(shirtColor);
+        this.armL.children[0].material.color.set(shirtColor);
+        this.armR.children[0].material.color.set(shirtColor);
+      }
+
+      walkTo(targetX, targetZ) {
+        this.targetPosition.set(targetX, 0, targetZ);
+      }
+
+      update(time, delta) {
+        // Movimentação suave até a posição alvo
+        const dist = this.group.position.distanceTo(this.targetPosition);
+        if (dist > 0.04) {
+          this.group.position.lerp(this.targetPosition, 0.08);
+          // Animação de Caminhada: balanço das pernas e braços
+          const walkSpeed = 12;
+          this.legL.rotation.x = Math.sin(time * walkSpeed) * 0.45;
+          this.legR.rotation.x = -Math.sin(time * walkSpeed) * 0.45;
+          this.armL.rotation.x = -Math.sin(time * walkSpeed) * 0.4;
+          this.armR.rotation.x = Math.sin(time * walkSpeed) * 0.4;
+        } else {
+          // Parado: Reseta pernas e aplica respiração suave
+          this.legL.rotation.x = 0;
+          this.legR.rotation.x = 0;
+
+          if (this.isSinging) {
+            // Animação Cantando / Imitando Som no Microfone:
+            // Corpo inclinado para o microfone, gestos de mão e boca abrindo com a amplitude da voz
+            this.group.rotation.y = 0;
+            this.headGroup.position.y = 1.6 + Math.sin(time * 8) * 0.04;
+            this.armL.rotation.z = 0.5 + Math.sin(time * 6) * 0.2;
+            this.armR.rotation.z = -0.5 - Math.sin(time * 6) * 0.2;
+
+            // Boca abre e fecha proporcional à energia do áudio
+            const amp = Math.max(0.1, Math.min(1.0, this.audioAmplitude * 5));
+            this.mouthMesh.scale.set(1 + amp * 0.8, 1 + amp * 3.5, 1);
+          } else {
+            // Idle Normal: Respiração sutil
+            this.headGroup.position.y = 1.6 + Math.sin(time * 2.5 + this.group.position.x) * 0.015;
+            this.armL.rotation.z = 0.15;
+            this.armR.rotation.z = -0.15;
+            this.mouthMesh.scale.set(1, 1, 1);
+          }
+        }
+      }
+    }
+
+    /* ==========================================================================
+       3. AUDIOMODULE: WEB AUDIO, SÍNTESE, GRAVAÇÃO SEM FILTROS E MASTER
+       ========================================================================== */
+    const AudioModule = {
+      ctx: null,
+      micStream: null,
+      analyser: null,
+      masterGainNode: null,
+      bgmGainNode: null,
+      isMuted: false,
+      savedVolume: 0.8,
+      isBgmPlaying: false,
+      bgmTimer: null,
+      isMicReady: false,
+
+      ensureContext() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContextClass();
+          this.masterGainNode = this.ctx.createGain();
+          this.masterGainNode.gain.value = this.savedVolume;
+          this.masterGainNode.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        return this.ctx;
+      },
+
+      outNode() {
+        return this.masterGainNode || this.ctx.destination;
+      },
+
+      async initMic() {
+        this.ensureContext();
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+
+        try {
+          // Requisito estrito: echoCancellation, noiseSuppression e autoGainControl DESLIGADOS
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false
+            }
+          });
+
+          this.micStream = stream;
+          const source = this.ctx.createMediaStreamSource(stream);
+          this.analyser = this.ctx.createAnalyser();
+          this.analyser.fftSize = 1024;
+          source.connect(this.analyser);
+
+          this.isMicReady = true;
+          return true;
+        } catch (e) {
+          console.warn("Permissão de microfone:", e);
+          return false;
+        }
+      },
+
+      toggleMasterMute() {
+        this.ensureContext();
+        this.isMuted = !this.isMuted;
+        const btn = document.getElementById('btnMuteToggle');
+        if (this.isMuted) {
+          this.masterGainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+          btn.innerText = '🔇';
+        } else {
+          this.masterGainNode.gain.setValueAtTime(this.savedVolume, this.ctx.currentTime);
+          btn.innerText = '🔊';
+        }
+      },
+
+      recordTakePCM(durationSeconds, onProgress, onFinish) {
+        this.ensureContext();
+        if (!this.micStream) {
+          if (onFinish) onFinish(null);
+          return;
+        }
+
+        const sampleRate = this.ctx.sampleRate;
+        const totalSamples = Math.floor(sampleRate * durationSeconds);
+        const recordedPCM = new Float32Array(totalSamples);
+        let sampleIndex = 0;
+
+        const bufferSize = 2048;
+        const processor = this.ctx.createScriptProcessor(bufferSize, 1, 1);
+        const source = this.ctx.createMediaStreamSource(this.micStream);
+        source.connect(processor);
+
+        // Previne vazamento do áudio do mic para o alto-falante (evita microfonia)
+        const silenceGain = this.ctx.createGain();
+        silenceGain.gain.value = 0;
+        processor.connect(silenceGain);
+        silenceGain.connect(this.ctx.destination);
+
+        const startTime = Date.now();
+        const durationMs = durationSeconds * 1000;
+
+        const timer = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          if (onProgress) onProgress(Math.min(1, elapsed / durationMs));
+        }, 30);
+
+        processor.onaudioprocess = (e) => {
+          const channel = e.inputBuffer.getChannelData(0);
+          for (let i = 0; i < channel.length; i++) {
+            if (sampleIndex < totalSamples) {
+              recordedPCM[sampleIndex++] = channel[i];
+            }
+          }
+
+          if (sampleIndex >= totalSamples) {
+            clearInterval(timer);
+            processor.onaudioprocess = null;
+            source.disconnect(processor);
+            processor.disconnect();
+            silenceGain.disconnect();
+
+            const audioBuf = AudioModule.ctx.createBuffer(1, totalSamples, sampleRate);
+            audioBuf.copyToChannel(recordedPCM, 0);
+
+            if (onProgress) onProgress(1);
+            if (onFinish) onFinish(audioBuf, recordedPCM);
+          }
+        };
+      },
+
+      playAudioBuffer(buffer, sabotageType, onEnded) {
+        this.ensureContext();
+        if (!buffer) { if (onEnded) onEnded(); return; }
+
+        if (sabotageType === 'pum') {
+          this.playFartSynth(onEnded);
+          return;
+        }
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        let lastNode = source;
+
+        // Sabotagem Saturação (WaveShaper)
+        if (sabotageType === 'saturacao') {
+          const shaper = this.ctx.createWaveShaper();
+          const curve = new Float32Array(2048);
+          for (let i = 0; i < 2048; i++) {
+            const x = (i * 2) / 2048 - 1;
+            curve[i] = Math.tanh(x * 12);
+          }
+          shaper.curve = curve;
+          lastNode.connect(shaper);
+          lastNode = shaper;
+        }
+
+        // Sabotagem Eco (DelayNode)
+        if (sabotageType === 'eco') {
+          const delay = this.ctx.createDelay();
+          delay.delayTime.value = 0.28;
+          const fb = this.ctx.createGain();
+          fb.gain.value = 0.65;
+          const merge = this.ctx.createGain();
+          lastNode.connect(merge);
+          lastNode.connect(delay);
+          delay.connect(fb);
+          fb.connect(delay);
+          delay.connect(merge);
+          lastNode = merge;
+        }
+
+        if (sabotageType === 'pitch') {
+          source.playbackRate.value = 1.45; // Esquilo
+        }
+
+        lastNode.connect(this.outNode());
+        source.onended = () => { if (onEnded) onEnded(); };
+        source.start();
+      },
+
+      playFartSynth(onEnded) {
+        this.ensureContext();
+        const now = this.ctx.currentTime;
+        const dur = 1.2;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(65, now);
+        osc.frequency.exponentialRampToValueAtTime(26, now + dur);
+
+        gain.gain.setValueAtTime(0.9, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+
+        osc.connect(gain);
+        gain.connect(this.outNode());
+        osc.start(now);
+        osc.stop(now + dur);
+        osc.onended = () => { if (onEnded) onEnded(); };
+      },
+
+      playSfx(type) {
+        this.ensureContext();
+        const now = this.ctx.currentTime;
+
+        if (type === 'beep') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(880, now);
+          g.gain.setValueAtTime(0.3, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(g);
+          g.connect(this.outNode());
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'beep_go') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1760, now);
+          g.gain.setValueAtTime(0.4, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.connect(g);
+          g.connect(this.outNode());
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'vine_boom') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(130, now);
+          osc.frequency.exponentialRampToValueAtTime(36, now + 0.5);
+          g.gain.setValueAtTime(0.9, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+          osc.connect(g);
+          g.connect(this.outNode());
+          osc.start(now);
+          osc.stop(now + 1.2);
+          UIModule.triggerScreenShake();
+        } else if (type === 'airhorn') {
+          [740, 744, 370].forEach(f => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(f, now);
+            g.gain.setValueAtTime(0.25, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+            osc.connect(g);
+            g.connect(this.outNode());
+            osc.start(now);
+            osc.stop(now + 0.85);
+          });
+          UIModule.triggerScreenShake();
+        } else if (type === 'tick') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(1200, now);
+          g.gain.setValueAtTime(0.15, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+          osc.connect(g);
+          g.connect(this.outNode());
+          osc.start(now);
+          osc.stop(now + 0.03);
+        }
+      },
+
+      toggleBgm() {
+        this.ensureContext();
+        const btn = document.getElementById('btnBgmToggle');
+        if (this.isBgmPlaying) {
+          this.isBgmPlaying = false;
+          if (this.bgmTimer) clearInterval(this.bgmTimer);
+          btn.innerText = '🔇 BGM: OFF';
+        } else {
+          this.isBgmPlaying = true;
+          this.startBgmLoop();
+          btn.innerText = '🎵 BGM: ON';
+        }
+      },
+
+      startBgmLoop() {
+        this.bgmGainNode = this.ctx.createGain();
+        this.bgmGainNode.gain.value = 0.06;
+        this.bgmGainNode.connect(this.outNode());
+
+        const notes = [261.63, 0, 329.63, 392.00, 293.66, 0, 349.23, 440.00];
+        let step = 0;
+        this.bgmTimer = setInterval(() => {
+          if (!this.isBgmPlaying) return;
+          const freq = notes[step % notes.length];
+          if (freq > 0) {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            g.gain.setValueAtTime(0.4, this.ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.22);
+            osc.connect(g);
+            g.connect(this.bgmGainNode);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.22);
+          }
+          step++;
+        }, 220);
+      }
+    };
+
+    /* ==========================================================================
+       4. SCORINGMODULE: YIN PITCH, RELATIVE SEMITONES, DTW E ATAQUES
+       ========================================================================== */
+    const ScoringModule = {
+      weights: { pitch: 0.40, onsetTiming: 0.35, onsetCount: 0.25 },
+
+      analyzeBuffer(audioBuffer) {
+        const sampleRate = audioBuffer.sampleRate;
+        const pcm = audioBuffer.getChannelData(0);
+        const frameSize = 1024;
+        const hopSize = Math.floor(sampleRate * 0.015);
+        const numFrames = Math.floor((pcm.length - frameSize) / hopSize);
+
+        const pitchContour = [];
+        const rmsEnvelope = [];
+        const minTau = Math.floor(sampleRate / 800);
+        const maxTau = Math.floor(sampleRate / 60);
+        const d = new Float32Array(maxTau);
+        const dPrime = new Float32Array(maxTau);
+
+        for (let f = 0; f < numFrames; f++) {
+          const offset = f * hopSize;
+          let sumSquares = 0;
+          for (let i = 0; i < frameSize; i++) {
+            const val = pcm[offset + i];
+            sumSquares += val * val;
+          }
+          const rms = Math.sqrt(sumSquares / frameSize);
+          rmsEnvelope.push(rms);
+
+          if (rms < 0.015) {
+            pitchContour.push(null);
+            continue;
+          }
+
+          d.fill(0);
+          for (let tau = 1; tau < maxTau; tau++) {
+            let sumDiff = 0;
+            for (let j = 0; j < frameSize / 2; j++) {
+              const delta = pcm[offset + j] - pcm[offset + j + tau];
+              sumDiff += delta * delta;
+            }
+            d[tau] = sumDiff;
+          }
+
+          dPrime[0] = 1;
+          let runningSum = 0;
+          for (let tau = 1; tau < maxTau; tau++) {
+            runningSum += d[tau];
+            dPrime[tau] = runningSum > 0 ? (d[tau] * tau) / runningSum : 1;
+          }
+
+          let bestTau = -1;
+          for (let tau = minTau; tau < maxTau; tau++) {
+            if (dPrime[tau] < 0.18) {
+              while (tau + 1 < maxTau && dPrime[tau + 1] < dPrime[tau]) tau++;
+              bestTau = tau;
+              break;
+            }
+          }
+
+          if (bestTau > 0) {
+            const freq = sampleRate / bestTau;
+            const semitone = 69 + 12 * Math.log2(freq / 440);
+            pitchContour.push(semitone);
+          } else {
+            pitchContour.push(null);
+          }
+        }
+
+        // Semitons Relativos à Mediana
+        const voiced = pitchContour.filter(p => p !== null).sort((a, b) => a - b);
+        const median = voiced.length > 0 ? voiced[Math.floor(voiced.length / 2)] : 60;
+        const relativePitch = pitchContour.map(p => (p !== null ? p - median : null));
+
+        const onsets = this.detectOnsets(rmsEnvelope, hopSize / sampleRate);
+
+        return {
+          duration: audioBuffer.duration,
+          relativePitch,
+          rmsEnvelope,
+          onsets
+        };
+      },
+
+      detectOnsets(rmsEnvelope, timeStep) {
+        const onsets = [];
+        for (let i = 2; i < rmsEnvelope.length - 2; i++) {
+          const diff = Math.max(0, rmsEnvelope[i] - rmsEnvelope[i - 1]);
+          if (diff > 0.02 && diff > (rmsEnvelope[i - 1] - rmsEnvelope[i - 2])) {
+            onsets.push({ time: i * timeStep, strength: Math.min(1.0, diff * 8) });
+          }
+        }
+        return onsets;
+      },
+
+      evaluate(refData, userData, isUnpitched = false) {
+        if (!userData || userData.rmsEnvelope.length === 0) return { totalScore: 0 };
+
+        let pitchScore = 80;
+        if (!isUnpitched) {
+          // DTW simplificado em semitons relativos
+          let diffSum = 0;
+          let count = 0;
+          const len = Math.min(refData.relativePitch.length, userData.relativePitch.length);
+          for (let i = 0; i < len; i++) {
+            const r = refData.relativePitch[i];
+            const u = userData.relativePitch[i];
+            if (r !== null && u !== null) {
+              diffSum += Math.abs(r - u);
+              count++;
+            }
+          }
+          const avgDist = count > 0 ? diffSum / count : 4.0;
+          pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgDist / 2.8))));
+        } else {
+          // Sons sem altura: compara o envelope de energia
+          let envDiffSum = 0;
+          const len = Math.min(refData.rmsEnvelope.length, userData.rmsEnvelope.length);
+          for (let i = 0; i < len; i++) {
+            envDiffSum += Math.abs(refData.rmsEnvelope[i] - userData.rmsEnvelope[i]);
+          }
+          const avgEnvDist = len > 0 ? envDiffSum / len : 0.5;
+          pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgEnvDist / 0.4))));
+        }
+
+        // Onsets Timing
+        let timingScore = 75;
+        if (refData.onsets.length > 0 && userData.onsets.length > 0) {
+          let sum = 0;
+          refData.onsets.forEach(ro => {
+            let minD = Infinity;
+            userData.onsets.forEach(uo => {
+              const d = Math.abs(ro.time - uo.time);
+              if (d < minD) minD = d;
+            });
+            sum += Math.exp(-minD / 0.25);
+          });
+          timingScore = Math.min(100, Math.round((sum / refData.onsets.length) * 100));
+        }
+
+        const total = Math.round(pitchScore * 0.5 + timingScore * 0.5);
+        return { totalScore: Math.max(10, Math.min(100, total)) };
+      },
+
+      drawContourCanvas(canvas, refData, userData, isUnpitched) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.fillStyle = '#14101e';
+        ctx.fillRect(0, 0, W, H);
+
+        const midY = H / 2;
+        ctx.strokeStyle = '#332744';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        ctx.lineTo(W, midY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Referência (Ciano)
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const rLen = isUnpitched ? refData.rmsEnvelope.length : refData.relativePitch.length;
+        for (let i = 0; i < rLen; i++) {
+          const x = (i / (rLen - 1 || 1)) * W;
+          let y = midY;
+          if (isUnpitched) {
+            y = H - (refData.rmsEnvelope[i] * H * 1.5 + 10);
+          } else {
+            const p = refData.relativePitch[i];
+            if (p !== null) y = midY - p * 5.0;
+          }
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Jogador (Rosa)
+        ctx.strokeStyle = '#ff0077';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const uLen = isUnpitched ? userData.rmsEnvelope.length : userData.relativePitch.length;
+        for (let i = 0; i < uLen; i++) {
+          const x = (i / (uLen - 1 || 1)) * W;
+          let y = midY;
+          if (isUnpitched) {
+            y = H - (userData.rmsEnvelope[i] * H * 1.5 + 10);
+          } else {
+            const p = userData.relativePitch[i];
+            if (p !== null) y = midY - p * 5.0;
+          }
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    };
+
+    /* ==========================================================================
+       5. PACKSMODULE: 18 SONS SINTETIZADOS E ARQUIVOS LOCAIS
+       ========================================================================== */
+    const PacksModule = {
+      activePacks: ['animais', 'maquinas', 'memes'],
+      customSounds: [],
+
+      library: [
+        // Animais
+        { id: 'galo', name: 'Galo da Madrugada 🐓', pack: 'animais', diff: 'facil', duration: 2.0, unpitched: false, generate: (ctx) => {
+          const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+          const p = b.getChannelData(0);
+          for (let i=0; i<p.length; i++) {
+            const t = i/ctx.sampleRate;
+            const f = t < 0.7 ? 350 + t*300 : 580 + Math.sin(t*40)*20;
+            p[i] = Math.sin(TWO_PI * f * t) * Math.sin(t/2*Math.PI) * 0.45;
+          }
+          return b;
+        }},
+        { id: 'vaca', name: 'Vaca Filosófica 🐮', pack: 'animais', diff: 'facil', duration: 2.2, unpitched: false, generate: (ctx) => {
+          const b = ctx.createBuffer(1, ctx.sampleRate * 2.2, ctx.sampleRate);
+          const p = b.getChannelData(0);
+          for (let i=0; i<p.length; i++) {
+            const t = i/ctx.sampleRate;
+            const f = 120 + Math.sin(t/2.2*Math.PI)*25;
+            p[i] = Math.sin(TWO_PI * f * t) * Math.sin(t/2.2*Math.PI) * 0.45;
+          }
+          return b;
+        }},
+        // Máquinas
+        { id: 'buzina', name: 'Buzina de Caminhão 🚛', pack: 'maquinas', diff: 'facil', duration: 1.8, unpitched: false, generate: (ctx) => {
+          const b = ctx.createBuffer(1, ctx.sampleRate * 1.8, ctx.sampleRate);
+          const p = b.getChannelData(0);
+          for (let i=0; i<p.length; i++) {
+            const t = i/ctx.sampleRate;
+            const s1 = (2 * ((t * 220) % 1)) - 1;
+            const s2 = (2 * ((t * 277) % 1)) - 1;
+            p[i] = (s1 + s2) * 0.25 * (t < 0.3 || t > 0.5 ? 1 : 0);
+          }
+          return b;
+        }},
+        { id: 'moto', name: 'Moto Sem Silencioso 🏍️', pack: 'maquinas', diff: 'medio', duration: 2.0, unpitched: true, generate: (ctx) => {
+          const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+          const p = b.getChannelData(0);
+          for (let i=0; i<p.length; i++) {
+            const t = i/ctx.sampleRate;
+            const saw = (2 * ((t * (60 + (t%0.6)*180)) % 1)) - 1;
+            p[i] = (saw + (Math.random()*2 - 1)*0.2) * 0.4;
+          }
+          return b;
+        }},
+        // Memes
+        { id: 'vine_boom', name: 'Vine Boom 💥', pack: 'memes', diff: 'facil', duration: 1.4, unpitched: true, generate: (ctx) => {
+          const b = ctx.createBuffer(1, ctx.sampleRate * 1.4, ctx.sampleRate);
+          const p = b.getChannelData(0);
+          for (let i=0; i<p.length; i++) {
+            const t = i/ctx.sampleRate;
+            const f = 130 * Math.exp(-t * 6) + 36;
+            p[i] = Math.tanh(Math.sin(TWO_PI * f * t) * 2.5) * Math.exp(-t * 2.5) * 0.6;
+          }
+          return b;
+        }},
+        { id: 'bruh', name: 'Efeito Bruh 🗿', pack: 'memes', diff: 'facil', duration: 1.2, unpitched: false, generate: (ctx) => {
+          const b = ctx.createBuffer(1, ctx.sampleRate * 1.2, ctx.sampleRate);
+          const p = b.getChannelData(0);
+          for (let i=0; i<p.length; i++) {
+            const t = i/ctx.sampleRate;
+            const f = 210 - (t/1.2)*135;
+            p[i] = Math.sin(TWO_PI * f * t) * Math.exp(-t*2) * 0.5;
+          }
+          return b;
+        }}
+      ],
+
+      togglePack(id) {
+        if (this.activePacks.includes(id)) {
+          if (this.activePacks.length > 1) this.activePacks = this.activePacks.filter(p => p !== id);
+        } else {
+          this.activePacks.push(id);
+        }
+        AudioModule.playSfx('tick');
+      },
+
+      async handleCustomFiles(files) {
+        if (!files) return;
+        AudioModule.ensureContext();
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const ab = await file.arrayBuffer();
+          const decoded = await AudioModule.ctx.decodeAudioData(ab);
+          this.customSounds.push({
+            id: 'custom_' + Date.now(),
+            name: file.name.replace(/\.[^/.]+$/, ""),
+            pack: 'custom',
+            diff: 'medio',
+            duration: Math.min(4, decoded.duration),
+            unpitched: false,
+            generate: () => decoded
+          });
+        }
+        document.getElementById('customFilesBadge').style.display = 'block';
+        document.getElementById('customFilesBadge').innerText = `${this.customSounds.length} sons personalizados prontos!`;
+        AudioModule.playSfx('beep_go');
+      },
+
+      getAvailable() {
+        const list = this.library.filter(s => this.activePacks.includes(s.pack));
+        return list.concat(this.customSounds);
+      }
+    };
+
+    /* ==========================================================================
+       6. NETWORKMODULE: MULTIPLAYER WEBRTC VIA PEERJS (ONLINE ENTRE AMIGOS)
+       ========================================================================== */
+    const NetworkModule = {
+      peer: null,
+      myPeerId: null,
+      roomCode: null,
+      isHost: false,
+      connections: [], // Conexões com outros amigos
+      hostConnection: null,
+
+      initHostRoom() {
+        // Gera código de sala de 5 caracteres amigável (ex: MP491)
+        this.roomCode = 'MP' + Math.floor(100 + Math.random() * 900);
+        this.isHost = true;
+
+        const peerId = `mimicparty-${this.roomCode}`;
+        this.peer = new Peer(peerId, { debug: 1 });
+
+        this.peer.on('open', (id) => {
+          this.myPeerId = id;
+          document.getElementById('displayRoomCode').innerText = this.roomCode;
+          this.updateWaitingRoomUI();
+        });
+
+        this.peer.on('connection', (conn) => {
+          this.connections.push(conn);
+          this.setupConnectionHandlers(conn);
+        });
+
+        this.peer.on('error', (err) => {
+          console.warn("PeerJS Host fallback:", err);
+          // Se ID já existir, tenta aleatório
+          if (err.type === 'unavailable-id') {
+            this.peer = new Peer();
+            this.peer.on('open', (id) => {
+              this.myPeerId = id;
+              this.roomCode = id.substring(0, 5).toUpperCase();
+              document.getElementById('displayRoomCode').innerText = this.roomCode;
+            });
+          }
+        });
+      },
+
+      joinRoom(code) {
+        this.isHost = false;
+        this.roomCode = code.trim().toUpperCase();
+        const targetPeerId = `mimicparty-${this.roomCode}`;
+
+        this.peer = new Peer();
+        this.peer.on('open', (id) => {
+          this.myPeerId = id;
+          const conn = this.peer.connect(targetPeerId);
+          this.hostConnection = conn;
+          this.setupConnectionHandlers(conn);
+
+          conn.on('open', () => {
+            // Envia informações do meu jogador para o Host
+            conn.send({
+              type: 'PLAYER_JOIN',
+              name: GameModule.localPlayer.name,
+              hair: GameModule.localPlayer.hair,
+              shirtColor: GameModule.localPlayer.shirtColor
+            });
+            UIModule.closeModal('modalJoinRoom');
+            GameModule.startOnlineClientMode();
+          });
+        });
+      },
+
+      setupConnectionHandlers(conn) {
+        conn.on('data', (data) => {
+          this.handleNetworkMessage(data, conn);
+        });
+        conn.on('close', () => {
+          this.connections = this.connections.filter(c => c !== conn);
+        });
+      },
+
+      broadcast(msg) {
+        this.connections.forEach(conn => {
+          if (conn.open) conn.send(msg);
+        });
+      },
+
+      sendToHost(msg) {
+        if (this.hostConnection && this.hostConnection.open) {
+          this.hostConnection.send(msg);
+        }
+      },
+
+      handleNetworkMessage(msg, senderConn) {
+        if (msg.type === 'PLAYER_JOIN' && this.isHost) {
+          GameModule.addOnlinePlayer(msg.name, msg.hair, msg.shirtColor, senderConn.peer);
+          this.broadcastRoomState();
+        } else if (msg.type === 'ROOM_STATE') {
+          GameModule.syncOnlinePlayers(msg.players);
+        } else if (msg.type === 'START_GAME') {
+          GameModule.beginMatch(msg.rounds);
+        } else if (msg.type === 'START_ROUND') {
+          GameModule.onOnlineRoundStart(msg.soundId, msg.roundNumber);
+        } else if (msg.type === 'TAKE_BROADCAST') {
+          GameModule.onOnlineTakeReceived(msg);
+        }
+      },
+
+      broadcastRoomState() {
+        if (!this.isHost) return;
+        const state = {
+          type: 'ROOM_STATE',
+          players: GameModule.players.map(p => ({
+            id: p.id,
+            name: p.name,
+            hair: p.char3D.hairType,
+            shirtColor: p.char3D.shirtColor,
+            score: p.score
+          }))
+        };
+        this.broadcast(state);
+        this.updateWaitingRoomUI();
+      },
+
+      updateWaitingRoomUI() {
+        const list = document.getElementById('waitingPlayersList');
+        const count = document.getElementById('waitingPlayerCount');
+        if (!list) return;
+        list.innerHTML = '';
+        count.innerText = GameModule.players.length;
+        GameModule.players.forEach(p => {
+          const item = document.createElement('div');
+          item.style.cssText = 'background:#222; padding:6px 12px; border-radius:8px; font-weight:800; display:flex; justify-content:space-between;';
+          item.innerHTML = `<span>👤 ${p.name}</span> <span style="color:#00f576;">PRONTO</span>`;
+          list.appendChild(item);
+        });
+      },
+
+      copyRoomLink() {
+        const url = `${window.location.origin}${window.location.pathname}?sala=${this.roomCode}`;
+        navigator.clipboard.writeText(url).then(() => {
+          alert(`Link da sala copiado! Envie para seus amigos:\n${url}`);
+        });
+      },
+
+      hostStartGame() {
+        UIModule.closeModal('modalCreateRoom');
+        this.broadcast({ type: 'START_GAME', rounds: 5 });
+        GameModule.beginMatch(5);
+      },
+
+      joinRoomFromInput() {
+        const code = document.getElementById('inputRoomCode').value;
+        if (!code) return;
+        this.joinRoom(code);
+      }
+    };
+
+    /* ==========================================================================
+       7. GAMEMODULE: MÁQUINA DE ESTADOS, REGRAS, BOTS E FLUXO DA PARTIDA
+       ========================================================================== */
+    const GameModule = {
+      isOnline: false,
+      isSoloBots: false,
+      currentRound: 1,
+      totalRounds: 5,
+      players: [],
+      localPlayer: {
+        id: 'host_p1',
+        name: 'Tigrezo',
+        hair: 'brown_parted',
+        shirtColor: '#0066ff',
+        score: 0
+      },
+      currentSound: null,
+      refAudioBuffer: null,
+      refAnalysis: null,
+      roundTakes: [],
+      currentTurnIndex: 0,
+      activePlaybackIndex: 0,
+
+      init() {
+        // Cria o personagem local inicial
+        const char = new Character3D({
+          id: this.localPlayer.id,
+          name: this.localPlayer.name,
+          hair: this.localPlayer.hair,
+          shirtColor: this.localPlayer.shirtColor
+        });
+        char.group.position.set(0, 0, 0); // Fica na frente no menu inicial
+        Scene3DModule.characters.push(char);
+        this.localPlayer.char3D = char;
+        this.players.push(this.localPlayer);
+
+        Scene3DModule.setCameraView('menu');
+
+        // Verifica se entrou via link com parâmetro ?sala=XXXX
+        const urlParams = new URLSearchParams(window.location.search);
+        const salaParam = urlParams.get('sala');
+        if (salaParam) {
+          setTimeout(() => {
+            NetworkModule.joinRoom(salaParam);
+          }, 800);
+        }
+      },
+
+      updateLocalSkin() {
+        const hair = document.getElementById('selectHairStyle').value;
+        const color = document.getElementById('selectShirtColor').value;
+        this.localPlayer.hair = hair;
+        this.localPlayer.shirtColor = color;
+        this.localPlayer.char3D.setSkin(hair, color);
+      },
+
+      updateLocalPlayerName(name) {
+        if (!name.trim()) return;
+        this.localPlayer.name = name.trim();
+        document.getElementById('localPlayerNameDisplay').innerText = name.trim().toUpperCase();
+      },
+
+      startSoloBotsMode() {
+        this.isSoloBots = true;
+        this.isOnline = false;
+
+        // Limpa e cria 4 bots com os visuais da Screenshot 2: Cap, Sangras, MrFall, Gaga
+        const botConfigs = [
+          { name: 'Cap', hair: 'bald', shirt: '#ff0044' },
+          { name: 'Sangras', hair: 'brown_parted', shirt: '#0066ff' },
+          { name: 'MrFall', hair: 'bald', shirt: '#ff0044' },
+          { name: 'Gaga', hair: 'brown_parted', shirt: '#0066ff' }
+        ];
+
+        // Posiciona os 5 personagens no palco (1 humano + 4 bots)
+        this.players = [this.localPlayer];
+        botConfigs.forEach((b, idx) => {
+          const bChar = new Character3D({
+            id: 'bot_' + idx,
+            name: b.name,
+            hair: b.hair,
+            shirtColor: b.shirt
+          });
+          Scene3DModule.characters.push(bChar);
+          this.players.push({
+            id: 'bot_' + idx,
+            name: b.name,
+            isBot: true,
+            score: 0,
+            char3D: bChar
+          });
+        });
+
+        this.beginMatch(5);
+      },
+
+      startOnlineClientMode() {
+        this.isOnline = true;
+        this.isSoloBots = false;
+        document.getElementById('mainMenuOverlay').style.display = 'none';
+        document.getElementById('mainLogoContainer').style.display = 'none';
+        Scene3DModule.setCameraView('stage_lineup');
+      },
+
+      addOnlinePlayer(name, hair, shirtColor, peerId) {
+        const char = new Character3D({ id: peerId, name, hair, shirtColor });
+        Scene3DModule.characters.push(char);
+        this.players.push({ id: peerId, name, score: 0, char3D: char });
+        this.repositionLineup();
+      },
+
+      syncOnlinePlayers(playersData) {
+        // Sincroniza lista de jogadores recebida do Host
+        this.repositionLineup();
+      },
+
+      repositionLineup() {
+        // Enfileira os personagens atrás do microfone (como na Screenshot 2!)
+        const count = this.players.length;
+        const spacing = 1.9;
+        const startX = -((count - 1) * spacing) / 2;
+
+        this.players.forEach((p, idx) => {
+          const x = startX + idx * spacing;
+          p.char3D.lineupPosition.set(x, 0, -2.5);
+          p.char3D.walkTo(x, -2.5);
+        });
+        this.updateTopBarCards();
+      },
+
+      beginMatch(totalRounds = 5) {
+        this.totalRounds = totalRounds;
+        this.currentRound = 1;
+
+        // Esconde menu e mostra HUD do jogo
+        document.getElementById('mainMenuOverlay').style.display = 'none';
+        document.getElementById('mainLogoContainer').style.display = 'none';
+        document.getElementById('roundBadgeBox').style.display = 'flex';
+        document.getElementById('playersTopRow').style.display = 'flex';
+        document.getElementById('btnLeaveGame').style.display = 'inline-flex';
+
+        this.repositionLineup();
+        Scene3DModule.setCameraView('stage_lineup');
+
+        this.startNextRound();
+      },
+
+      startNextRound() {
+        document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
+        document.getElementById('roundSubtitleText').innerText = 'OUÇA O SOM';
+
+        // Sorteia som
+        const available = PacksModule.getAvailable();
+        this.currentSound = available[Math.floor(Math.random() * available.length)];
+
+        AudioModule.ensureContext();
+        this.refAudioBuffer = this.currentSound.generate(AudioModule.ctx);
+        this.refAnalysis = ScoringModule.analyzeBuffer(this.refAudioBuffer);
+
+        // Notifica amigos se for host online
+        if (this.isOnline && NetworkModule.isHost) {
+          NetworkModule.broadcast({
+            type: 'START_ROUND',
+            soundId: this.currentSound.id,
+            roundNumber: this.currentRound
+          });
+        }
+
+        // Toca o som de referência com a câmera no microfone
+        Scene3DModule.setCameraView('close_singer');
+        setTimeout(() => {
+          AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
+            // Após ouvir o som, inicia as gravações por turno!
+            this.roundTakes = [];
+            this.currentTurnIndex = 0;
+            this.runTurnRecording();
+          });
+        }, 800);
+      },
+
+      onOnlineRoundStart(soundId, roundNum) {
+        this.currentRound = roundNum;
+        const s = PacksModule.library.find(x => x.id === soundId) || PacksModule.library[0];
+        this.currentSound = s;
+        this.refAudioBuffer = s.generate(AudioModule.ctx);
+        this.refAnalysis = ScoringModule.analyzeBuffer(this.refAudioBuffer);
+      },
+
+      runTurnRecording() {
+        if (this.currentTurnIndex >= this.players.length) {
+          // Todos gravaram! Inicia o Show dos Takes e Julgamento
+          this.startTakesShowcase();
+          return;
+        }
+
+        const p = this.players[this.currentTurnIndex];
+        this.highlightActiveCard(p.id);
+
+        // O personagem da vez caminha até o microfone!
+        p.char3D.walkTo(0, -0.6);
+        Scene3DModule.setCameraView('close_singer');
+
+        const recOverlay = document.getElementById('recordOverlay');
+        const countNum = document.getElementById('countdownNumber');
+        const recBanner = document.getElementById('recordingCharacterBanner');
+        const fillBar = document.getElementById('recBarFill');
+
+        recBanner.innerText = `VEZ DE: ${p.name.toUpperCase()} 🎤`;
+        fillBar.style.width = '0%';
+
+        // Se for BOT: simula o take com personalidade
+        if (p.isBot) {
+          setTimeout(() => {
+            const botTakeBuffer = this.currentSound.generate(AudioModule.ctx);
+            const botAnalysis = ScoringModule.analyzeBuffer(botTakeBuffer);
+            const scoreRes = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound.unpitched);
+
+            this.roundTakes.push({
+              player: p,
+              audioBuffer: botTakeBuffer,
+              userAnalysis: botAnalysis,
+              scoreResult: scoreRes
+            });
+
+            p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
+            this.currentTurnIndex++;
+            setTimeout(() => this.runTurnRecording(), 600);
+          }, 1500);
+          return;
+        }
+
+        // Jogador Humano: Contagem regressiva 3, 2, 1, VAI!
+        recOverlay.style.display = 'flex';
+        let count = 3;
+        countNum.innerText = count;
+        AudioModule.playSfx('beep');
+
+        const interval = setInterval(() => {
+          count--;
+          if (count > 0) {
+            countNum.innerText = count;
+            AudioModule.playSfx('beep');
+          } else if (count === 0) {
+            countNum.innerText = 'VAI! 🔥';
+            AudioModule.playSfx('beep_go');
+            clearInterval(interval);
+
+            // Grava o microfone
+            const duration = this.refAudioBuffer.duration + 0.6;
+            p.char3D.isSinging = true;
+
+            AudioModule.recordTakePCM(duration,
+              (prog) => { fillBar.style.width = Math.round(prog * 100) + '%'; },
+              (userBuf) => {
+                p.char3D.isSinging = false;
+                recOverlay.style.display = 'none';
+
+                const userAnalysis = ScoringModule.analyzeBuffer(userBuf);
+                const scoreRes = ScoringModule.evaluate(this.refAnalysis, userAnalysis, this.currentSound.unpitched);
+
+                this.roundTakes.push({
+                  player: p,
+                  audioBuffer: userBuf,
+                  userAnalysis,
+                  scoreResult: scoreRes
+                });
+
+                p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
+                this.currentTurnIndex++;
+                setTimeout(() => this.runTurnRecording(), 600);
+              }
+            );
+          }
+        }, 850);
+      },
+
+      startTakesShowcase() {
+        this.activePlaybackIndex = 0;
+        document.getElementById('roundSubtitleText').innerText = 'JULGAMENTO DOS TAKES';
+        this.playCurrentTakeShowcase();
+      },
+
+      playCurrentTakeShowcase() {
+        if (this.activePlaybackIndex >= this.roundTakes.length) {
+          // Fim dos takes da rodada! Abre a Roleta da Discórdia
+          this.openRoundRoulette();
+          return;
+        }
+
+        const take = this.roundTakes[this.activePlaybackIndex];
+        const p = take.player;
+
+        // O personagem vai até o microfone para seu take ser julgado!
+        p.char3D.walkTo(0, -0.6);
+        p.char3D.isSinging = true;
+        p.char3D.audioAmplitude = 0.8;
+        Scene3DModule.setCameraView('close_singer');
+
+        const card = document.getElementById('judgementCard');
+        card.style.display = 'flex';
+
+        const scoreEl = document.getElementById('scoreAnimatedNumber');
+        scoreEl.innerText = '0';
+        document.getElementById('btnNextTake').disabled = true;
+
+        // Desenha comparativo de pitch no canvas
+        const canvas = document.getElementById('contourCanvas');
+        ScoringModule.drawContourCanvas(canvas, this.refAnalysis, take.userAnalysis, this.currentSound.unpitched);
+
+        // Toca o take gravado
+        AudioModule.playAudioBuffer(take.audioBuffer, take.sabotage, () => {
+          p.char3D.isSinging = false;
+          // Revela a nota animada subindo!
+          const finalScore = take.scoreResult.totalScore;
+          p.score += finalScore;
+          this.updateTopBarCards();
+
+          let cur = 0;
+          const t = setInterval(() => {
+            cur += Math.max(1, Math.floor(finalScore / 20));
+            if (cur >= finalScore) {
+              cur = finalScore;
+              clearInterval(t);
+              UIModule.triggerTakeReactions(finalScore);
+              document.getElementById('btnNextTake').disabled = false;
+            }
+            scoreEl.innerText = cur;
+          }, 30);
+        });
+      },
+
+      advanceTakePlayback() {
+        const take = this.roundTakes[this.activePlaybackIndex];
+        take.player.char3D.walkTo(take.player.char3D.lineupPosition.x, -2.5);
+        document.getElementById('judgementCard').style.display = 'none';
+
+        this.activePlaybackIndex++;
+        this.playCurrentTakeShowcase();
+      },
+
+      openRoundRoulette() {
+        if (this.currentRound >= this.totalRounds) {
+          this.showFinalPodium();
+          return;
+        }
+
+        document.getElementById('modalRoulette').style.display = 'flex';
+        WheelModule.init();
+      },
+
+      proceedAfterRoulette() {
+        UIModule.closeModal('modalRoulette');
+        this.currentRound++;
+        this.startNextRound();
+      },
+
+      updateTopBarCards() {
+        const container = document.getElementById('playersTopRow');
+        container.innerHTML = '';
+        this.players.forEach(p => {
+          const card = document.createElement('div');
+          card.id = `topcard_${p.id}`;
+          card.className = 'player-card-top';
+          card.innerHTML = `
+            <div class="p-avatar">👤</div>
+            <div class="p-name">${p.name}</div>
+            <div class="p-score">${p.score}</div>
+          `;
+          container.appendChild(card);
+        });
+      },
+
+      highlightActiveCard(playerId) {
+        document.querySelectorAll('.player-card-top').forEach(c => c.classList.remove('active-turn'));
+        const target = document.getElementById(`topcard_${playerId}`);
+        if (target) target.classList.add('active-turn');
+      },
+
+      showFinalPodium() {
+        Scene3DModule.setCameraView('stage_lineup');
+        document.getElementById('modalFinalPodium').style.display = 'flex';
+
+        const sorted = [...this.players].sort((a, b) => b.score - a.score);
+        const podBox = document.getElementById('podiumVisualContainer');
+        podBox.innerHTML = '';
+
+        const p1 = sorted[0];
+        const p2 = sorted[1] || { name: '-', score: 0 };
+        const p3 = sorted[2] || { name: '-', score: 0 };
+
+        podBox.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <strong>${p2.name}</strong>
+            <span style="color:#ffb703; font-weight:900;">${p2.score} pts</span>
+            <div style="width:90px; height:90px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.8rem; color:#000;">2º</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <strong style="color:#ffdd00; font-size:1.2rem;">👑 ${p1.name}</strong>
+            <span style="color:#00f576; font-weight:900;">${p1.score} pts</span>
+            <div style="width:110px; height:130px; background:#ffd700; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2.4rem; color:#000;">1º 🏆</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <strong>${p3.name}</strong>
+            <span style="color:#ffb703; font-weight:900;">${p3.score} pts</span>
+            <div style="width:90px; height:70px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.6rem; color:#000;">3º</div>
+          </div>
+        `;
+
+        UIModule.startConfetti();
+        AudioModule.playSfx('airhorn');
+      },
+
+      returnToMenu() {
+        UIModule.stopConfetti();
+        UIModule.closeModal('modalFinalPodium');
+        document.getElementById('mainMenuOverlay').style.display = 'flex';
+        document.getElementById('mainLogoContainer').style.display = 'flex';
+        document.getElementById('roundBadgeBox').style.display = 'none';
+        document.getElementById('playersTopRow').style.display = 'none';
+        document.getElementById('btnLeaveGame').style.display = 'none';
+        document.getElementById('judgementCard').style.display = 'none';
+
+        Scene3DModule.setCameraView('menu');
+      }
+    };
+
+    /* ==========================================================================
+       8. WHEELMODULE: ROLETA ANIMADA EM CANVAS ENTRE RODADAS
+       ========================================================================== */
+    const WheelModule = {
+      canvas: null,
+      ctx: null,
+      isSpinning: false,
+      angle: 0,
+      angularVel: 0,
+
+      segments: [
+        { label: '+20 PONTOS', color: '#00f576', type: 'bonus', val: 20 },
+        { label: 'SABOTAGEM: PUM', color: '#8d6e63', type: 'sabotage', sub: 'pum' },
+        { label: 'MULTIPLICADOR x2', color: '#ffdd00', type: 'mult', val: 2 },
+        { label: 'SABOTAGEM: DISTORÇÃO', color: '#ff0077', type: 'sabotage', sub: 'saturacao' },
+        { label: 'CAIU O PIX: +50', color: '#00f0ff', type: 'bonus', val: 50 },
+        { label: 'SABOTAGEM: ECO', color: '#ff6d00', type: 'sabotage', sub: 'eco' },
+        { label: 'ESCUDO PROTETOR', color: '#7209b7', type: 'shield' },
+        { label: 'SABOTAGEM: ESQUILO', color: '#d90429', type: 'sabotage', sub: 'pitch' }
+      ],
+
+      init() {
+        this.canvas = document.getElementById('wheelCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        document.getElementById('wheelResultBox').style.display = 'none';
+        document.getElementById('btnProceedAfterWheel').style.display = 'none';
+        document.getElementById('btnSpinWheel').style.display = 'inline-flex';
+        this.draw();
+      },
+
+      draw() {
+        const ctx = this.ctx;
+        const W = this.canvas.width;
+        const r = W / 2 - 8;
+        const arc = TWO_PI / this.segments.length;
+
+        ctx.clearRect(0, 0, W, W);
+        ctx.save();
+        ctx.translate(W / 2, W / 2);
+        ctx.rotate(this.angle);
+
+        this.segments.forEach((seg, i) => {
+          ctx.beginPath();
+          ctx.fillStyle = seg.color;
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r, i * arc, (i + 1) * arc);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.save();
+          ctx.rotate(i * arc + arc / 2);
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(seg.label, r - 14, 4);
+          ctx.restore();
+        });
+
+        ctx.restore();
+      },
+
+      spin() {
+        if (this.isSpinning) return;
+        this.isSpinning = true;
+        document.getElementById('btnSpinWheel').style.display = 'none';
+        this.angularVel = 0.35 + Math.random() * 0.25;
+
+        const anim = () => {
+          this.angle += this.angularVel;
+          this.angularVel *= 0.985;
+          this.draw();
+
+          if (this.angularVel > 0.002) {
+            requestAnimationFrame(anim);
+          } else {
+            this.isSpinning = false;
+            const arc = TWO_PI / this.segments.length;
+            const segIdx = Math.floor(((TWO_PI - (this.angle - Math.PI / 2) % TWO_PI) % TWO_PI) / arc);
+            this.onComplete(this.segments[segIdx]);
+          }
+        };
+        requestAnimationFrame(anim);
+      },
+
+      onComplete(seg) {
+        const box = document.getElementById('wheelResultBox');
+        const title = document.getElementById('wheelResultTitle');
+        const desc = document.getElementById('wheelResultDesc');
+        const btnNext = document.getElementById('btnProceedAfterWheel');
+
+        box.style.display = 'block';
+        btnNext.style.display = 'inline-flex';
+        title.innerText = seg.label;
+        desc.innerText = 'Efeito aplicado com sucesso para a próxima rodada!';
+        AudioModule.playSfx('beep_go');
+      }
+    };
+
+    /* ==========================================================================
+       9. UIMODULE: NARRADOR MEME, CONFETES, SCREEN SHAKE E EXPORTAÇÃO PNG
+       ========================================================================== */
+    const UIModule = {
+      confettiParticles: [],
+      confettiId: null,
+
+      narratorQuotes: {
+        epic: [
+          'ABSOLUTE CINEMA! Scorsese aplaudiu de pé! 🚬🗿',
+          'TRANSCENDEU! O cara é uma máquina de imitar! 🔥',
+          'CALMA CALABRESO! O maioral da paróquia vocal! 👑'
+        ],
+        good: [
+          'AÍ SIM MEU PATRÃO! Mandou benzasso! 👏',
+          'Quase afinado, humildade e disciplina no microfone! 🎯'
+        ],
+        mid: [
+          'É sobre isso e tá tudo completamente errado... 🤡',
+          'Foi na trave... da quadra do vizinho! ⚽'
+        ],
+        bad: [
+          'Isso foi um erro gravíssimo de português sonoro! 🚫',
+          'Nem meu cachorro com dor de dente late tão mal... 🐶'
+        ],
+        fail: [
+          'APAGA QUE DÁ TEMPO! Pelo amor de Deus! 🚒',
+          'QUE SHOW DA XUXA É ESSE?! 💀'
+        ]
+      },
+
+      openCreateRoomModal() {
+        AudioModule.initMic();
+        document.getElementById('modalCreateRoom').style.display = 'flex';
+        NetworkModule.initHostRoom();
+      },
+
+      openJoinRoomModal() {
+        AudioModule.initMic();
+        document.getElementById('modalJoinRoom').style.display = 'flex';
+      },
+
+      openCustomizeModal() {
+        document.getElementById('modalCustomize').style.display = 'flex';
+      },
+
+      openSoundPacksModal() {
+        document.getElementById('modalPacks').style.display = 'flex';
+      },
+
+      closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        AudioModule.playSfx('tick');
+      },
+
+      triggerScreenShake() {
+        document.body.classList.remove('shake');
+        void document.body.offsetWidth;
+        document.body.classList.add('shake');
+      },
+
+      triggerTakeReactions(score) {
+        const box = document.getElementById('narratorQuoteBox');
+        let category = 'mid';
+        let sfx = 'beep';
+
+        if (score >= 85) { category = 'epic'; sfx = 'airhorn'; }
+        else if (score >= 65) { category = 'good'; sfx = 'beep_go'; }
+        else if (score >= 40) { category = 'mid'; sfx = 'beep'; }
+        else if (score >= 20) { category = 'bad'; sfx = 'vine_boom'; }
+        else { category = 'fail'; sfx = 'vine_boom'; }
+
+        const q = this.narratorQuotes[category];
+        box.innerText = q[Math.floor(Math.random() * q.length)];
+        AudioModule.playSfx(sfx);
+      },
+
+      startConfetti() {
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        this.confettiParticles = [];
+        const colors = ['#ff0077', '#ffdd00', '#00f0ff', '#00f576', '#7209b7'];
+
+        for (let i = 0; i < 100; i++) {
+          this.confettiParticles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height,
+            size: Math.random() * 10 + 6,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: Math.random() * 4 - 2,
+            vy: Math.random() * 4 + 4
+          });
+        }
+
+        const loop = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          this.confettiParticles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.y > canvas.height) p.y = -20;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+          });
+          this.confettiId = requestAnimationFrame(loop);
+        };
+        loop();
+      },
+
+      stopConfetti() {
+        if (this.confettiId) cancelAnimationFrame(this.confettiId);
+        const canvas = document.getElementById('confettiCanvas');
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      },
+
+      downloadShareCard() {
+        const canvas = document.getElementById('shareCardCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        ctx.fillStyle = '#ff0077';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 14;
+        ctx.strokeRect(20, 20, W - 40, H - 40);
+
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(50, 50, W - 100, H - 100);
+        ctx.strokeRect(50, 50, W - 100, H - 100);
+
+        ctx.fillStyle = '#ff0077';
+        ctx.font = 'bold 64px Impact, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('MIMIC PARTY 3D ONLINE 🎤', W / 2, 160);
+
+        const champ = [...GameModule.players].sort((a,b)=>b.score-a.score)[0];
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 44px Impact, sans-serif';
+        ctx.fillText(`👑 CAMPEÃO: ${champ.name.toUpperCase()} (${champ.score} PTS) 👑`, W / 2, 320);
+
+        const link = document.createElement('a');
+        link.download = `mimic-party-3d-campeao-${champ.name}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    };
+
+    // Inicialização do Jogo no Carregamento
+    window.addEventListener('DOMContentLoaded', () => {
+      Scene3DModule.init();
+      GameModule.init();
+    });
+  </script>
+</body>
+</html>
