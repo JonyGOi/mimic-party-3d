@@ -621,6 +621,51 @@
       transition: width 1s linear;
     }
 
+    /* Banner da Animação de Entrada dos Jogadores no Palco */
+    .match-intro-banner {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14, 11, 30, 0.95);
+      border: 4px solid #ffdd00;
+      border-radius: 24px;
+      box-shadow: 0 0 35px rgba(255, 221, 0, 0.6), 5px 5px 0 #000;
+      padding: 18px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 60;
+      text-align: center;
+      animation: entrancePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes entrancePop {
+      0% { transform: translateX(-50%) scale(0.6); opacity: 0; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    }
+    .intro-badge {
+      background: #ff0077;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 2px solid #000;
+      letter-spacing: 1px;
+    }
+    .intro-title {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      color: #00f0ff;
+      text-shadow: 3px 3px 0 #000;
+    }
+    .intro-subtitle {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
     /* Seletor de Áudios de Memes */
     .sound-item-row {
       display: flex;
@@ -1108,13 +1153,13 @@
     </div>
 
     <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO COM TESTADOR DE MICROFONE -->
-    <div id="localPlayerProfileCard" class="interactive" style="position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.85); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;">
+    <div id="localPlayerProfileCard" class="interactive" onclick="UIModule.openNicknameModal()" style="cursor:pointer; position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.85); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;" title="Clique para alterar seu Nickname">
       <div id="localAvatarFaceIcon" style="font-size:2.2rem; background:#ffdd00; border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border:2px solid #000;">
         🧔
       </div>
       <div>
-        <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST)</div>
-        <button id="btnTestMicQuick" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; margin-top:2px;" onclick="AudioModule.testMicInteractive()">
+        <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST) ✏️</div>
+        <button id="btnTestMicQuick" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; margin-top:2px;" onclick="event.stopPropagation(); AudioModule.testMicInteractive()">
           🎙️ TESTAR MICROFONE
         </button>
         <div id="vuMeterWrap" style="width:130px; margin-top:4px; display:none;">
@@ -1404,6 +1449,32 @@
     </div>
   </div>
 
+  <!-- BANNER DE ENTRADA DOS JOGADORES NO PALCO -->
+  <div id="matchIntroBanner" class="match-intro-banner" style="display:none;">
+    <div class="intro-badge">✨ VAI COMEÇAR! ✨</div>
+    <div class="intro-title">🌟 ENTRADA DOS JOGADORES 🌟</div>
+    <div class="intro-subtitle">Apresentando os imitadores da rodada! 🎤🔥</div>
+  </div>
+
+  <!-- MODAL: BOAS-VINDAS / PERGUNTAR NICKNAME AO ENTRAR -->
+  <div id="modalNickname" class="modal-overlay" style="display:none; z-index:9999;">
+    <div class="modal-box" style="max-width:440px; text-align:center;">
+      <div style="font-size:3.5rem; filter:drop-shadow(0 4px 0 #000); animation: entrancePop 0.5s ease;">🎤</div>
+      <h2 class="modal-title" style="margin-top:6px; font-size:1.8rem;">QUAL É SEU NICKNAME?</h2>
+      <p style="font-weight:700; color:#ddd; font-size:0.95rem; margin-bottom:18px;">
+        Digite seu nome de guerra para entrar na festa e imitar os memes!
+      </p>
+
+      <div style="margin-bottom:18px;">
+        <input type="text" id="inputInitialNickname" class="input-box" placeholder="Ex: Tigrezo, Calabreso..." maxlength="14" style="text-align:center; font-size:1.4rem; padding:12px; font-weight:900;" onkeydown="if(event.key==='Enter') GameModule.saveNicknameFromModal()">
+      </div>
+
+      <button class="btn btn-play" style="width:100%; font-size:1.2rem; padding:14px;" onclick="GameModule.saveNicknameFromModal()">
+        ENTRAR NA FESTA! 🔥
+      </button>
+    </div>
+  </div>
+
   <!-- MODAL: PODIUM FINAL E TIER LIST -->
   <div id="modalFinalPodium" class="modal-overlay" style="display:none;">
     <div class="modal-box" style="max-width:650px;">
@@ -1414,12 +1485,15 @@
         <!-- Injetado via JS -->
       </div>
 
-      <div style="display:flex; justify-content:center; gap:12px; margin-top:12px; flex-wrap:wrap;">
+      <div style="display:flex; justify-content:center; gap:12px; margin-top:16px; flex-wrap:wrap;">
+        <button class="btn btn-green" style="font-size:1.15rem; padding:12px 26px; box-shadow:0 0 18px rgba(0,245,118,0.5);" onclick="GameModule.restartMatchSamePlayers()">
+          🔁 RECOMEÇAR PARTIDA (MESMAS PESSOAS)
+        </button>
         <button class="btn btn-pink" onclick="UIModule.downloadShareCard()">
           📸 BAIXAR CARD DO CAMPEÃO (PNG)
         </button>
         <button class="btn btn-neutral" onclick="GameModule.returnToMenu()">
-          🔄 NOVO JOGO
+          🏠 MENU PRINCIPAL
         </button>
       </div>
     </div>
@@ -3171,6 +3245,8 @@
           GameModule.syncOnlinePlayers(msg.players);
         } else if (msg.type === 'START_GAME') {
           GameModule.beginMatch(msg.rounds);
+        } else if (msg.type === 'RESTART_GAME') {
+          GameModule.restartMatchSamePlayers(false);
         } else if (msg.type === 'START_ROUND') {
           GameModule.onOnlineRoundStart(msg.soundId, msg.roundNumber);
         }
@@ -3252,6 +3328,13 @@
       needleAnimFrame: null,
 
       init() {
+        const savedNick = localStorage.getItem('mimic_nickname');
+        if (savedNick) {
+          this.localPlayer.name = savedNick;
+          const displayEl = document.getElementById('localPlayerNameDisplay');
+          if (displayEl) displayEl.innerText = `${savedNick.toUpperCase()} ✏️`;
+        }
+
         const char = new Character3D({
           id: this.localPlayer.id,
           name: this.localPlayer.name,
@@ -3269,7 +3352,33 @@
         const urlParams = new URLSearchParams(window.location.search);
         const salaParam = urlParams.get('sala');
         if (salaParam) {
-          setTimeout(() => NetworkModule.joinRoom(salaParam), 800);
+          this.pendingJoinSala = salaParam;
+        }
+
+        // PERGUNTA O NICKNAME ASSIM QUE ENTRA NO SITE!
+        setTimeout(() => {
+          UIModule.openNicknameModal();
+        }, 250);
+      },
+
+      saveNicknameFromModal() {
+        const input = document.getElementById('inputInitialNickname');
+        let name = input ? input.value.trim() : '';
+        if (!name) name = 'Tigrezo';
+        localStorage.setItem('mimic_nickname', name);
+        this.updateLocalPlayerName(name);
+
+        const customInput = document.getElementById('inputPlayerName');
+        if (customInput) customInput.value = name;
+
+        UIModule.closeModal('modalNickname');
+        AudioModule.playSfx('beep_go');
+
+        // Se entrou por link de convite (?sala=...), conecta à sala agora
+        if (this.pendingJoinSala) {
+          const s = this.pendingJoinSala;
+          this.pendingJoinSala = null;
+          NetworkModule.joinRoom(s);
         }
       },
 
@@ -3300,7 +3409,9 @@
       updateLocalPlayerName(name) {
         if (!name.trim()) return;
         this.localPlayer.name = name.trim();
-        document.getElementById('localPlayerNameDisplay').innerText = name.trim().toUpperCase();
+        localStorage.setItem('mimic_nickname', name.trim());
+        const displayEl = document.getElementById('localPlayerNameDisplay');
+        if (displayEl) displayEl.innerText = `${name.trim().toUpperCase()} ✏️`;
         if (this.localPlayer.char3D) {
           this.localPlayer.char3D.setName(name.trim());
         }
@@ -3382,10 +3493,62 @@
         document.getElementById('playersTopRow').style.display = 'flex';
         document.getElementById('btnLeaveGame').style.display = 'inline-flex';
 
-        this.repositionLineup();
-        Scene3DModule.setCameraView('stage_lineup');
+        // Animação espetacular de entrada dos jogadores no palco
+        this.playEntranceAnimation(() => {
+          this.startNextRound();
+        });
+      },
 
-        this.startNextRound();
+      playEntranceAnimation(onComplete) {
+        const count = this.players.length;
+        const spacing = 2.0;
+        const startX = -((count - 1) * spacing) / 2;
+
+        // Posiciona todos fora do palco (à esquerda e à direita) e faz caminharem para os seus spots
+        this.players.forEach((p, idx) => {
+          const targetX = startX + idx * spacing;
+          const targetZ = -2.5;
+          p.char3D.lineupPosition.set(targetX, 0, targetZ);
+
+          // Alterna entrada pelas laterais dos bastidores
+          const spawnX = idx % 2 === 0 ? -9.5 - (idx * 1.5) : 9.5 + (idx * 1.5);
+          const spawnZ = -3.2 - (idx * 0.4);
+          p.char3D.group.position.set(spawnX, 0, spawnZ);
+          p.char3D.walkTo(targetX, targetZ);
+        });
+
+        this.updateTopBarCards();
+        Scene3DModule.setCameraView('stage_lineup');
+        AudioModule.playSfx('airhorn');
+
+        const banner = document.getElementById('matchIntroBanner');
+        if (banner) banner.style.display = 'flex';
+
+        setTimeout(() => {
+          if (banner) banner.style.display = 'none';
+          if (onComplete) onComplete();
+        }, 2500);
+      },
+
+      restartMatchSamePlayers(broadcast = true) {
+        UIModule.closeModal('modalFinalPodium');
+        UIModule.stopConfetti();
+
+        // Zera pontuações e sabotagens dos mesmos jogadores/bots
+        this.players.forEach(p => {
+          p.score = 0;
+          p.pendingSabotage = null;
+          if (p.char3D) {
+            p.char3D.isSinging = false;
+            p.char3D.audioAmplitude = 0;
+          }
+        });
+
+        if (broadcast && this.isOnline && NetworkModule.isHost) {
+          NetworkModule.broadcast({ type: 'RESTART_GAME', rounds: this.totalRounds });
+        }
+
+        this.beginMatch(this.totalRounds);
       },
 
       animateNeedle(durationSeconds, onComplete) {
@@ -4217,6 +4380,19 @@
           'APAGA QUE DÁ TEMPO! Pelo amor de Deus! 🚒',
           'QUE SHOW DA XUXA É ESSE?! 💀'
         ]
+      },
+
+      openNicknameModal() {
+        const modal = document.getElementById('modalNickname');
+        const input = document.getElementById('inputInitialNickname');
+        if (modal) modal.style.display = 'flex';
+        if (input) {
+          input.value = GameModule.localPlayer.name || localStorage.getItem('mimic_nickname') || 'Tigrezo';
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 150);
+        }
       },
 
       openCreateRoomModal() {
