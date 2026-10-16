@@ -511,6 +511,159 @@
       z-index: 99;
     }
 
+    /* OVERLAY ESTILO MIMIC PARTY (SCREENSHOT): "Ouça bem o som a imitar" */
+    .sound-showcase-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 25;
+      background: radial-gradient(circle at center, rgba(16, 12, 28, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%);
+    }
+
+    .meme-circle-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+      animation: floatMeme 3s ease-in-out infinite;
+    }
+
+    @keyframes floatMeme {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .meme-circle-cover {
+      width: 155px;
+      height: 155px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8), 0 0 10px rgba(255, 0, 119, 0.6), inset 0 0 15px rgba(0,0,0,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 35% 35%, #2a2050, #0a0815);
+      position: relative;
+    }
+
+    .meme-circle-icon {
+      font-size: 4.2rem;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+    }
+
+    .meme-circle-title-inner {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      color: #fff;
+      text-align: center;
+      text-shadow: 2px 2px 0 #000;
+      padding: 0 6px;
+      line-height: 1.1;
+      pointer-events: none;
+      text-transform: uppercase;
+    }
+
+    .showcase-title {
+      font-family: var(--font-display);
+      font-size: 2.6rem;
+      color: #e0f7fa;
+      text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 6px 15px rgba(0,0,0,0.9);
+      letter-spacing: 1px;
+      margin-top: 6px;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .showcase-tag {
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: #ffffff;
+      text-shadow: 2px 2px 0 #000;
+      margin-top: 2px;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Waveform Box com Contorno Ciano e Needle Vermelho */
+    .waveform-box {
+      width: 480px;
+      max-width: 90vw;
+      height: 110px;
+      background: #090b16;
+      border: 3.5px solid #00f0ff;
+      border-radius: 24px;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.45), 4px 4px 0 #000;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .waveform-center-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #ff0077;
+      opacity: 0.7;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #waveformCanvas {
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .waveform-needle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0%;
+      width: 4px;
+      background: #ff0044;
+      box-shadow: 0 0 12px #ff0044, 0 0 20px #ff0044;
+      z-index: 5;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
+    .showcase-subtitle {
+      font-family: var(--font-main);
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: #ffffff;
+      text-shadow: 2px 2px 0 #000, 0 3px 8px rgba(0,0,0,0.8);
+      margin-top: 14px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .showcase-countdown-badge {
+      display: none;
+      font-family: var(--font-display);
+      font-size: 4rem;
+      color: #ffdd00;
+      text-shadow: 4px 4px 0 #000;
+      animation: pulsePop 0.4s ease;
+      margin-top: 6px;
+    }
+
     /* Responsividade */
     @media (max-width: 768px) {
       .main-menu-overlay {
@@ -758,15 +911,31 @@
     </div>
   </div>
 
-  <!-- ESTÁGIO DE GRAVAÇÃO (3, 2, 1, VAI!) -->
-  <div id="recordOverlay" class="record-overlay">
-    <div id="recordingCharacterBanner" style="font-family:var(--font-display); font-size:2rem; background:#ffb703; color:#000; padding:6px 22px; border:3px solid #000; border-radius:24px; box-shadow:4px 4px 0 #000;">
-      VEZ DE: JOGADOR 1 🎤
+  <!-- OVERLAY ESTILO MIMIC PARTY (SCREENSHOT): "Ouça bem o som a imitar" E GRAVAÇÃO -->
+  <div id="soundShowcaseOverlay" class="sound-showcase-overlay">
+    <!-- Foto / Avatar circular do Meme com borda brilhante -->
+    <div class="meme-circle-wrapper">
+      <div id="showcaseMemeCover" class="meme-circle-cover">
+        <div id="showcaseMemeIcon" class="meme-circle-icon">🗣️</div>
+        <div id="showcaseMemeInnerTitle" class="meme-circle-title-inner">CALABRESO</div>
+      </div>
     </div>
-    <div id="countdownNumber" class="countdown-huge">3</div>
-    <div class="rec-bar">
-      <div id="recBarFill" class="rec-bar-fill"></div>
+
+    <!-- Título do Meme e Categoria / Origem -->
+    <div id="showcaseSoundTitle" class="showcase-title">Calma Calabreso!</div>
+    <div id="showcaseSoundTag" class="showcase-tag">Meme Brasileiro</div>
+
+    <!-- Caixa de Waveform com Borda Ciano e Agulha Vermelha de Varredura -->
+    <div class="waveform-box">
+      <div class="waveform-center-line"></div>
+      <canvas id="waveformCanvas" width="480" height="110"></canvas>
+      <div id="waveformNeedle" class="waveform-needle"></div>
     </div>
+
+    <!-- Subtítulo de Instrução / Status -->
+    <div id="showcaseSubtitle" class="showcase-subtitle">Ouça bem o som a imitar</div>
+    <!-- Contagem regressiva 3, 2, 1, VAI! -->
+    <div id="showcaseCountdownBadge" class="showcase-countdown-badge">3</div>
   </div>
 
   <!-- ROLETA DA DISCÓRDIA ENTRE RODADAS (CANVAS MODAL) -->
@@ -950,6 +1119,39 @@
 
         // Microfone Central Cromado
         this.createMicrophone(0, 0, 0);
+
+        // Logo MIMIC PARTY no fundo do palco (Screenshot)
+        this.createWallLogo(0, 5.0, -5.9);
+      },
+
+      createWallLogo(x, y, z) {
+        const logoCanvas = document.createElement('canvas');
+        logoCanvas.width = 512;
+        logoCanvas.height = 256;
+        const lctx = logoCanvas.getContext('2d');
+        lctx.clearRect(0, 0, 512, 256);
+
+        lctx.font = '900 85px sans-serif';
+        lctx.fillStyle = '#ff0077';
+        lctx.textAlign = 'center';
+        lctx.strokeStyle = '#000000';
+        lctx.lineWidth = 14;
+        lctx.strokeText('MIMIC', 256, 115);
+        lctx.fillText('MIMIC', 256, 115);
+
+        lctx.font = '900 48px sans-serif';
+        lctx.fillStyle = '#ffdd00';
+        lctx.lineWidth = 10;
+        lctx.strokeText('PARTY', 256, 175);
+        lctx.fillText('PARTY', 256, 175);
+
+        const logoTex = new THREE.CanvasTexture(logoCanvas);
+        const logoMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(6.5, 3.2),
+          new THREE.MeshBasicMaterial({ map: logoTex, transparent: true })
+        );
+        logoMesh.position.set(x, y, z);
+        this.scene.add(logoMesh);
       },
 
       createSpeakerBox(x, y, z) {
@@ -1164,7 +1366,43 @@
         this.legR.position.set(0.2, 0.68, 0);
         this.group.add(this.legR);
 
+        // Sprite 3D Flutuante com o Nome do Personagem (Screenshot: Sangras, gaga, etc.)
+        this.nameSprite = this.createNameSprite(this.name);
+        this.group.add(this.nameSprite);
+
         Scene3DModule.scene.add(this.group);
+      }
+
+      createNameSprite(name) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        ctx.font = '900 28px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText(name, 128, 32);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(1.5, 0.38, 1);
+        sprite.position.set(0, 2.3, 0);
+        return sprite;
+      }
+
+      setName(newName) {
+        this.name = newName;
+        if (this.nameSprite) {
+          this.group.remove(this.nameSprite);
+        }
+        this.nameSprite = this.createNameSprite(newName);
+        this.group.add(this.nameSprite);
       }
 
       buildHair() {
@@ -1305,7 +1543,7 @@
         }
       },
 
-      // Gravação com Proteção Total contra travamentos (Hard Timeout)
+      // Gravação com Proteção Total contra travamentos (Zero TDZ, Try/Catch Total)
       recordTakePCM(durationSeconds, onProgress, onFinish) {
         this.ensureContext();
         const sampleRate = this.ctx.sampleRate;
@@ -1313,66 +1551,88 @@
         const recordedPCM = new Float32Array(totalSamples);
         let sampleIndex = 0;
         let isDone = false;
+        let processor = null;
+        let source = null;
+        let silenceGain = null;
+        let progressTimer = null;
+        let hardTimeout = null;
 
         const complete = () => {
           if (isDone) return;
           isDone = true;
-          clearInterval(progressTimer);
-          clearTimeout(hardTimeout);
+          if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+          if (hardTimeout) { clearTimeout(hardTimeout); hardTimeout = null; }
 
           if (processor) {
             processor.onaudioprocess = null;
-            try { source.disconnect(processor); processor.disconnect(); silenceGain.disconnect(); } catch (e) {}
+            try { if (source) source.disconnect(processor); } catch (e) {}
+            try { processor.disconnect(); } catch (e) {}
+            try { if (silenceGain) silenceGain.disconnect(); } catch (e) {}
           }
 
-          const audioBuf = AudioModule.ctx.createBuffer(1, Math.max(1024, sampleIndex), sampleRate);
-          audioBuf.copyToChannel(recordedPCM.subarray(0, audioBuf.length), 0);
+          let audioBuf = null;
+          try {
+            audioBuf = AudioModule.ctx.createBuffer(1, Math.max(1024, sampleIndex), sampleRate);
+            audioBuf.copyToChannel(recordedPCM.subarray(0, audioBuf.length), 0);
+          } catch (e) {
+            console.warn("Buffer fallback:", e);
+            audioBuf = AudioModule.ctx.createBuffer(1, Math.max(1024, totalSamples), sampleRate);
+          }
 
-          if (onProgress) onProgress(1);
-          if (onFinish) onFinish(audioBuf, recordedPCM);
+          if (onProgress) try { onProgress(1); } catch (e) {}
+          if (onFinish) try { onFinish(audioBuf, recordedPCM); } catch (e) { console.error("onFinish err:", e); }
         };
 
+        const durationMs = durationSeconds * 1000;
+        const startTime = Date.now();
+
+        progressTimer = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          if (onProgress) try { onProgress(Math.min(1, elapsed / durationMs)); } catch (e) {}
+        }, 30);
+
+        hardTimeout = setTimeout(() => {
+          complete();
+        }, durationMs + 200);
+
         if (!this.micStream) {
-          // Sem microfone: simula buffer de 1s para não travar
-          setTimeout(() => complete(), durationSeconds * 1000);
+          // Microfone indisponível: preenche com tom suave simulado e completa sem travar!
+          for (let i = 0; i < totalSamples; i++) {
+            const t = i / sampleRate;
+            recordedPCM[i] = Math.sin(TWO_PI * 320 * t) * 0.15;
+          }
+          sampleIndex = totalSamples;
+          setTimeout(() => complete(), durationMs);
           return;
         }
 
-        const bufferSize = 2048;
-        const processor = this.ctx.createScriptProcessor(bufferSize, 1, 1);
-        const source = this.ctx.createMediaStreamSource(this.micStream);
-        source.connect(processor);
+        try {
+          const bufferSize = 2048;
+          processor = this.ctx.createScriptProcessor(bufferSize, 1, 1);
+          source = this.ctx.createMediaStreamSource(this.micStream);
+          source.connect(processor);
 
-        const silenceGain = this.ctx.createGain();
-        silenceGain.gain.value = 0;
-        processor.connect(silenceGain);
-        silenceGain.connect(this.ctx.destination);
+          silenceGain = this.ctx.createGain();
+          silenceGain.gain.value = 0;
+          processor.connect(silenceGain);
+          silenceGain.connect(this.ctx.destination);
 
-        const startTime = Date.now();
-        const durationMs = durationSeconds * 1000;
-
-        const progressTimer = setInterval(() => {
-          const elapsed = Date.now() - startTime;
-          if (onProgress) onProgress(Math.min(1, elapsed / durationMs));
-        }, 30);
-
-        // Hard timeout de segurança para NUNCA travar o boneco
-        const hardTimeout = setTimeout(() => {
-          complete();
-        }, durationMs + 250);
-
-        processor.onaudioprocess = (e) => {
-          if (isDone) return;
-          const channel = e.inputBuffer.getChannelData(0);
-          for (let i = 0; i < channel.length; i++) {
-            if (sampleIndex < totalSamples) {
-              recordedPCM[sampleIndex++] = channel[i];
+          processor.onaudioprocess = (e) => {
+            if (isDone) return;
+            const channel = e.inputBuffer.getChannelData(0);
+            for (let i = 0; i < channel.length; i++) {
+              if (sampleIndex < totalSamples) {
+                recordedPCM[sampleIndex++] = channel[i];
+              }
             }
-          }
-          if (sampleIndex >= totalSamples) {
-            complete();
-          }
-        };
+            if (sampleIndex >= totalSamples) {
+              complete();
+            }
+          };
+        } catch (err) {
+          console.warn("Erro ao iniciar captura do mic, usando fallback:", err);
+          setTimeout(() => complete(), durationMs);
+        }
       },
 
       playAudioBuffer(buffer, sabotageType, onEnded) {
@@ -1746,6 +2006,70 @@
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
+      },
+
+      // Desenha o gráfico de Waveform idêntico ao screenshot do Mimic Party (Camadas azul, ciano e branco)
+      drawWaveform(canvas, buffer) {
+        if (!canvas || !buffer) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        const data = buffer.getChannelData(0);
+        const step = Math.ceil(data.length / W);
+        const midY = H / 2;
+
+        // Camada 1: Silhueta azul escura
+        ctx.fillStyle = '#1d4ed8';
+        for (let i = 0; i < W; i++) {
+          let min = 1.0;
+          let max = -1.0;
+          const start = i * step;
+          const end = Math.min(start + step, data.length);
+          for (let j = start; j < end; j++) {
+            const v = data[j];
+            if (v < min) min = v;
+            if (v > max) max = v;
+          }
+          const amp = Math.max(0.06, (max - min) / 2);
+          const barHeight = amp * (H * 0.92);
+          ctx.fillRect(i, midY - barHeight / 2, 1, barHeight);
+        }
+
+        // Camada 2: Onda ciano brilhante
+        ctx.fillStyle = '#00f0ff';
+        for (let i = 0; i < W; i++) {
+          let min = 1.0;
+          let max = -1.0;
+          const start = i * step;
+          const end = Math.min(start + step, data.length);
+          for (let j = start; j < end; j++) {
+            const v = data[j];
+            if (v < min) min = v;
+            if (v > max) max = v;
+          }
+          const amp = Math.max(0.03, (max - min) / 2);
+          const barHeight = amp * (H * 0.70);
+          ctx.fillRect(i, midY - barHeight / 2, 1, barHeight);
+        }
+
+        // Camada 3: Núcleo branco / gelo
+        ctx.fillStyle = '#f0fdf4';
+        for (let i = 0; i < W; i++) {
+          let min = 1.0;
+          let max = -1.0;
+          const start = i * step;
+          const end = Math.min(start + step, data.length);
+          for (let j = start; j < end; j++) {
+            const v = data[j];
+            if (v < min) min = v;
+            if (v > max) max = v;
+          }
+          const amp = Math.max(0.015, (max - min) / 2);
+          const barHeight = amp * (H * 0.35);
+          ctx.fillRect(i, midY - barHeight / 2, 1, barHeight);
+        }
       }
     };
 
@@ -1755,22 +2079,22 @@
     const PacksModule = {
       // 16 Memes lendários com arquivos MP3 servidos na pasta sounds/
       library: [
-        { id: 'vine_boom', name: 'Vine Boom 💥', file: 'sounds/vine-boom.mp3', unpitched: true, selected: true },
-        { id: 'receba', name: 'Receba! (Luva de Pedreiro) ⚽', file: 'sounds/receba.mp3', unpitched: false, selected: true },
-        { id: 'calabreso', name: 'Calma Calabreso! 🗣️', file: 'sounds/calma-calabreso.mp3', unpitched: false, selected: true },
-        { id: 'pare', name: 'PARE! (Rodrigo Faro) ✋', file: 'sounds/pare-rodrigo-faro.mp3', unpitched: false, selected: true },
-        { id: 'danca_gatinho', name: 'Dança Gatinho, Dança! 🕺', file: 'sounds/danca-gatinho.mp3', unpitched: false, selected: true },
-        { id: 'cavalo', name: 'Cavaaaalo! (Rodrigo Faro) 🐴', file: 'sounds/cavalo.mp3', unpitched: false, selected: true },
-        { id: 'filho_calma', name: 'Que Isso Meu Filho, Calma! 🤦', file: 'sounds/que-isso-meu-filho.mp3', unpitched: false, selected: true },
-        { id: 'uepa', name: 'Uêpa! (Ratinho) 🤠', file: 'sounds/uepa.mp3', unpitched: false, selected: true },
-        { id: 'rapaz', name: 'Rapaaaaz! (Xaropinho) 🐭', file: 'sounds/rapaz.mp3', unpitched: false, selected: true },
-        { id: 'errou', name: 'Errou! (Faustão) ❌', file: 'sounds/errou.mp3', unpitched: false, selected: true },
-        { id: 'win_error', name: 'Erro do Windows XP 💻', file: 'sounds/windows-xp-error.mp3', unpitched: false, selected: true },
-        { id: 'bruh', name: 'Efeito Bruh 🗿', file: 'sounds/bruh.mp3', unpitched: false, selected: true },
-        { id: 'airhorn', name: 'Buzina Airhorn MLG 🎺', file: 'sounds/airhorn.mp3', unpitched: false, selected: true },
-        { id: 'sad_trombone', name: 'Trombone Triste 😢', file: 'sounds/sad-trombone.mp3', unpitched: false, selected: true },
-        { id: 'galo', name: 'Galo Cocoricó 🐓', file: 'sounds/galo.mp3', unpitched: false, selected: true },
-        { id: 'miau', name: 'Miau Engraçado 🐱', file: 'sounds/miau.mp3', unpitched: false, selected: true }
+        { id: 'calabreso', name: 'Calma Calabreso! 🗣️', shortName: 'CALABRESO', tag: 'Meme Brasileiro', icon: '🗣️', file: 'sounds/calma-calabreso.mp3', unpitched: false, selected: true },
+        { id: 'receba', name: 'Receba! Graças a Deus! ⚽', shortName: 'RECEBA', tag: 'Luva de Pedreiro', icon: '⚽', file: 'sounds/receba.mp3', unpitched: false, selected: true },
+        { id: 'pare', name: 'PARE! (Rodrigo Faro) ✋', shortName: 'PARE!', tag: 'Vai Dar Namoro', icon: '✋', file: 'sounds/pare-rodrigo-faro.mp3', unpitched: false, selected: true },
+        { id: 'danca_gatinho', name: 'Dança Gatinho, Dança! 🕺', shortName: 'GATINHO', tag: 'Rodrigo Faro', icon: '🕺', file: 'sounds/danca-gatinho.mp3', unpitched: false, selected: true },
+        { id: 'cavalo', name: 'Cavaaaalo! (Rodrigo Faro) 🐴', shortName: 'CAVALO', tag: 'Rodrigo Faro', icon: '🐴', file: 'sounds/cavalo.mp3', unpitched: false, selected: true },
+        { id: 'filho_calma', name: 'Que Isso Meu Filho, Calma! 🤦', shortName: 'MEU FILHO', tag: 'Programa do Ratinho', icon: '🤦‍♂️', file: 'sounds/que-isso-meu-filho.mp3', unpitched: false, selected: true },
+        { id: 'uepa', name: 'Uêpa! (Ratinho) 🤠', shortName: 'UÊPA!', tag: 'Programa do Ratinho', icon: '🤠', file: 'sounds/uepa.mp3', unpitched: false, selected: true },
+        { id: 'rapaz', name: 'Rapaaaaz! (Xaropinho) 🐭', shortName: 'RAPAZ', tag: 'Programa do Ratinho', icon: '🐭', file: 'sounds/rapaz.mp3', unpitched: false, selected: true },
+        { id: 'errou', name: 'Errou! (Faustão) ❌', shortName: 'ERROU!', tag: 'Domingão do Faustão', icon: '❌', file: 'sounds/errou.mp3', unpitched: false, selected: true },
+        { id: 'win_error', name: 'Erro do Windows XP 💻', shortName: 'WINDOWS XP', tag: 'Nostalgia Tech', icon: '💻', file: 'sounds/windows-xp-error.mp3', unpitched: false, selected: true },
+        { id: 'bruh', name: 'Efeito Bruh 🗿', shortName: 'BRUH', tag: 'Internet Meme', icon: '🗿', file: 'sounds/bruh.mp3', unpitched: false, selected: true },
+        { id: 'airhorn', name: 'Buzina Airhorn MLG 🎺', shortName: 'AIRHORN', tag: 'Efeito Sonoro MLG', icon: '🎺', file: 'sounds/airhorn.mp3', unpitched: false, selected: true },
+        { id: 'sad_trombone', name: 'Trombone Triste 😢', shortName: 'TROMBONE', tag: 'Fracasso Total', icon: '😢', file: 'sounds/sad-trombone.mp3', unpitched: false, selected: true },
+        { id: 'vine_boom', name: 'Vine Boom 💥', shortName: 'VINE BOOM', tag: 'Efeito Sonoro', icon: '💥', file: 'sounds/vine-boom.mp3', unpitched: true, selected: true },
+        { id: 'galo', name: 'Galo Cocoricó 🐓', shortName: 'GALO', tag: 'Sons de Animais', icon: '🐓', file: 'sounds/galo.mp3', unpitched: false, selected: true },
+        { id: 'miau', name: 'Miau Bravo 🐱', shortName: 'MIAU', tag: 'Gato Ofendido', icon: '😾', file: 'sounds/miau.mp3', unpitched: false, selected: true }
       ],
 
       previewAudio: null,
@@ -2032,6 +2356,8 @@
       roundTakes: [],
       currentTurnIndex: 0,
       activePlaybackIndex: 0,
+      autoAdvanceTimer: null,
+      needleAnimFrame: null,
 
       init() {
         const char = new Character3D({
@@ -2083,6 +2409,9 @@
         if (!name.trim()) return;
         this.localPlayer.name = name.trim();
         document.getElementById('localPlayerNameDisplay').innerText = name.trim().toUpperCase();
+        if (this.localPlayer.char3D) {
+          this.localPlayer.char3D.setName(name.trim());
+        }
       },
 
       startSoloBotsMode() {
@@ -2166,6 +2495,29 @@
         this.startNextRound();
       },
 
+      animateNeedle(durationSeconds, onComplete) {
+        const needle = document.getElementById('waveformNeedle');
+        if (!needle) { if (onComplete) onComplete(); return; }
+        if (this.needleAnimFrame) cancelAnimationFrame(this.needleAnimFrame);
+
+        needle.style.left = '0%';
+        const startTime = performance.now();
+        const durMs = Math.max(500, durationSeconds * 1000);
+
+        const frame = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / durMs);
+          needle.style.left = (progress * 100) + '%';
+          if (progress < 1) {
+            this.needleAnimFrame = requestAnimationFrame(frame);
+          } else {
+            this.needleAnimFrame = null;
+            if (onComplete) onComplete();
+          }
+        };
+        this.needleAnimFrame = requestAnimationFrame(frame);
+      },
+
       async startNextRound() {
         document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
         document.getElementById('roundSubtitleText').innerText = 'OUÇA O SOM';
@@ -2186,15 +2538,42 @@
           });
         }
 
-        // Câmera no microfone para ouvir o som
-        Scene3DModule.setCameraView('close_singer');
+        // MOSTRA A TELA ESTILO MIMIC PARTY (SCREENSHOT)
+        const overlay = document.getElementById('soundShowcaseOverlay');
+        const iconEl = document.getElementById('showcaseMemeIcon');
+        const innerTitleEl = document.getElementById('showcaseMemeInnerTitle');
+        const titleEl = document.getElementById('showcaseSoundTitle');
+        const tagEl = document.getElementById('showcaseSoundTag');
+        const subtitleEl = document.getElementById('showcaseSubtitle');
+        const countBadge = document.getElementById('showcaseCountdownBadge');
+        const waveCanvas = document.getElementById('waveformCanvas');
+
+        overlay.style.display = 'flex';
+        countBadge.style.display = 'none';
+
+        iconEl.innerText = this.currentSound.icon || '🎵';
+        innerTitleEl.innerText = this.currentSound.shortName || this.currentSound.name.slice(0, 12);
+        titleEl.innerText = this.currentSound.name;
+        tagEl.innerText = this.currentSound.tag || 'Meme BR';
+        subtitleEl.innerText = 'Ouça bem o som a imitar';
+
+        // Desenha a waveform idêntica ao screenshot do Mimic Party
+        ScoringModule.drawWaveform(waveCanvas, this.refAudioBuffer);
+        Scene3DModule.setCameraView('stage_lineup');
+
+        // Toca o áudio de referência com a agulha varrendo a tela
         setTimeout(() => {
+          const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
+          this.animateNeedle(dur);
           AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
-            this.roundTakes = [];
-            this.currentTurnIndex = 0;
-            this.runTurnRecording();
+            // Concluiu a escuta da referência, prepara para gravar!
+            setTimeout(() => {
+              this.roundTakes = [];
+              this.currentTurnIndex = 0;
+              this.runTurnRecording();
+            }, 600);
           });
-        }, 800);
+        }, 500);
       },
 
       async onOnlineRoundStart(soundId, roundNum) {
@@ -2203,10 +2582,34 @@
         this.currentSound = s;
         this.refAudioBuffer = await PacksModule.loadSoundBuffer(s);
         this.refAnalysis = ScoringModule.analyzeBuffer(this.refAudioBuffer);
+
+        const overlay = document.getElementById('soundShowcaseOverlay');
+        const iconEl = document.getElementById('showcaseMemeIcon');
+        const innerTitleEl = document.getElementById('showcaseMemeInnerTitle');
+        const titleEl = document.getElementById('showcaseSoundTitle');
+        const tagEl = document.getElementById('showcaseSoundTag');
+        const subtitleEl = document.getElementById('showcaseSubtitle');
+        const countBadge = document.getElementById('showcaseCountdownBadge');
+        const waveCanvas = document.getElementById('waveformCanvas');
+
+        overlay.style.display = 'flex';
+        countBadge.style.display = 'none';
+        iconEl.innerText = s.icon || '🎵';
+        innerTitleEl.innerText = s.shortName || s.name.slice(0, 12);
+        titleEl.innerText = s.name;
+        tagEl.innerText = s.tag || 'Meme BR';
+        subtitleEl.innerText = 'Ouça bem o som a imitar';
+        ScoringModule.drawWaveform(waveCanvas, this.refAudioBuffer);
+
+        const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
+        this.animateNeedle(dur);
+        AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {});
       },
 
       async runTurnRecording() {
         if (this.currentTurnIndex >= this.players.length) {
+          // Esconde overlay de gravação e abre julgamento dos takes
+          document.getElementById('soundShowcaseOverlay').style.display = 'none';
           this.startTakesShowcase();
           return;
         }
@@ -2214,24 +2617,30 @@
         const p = this.players[this.currentTurnIndex];
         this.highlightActiveCard(p.id);
 
-        // O boneco caminha até o microfone!
+        // O boneco da vez caminha até o microfone!
         p.char3D.walkTo(0, -0.6);
         Scene3DModule.setCameraView('close_singer');
 
-        const recOverlay = document.getElementById('recordOverlay');
-        const countNum = document.getElementById('countdownNumber');
-        const recBanner = document.getElementById('recordingCharacterBanner');
-        const fillBar = document.getElementById('recBarFill');
+        const overlay = document.getElementById('soundShowcaseOverlay');
+        const subtitleEl = document.getElementById('showcaseSubtitle');
+        const countBadge = document.getElementById('showcaseCountdownBadge');
+        const needle = document.getElementById('waveformNeedle');
+        overlay.style.display = 'flex';
+        needle.style.left = '0%';
 
-        recBanner.innerText = `VEZ DE: ${p.name.toUpperCase()} 🎤`;
-        fillBar.style.width = '0%';
-
-        // Se for BOT: simula o take com personalidade
+        // Se for BOT: simula o take com rapidez e animação
         if (p.isBot) {
+          subtitleEl.innerText = `Vez de: ${p.name.toUpperCase()} (BOT) 🤖`;
+          countBadge.style.display = 'none';
+          p.char3D.isSinging = true;
+          p.char3D.audioAmplitude = 0.6;
+
           setTimeout(() => {
+            p.char3D.isSinging = false;
+            p.char3D.audioAmplitude = 0;
             const botTakeBuffer = this.refAudioBuffer;
             const botAnalysis = ScoringModule.analyzeBuffer(botTakeBuffer);
-            const scoreRes = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound.unpitched);
+            const scoreRes = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
 
             this.roundTakes.push({
               player: p,
@@ -2243,40 +2652,44 @@
             // Boneco volta para a fila
             p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
             this.currentTurnIndex++;
-            setTimeout(() => this.runTurnRecording(), 700);
-          }, 1400);
+            setTimeout(() => this.runTurnRecording(), 400);
+          }, 700);
           return;
         }
 
-        // Jogador Humano: garante que o mic está pronto antes da contagem
+        // Jogador Humano: garante microfone pronto
         await AudioModule.initMic();
 
-        recOverlay.style.display = 'flex';
+        subtitleEl.innerText = `Sua vez! Prepare-se para imitar... 🎤`;
+        countBadge.style.display = 'block';
         let count = 3;
-        countNum.innerText = count;
+        countBadge.innerText = count;
         AudioModule.playSfx('beep');
 
         const interval = setInterval(() => {
           count--;
           if (count > 0) {
-            countNum.innerText = count;
+            countBadge.innerText = count;
             AudioModule.playSfx('beep');
           } else if (count === 0) {
-            countNum.innerText = 'VAI! 🔥';
+            countBadge.innerText = 'VAI! 🔥';
             AudioModule.playSfx('beep_go');
             clearInterval(interval);
 
-            const duration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.6) : 2.0;
+            subtitleEl.innerText = `Gravando sua voz... IMITE O SOM! 🗣️`;
+            const duration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
             p.char3D.isSinging = true;
+            this.animateNeedle(duration);
 
             AudioModule.recordTakePCM(duration,
-              (prog) => { fillBar.style.width = Math.round(prog * 100) + '%'; },
+              (prog) => {
+                p.char3D.audioAmplitude = 0.5 + Math.random() * 0.4;
+              },
               (userBuf) => {
-                // NUNCA DEIXA O BONECO TRAVADO: Envolvido em try/finally garantido
                 try {
-                  recOverlay.style.display = 'none';
+                  countBadge.style.display = 'none';
                   const userAnalysis = ScoringModule.analyzeBuffer(userBuf);
-                  const scoreRes = ScoringModule.evaluate(this.refAnalysis, userAnalysis, this.currentSound.unpitched);
+                  const scoreRes = ScoringModule.evaluate(this.refAnalysis, userAnalysis, this.currentSound ? this.currentSound.unpitched : false);
 
                   this.roundTakes.push({
                     player: p,
@@ -2289,9 +2702,10 @@
                 } finally {
                   // O BONECO VOLTA COM 100% DE CERTEZA
                   p.char3D.isSinging = false;
+                  p.char3D.audioAmplitude = 0;
                   p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
                   this.currentTurnIndex++;
-                  setTimeout(() => this.runTurnRecording(), 700);
+                  setTimeout(() => this.runTurnRecording(), 600);
                 }
               }
             );
@@ -2302,6 +2716,7 @@
       startTakesShowcase() {
         this.activePlaybackIndex = 0;
         document.getElementById('roundSubtitleText').innerText = 'JULGAMENTO DOS TAKES';
+        document.getElementById('soundShowcaseOverlay').style.display = 'none';
         this.playCurrentTakeShowcase();
       },
 
@@ -2314,6 +2729,7 @@
         const take = this.roundTakes[this.activePlaybackIndex];
         const p = take.player;
 
+        // O personagem vai até o microfone para ouvir o take
         p.char3D.walkTo(0, -0.6);
         p.char3D.isSinging = true;
         p.char3D.audioAmplitude = 0.8;
@@ -2324,13 +2740,16 @@
 
         const scoreEl = document.getElementById('scoreAnimatedNumber');
         scoreEl.innerText = '0';
-        document.getElementById('btnNextTake').disabled = true;
+        const nextBtn = document.getElementById('btnNextTake');
+        nextBtn.disabled = true;
 
         const canvas = document.getElementById('contourCanvas');
-        ScoringModule.drawContourCanvas(canvas, this.refAnalysis, take.userAnalysis, this.currentSound.unpitched);
+        ScoringModule.drawContourCanvas(canvas, this.refAnalysis, take.userAnalysis, this.currentSound ? this.currentSound.unpitched : false);
 
+        // Reproduz o take do jogador
         AudioModule.playAudioBuffer(take.audioBuffer, take.sabotage, () => {
           p.char3D.isSinging = false;
+          p.char3D.audioAmplitude = 0;
           const finalScore = take.scoreResult.totalScore;
           p.score += finalScore;
           this.updateTopBarCards();
@@ -2342,7 +2761,15 @@
               cur = finalScore;
               clearInterval(t);
               UIModule.triggerTakeReactions(finalScore);
-              document.getElementById('btnNextTake').disabled = false;
+              nextBtn.disabled = false;
+
+              // Auto-avanço de segurança: passa para o próximo take após 4 segundos se o usuário não clicar
+              if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
+              this.autoAdvanceTimer = setTimeout(() => {
+                if (card.style.display !== 'none') {
+                  this.advanceTakePlayback();
+                }
+              }, 4000);
             }
             scoreEl.innerText = cur;
           }, 30);
@@ -2350,8 +2777,16 @@
       },
 
       advanceTakePlayback() {
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
         const take = this.roundTakes[this.activePlaybackIndex];
-        take.player.char3D.walkTo(take.player.char3D.lineupPosition.x, -2.5);
+        if (take && take.player && take.player.char3D) {
+          take.player.char3D.isSinging = false;
+          take.player.char3D.audioAmplitude = 0;
+          take.player.char3D.walkTo(take.player.char3D.lineupPosition.x, -2.5);
+        }
         document.getElementById('judgementCard').style.display = 'none';
 
         this.activePlaybackIndex++;
@@ -2439,6 +2874,17 @@
         document.getElementById('playersTopRow').style.display = 'none';
         document.getElementById('btnLeaveGame').style.display = 'none';
         document.getElementById('judgementCard').style.display = 'none';
+
+        const overlay = document.getElementById('soundShowcaseOverlay');
+        if (overlay) overlay.style.display = 'none';
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
+        if (this.needleAnimFrame) {
+          cancelAnimationFrame(this.needleAnimFrame);
+          this.needleAnimFrame = null;
+        }
 
         this.cleanupBotsAndReset();
         Scene3DModule.setCameraView('menu');
