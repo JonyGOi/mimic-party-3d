@@ -448,6 +448,116 @@
       border-radius: 10px;
     }
 
+    /* Display de Pontuação Gigante no Palco estilo Mimic Party (Screenshot) */
+    .take-score-hud {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 50;
+      pointer-events: auto;
+      text-align: center;
+    }
+
+    .take-score-number {
+      font-family: var(--font-display);
+      font-size: 4.8rem;
+      line-height: 1;
+      color: #f7b731;
+      -webkit-text-stroke: 4px #000;
+      text-shadow: 4px 5px 0px #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000;
+      letter-spacing: 2px;
+      animation: scorePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes scorePop {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .take-narrator-meme {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.75);
+      border: 2px solid #000;
+      border-radius: 14px;
+      padding: 5px 16px;
+      margin-top: 6px;
+      box-shadow: 2px 2px 0 #000;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    /* Overlay de Tomatada na Cara (Nota Ruim) */
+    .tomato-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .flying-tomato {
+      font-size: 5.5rem;
+      position: absolute;
+      bottom: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: all 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .flying-tomato.thrown {
+      bottom: 45%;
+      transform: translateX(-50%) scale(2.2) rotate(720deg);
+      opacity: 0;
+    }
+
+    .tomato-splat-graphic {
+      width: 320px;
+      height: 320px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: splatBurst 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes splatBurst {
+      0% { transform: scale(0.1) rotate(-25deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .tomato-splat-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.7));
+    }
+
+    .splat-badge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-6deg);
+      background: #ffdd00;
+      color: #000;
+      border: 3.5px solid #000;
+      border-radius: 14px;
+      padding: 8px 18px;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      white-space: nowrap;
+      box-shadow: 4px 4px 0 #000;
+    }
+
     /* Seletor de Áudios de Memes */
     .sound-item-row {
       display: flex;
@@ -662,32 +772,6 @@
       text-shadow: 4px 4px 0 #000;
       animation: pulsePop 0.4s ease;
       margin-top: 6px;
-    }
-
-    /* Rótulos de Agudo e Grave na Waveform */
-    .pitch-label-high {
-      position: absolute;
-      top: 6px;
-      right: 14px;
-      font-size: 0.8rem;
-      font-weight: 900;
-      color: #00f0ff;
-      text-shadow: 1px 1px 0 #000, 0 0 8px rgba(0,240,255,0.6);
-      letter-spacing: 0.5px;
-      z-index: 6;
-      pointer-events: none;
-    }
-    .pitch-label-low {
-      position: absolute;
-      bottom: 6px;
-      right: 14px;
-      font-size: 0.8rem;
-      font-weight: 900;
-      color: #ff0077;
-      text-shadow: 1px 1px 0 #000, 0 0 8px rgba(255,0,119,0.6);
-      letter-spacing: 0.5px;
-      z-index: 6;
-      pointer-events: none;
     }
 
     /* ESTILOS DA BIBLIOTECA DE PACOTES DE SONS (SCREENSHOTS DO USUÁRIO) */
@@ -1172,10 +1256,8 @@
     <div id="showcaseSoundTitle" class="showcase-title">Calma Calabreso!</div>
     <div id="showcaseSoundTag" class="showcase-tag">Meme Brasileiro</div>
 
-    <!-- Caixa de Waveform com Borda Ciano, Agulha Vermelha e Rastro de Tom Agudo/Grave -->
+    <!-- Caixa de Waveform com Borda Ciano e Agulha Vermelha (Onda de Volume Alto / Baixo) -->
     <div class="waveform-box">
-      <span class="pitch-label-high">AGUDO ⬆️</span>
-      <span class="pitch-label-low">GRAVE ⬇️</span>
       <div class="waveform-center-line"></div>
       <canvas id="waveformCanvas" width="480" height="110"></canvas>
       <canvas id="pitchTrailCanvas" width="480" height="110" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:4; pointer-events:none;"></canvas>
@@ -1214,34 +1296,37 @@
     </div>
   </div>
 
-  <!-- PAINEL DE JULGAMENTO / PLAYBACK DOS TAKES -->
-  <div id="judgementCard" class="judgement-card">
-    <div class="score-circle">
-      <span id="scoreAnimatedNumber" class="score-number">0</span>
-      <span style="font-weight:900; font-size:0.75rem;">PONTOS</span>
-    </div>
-
-    <!-- Sabotagem Ativa (se houver) -->
-    <div id="sabotageBanner" style="display:none; background:#ff0077; color:#fff; font-family:var(--font-display); font-size:1.1rem; padding:4px 14px; border:2px solid #000; border-radius:20px; box-shadow:2px 2px 0 #000;">
-      💩 SABOTADO COM PUM! (-15 pts)
-    </div>
-
-    <div id="narratorQuoteBox" class="narrator-quote-box">
-      "Analisando a perícia criminal da voz..."
-    </div>
-
-    <!-- Gráfico Comparativo YIN Pitch / Envelope Canvas -->
-    <canvas id="contourCanvas" width="580" height="120"></canvas>
-
-    <div style="display:flex; justify-content:space-between; width:100%; font-size:0.8rem; font-weight:800;">
-      <span style="color:#00f0ff;">■ Som de Referência</span>
-      <span style="color:#ff0077;">■ Voz do Personagem</span>
-      <span style="color:#ffdd00;">● Ataques / Onsets</span>
-    </div>
-
-    <button id="btnNextTake" class="btn btn-pink btn-sm" onclick="GameModule.advanceTakePlayback()">
+  <!-- DISPLAY DE PONTUAÇÃO GIGANTE ESTILO MIMIC PARTY (SCREENSHOT) -->
+  <div id="takeScoreOverlay" class="take-score-hud" style="display:none;">
+    <div id="takeScoreNumber" class="take-score-number">0 / 100</div>
+    <div id="takeNarratorMeme" class="take-narrator-meme">"Absolute Cinema!"</div>
+    <button id="btnAdvanceTake" class="btn btn-pink btn-sm" style="margin-top:10px; font-size:0.95rem; padding:8px 20px;" onclick="GameModule.advanceTakePlayback()">
       PRÓXIMO TAKE ➡️
     </button>
+  </div>
+
+  <!-- OVERLAY DO TOMATE NA CARA (QUANDO A NOTA É RUIM) -->
+  <div id="tomatoOverlay" class="tomato-overlay" style="display:none;">
+    <div id="flyingTomato" class="flying-tomato">🍅</div>
+    <div id="tomatoSplatGraphic" class="tomato-splat-graphic" style="display:none;">
+      <svg viewBox="0 0 340 340" class="tomato-splat-svg">
+        <path d="M160,180 Q156,260 152,310 Q156,316 161,310 Q166,260 170,180 Z" fill="#b91c1c" />
+        <path d="M195,170 Q200,240 204,285 Q208,290 212,285 Q208,240 203,170 Z" fill="#b91c1c" />
+        <path d="M125,160 Q120,220 116,255 Q120,260 124,255 Q129,220 133,160 Z" fill="#b91c1c" />
+        <path d="M170,55 C220,45 255,80 275,115 C295,150 285,195 260,230 C235,265 190,275 155,270 C110,280 70,250 55,205 C40,160 55,115 90,85 C125,55 135,65 170,55 Z" fill="#dc2626" />
+        <path d="M170,75 C205,70 230,100 245,130 C260,160 250,195 225,215 C205,235 165,240 140,230 C105,235 85,210 75,175 C65,140 85,105 110,90 C135,75 145,85 170,75 Z" fill="#ef4444" />
+        <ellipse cx="155" cy="135" rx="6" ry="10" fill="#fef08a" transform="rotate(25 155 135)" />
+        <ellipse cx="185" cy="160" rx="5" ry="9" fill="#fef08a" transform="rotate(-30 185 160)" />
+        <ellipse cx="138" cy="175" rx="6" ry="9" fill="#fef08a" transform="rotate(40 138 175)" />
+        <ellipse cx="198" cy="125" rx="5" ry="8" fill="#fef08a" transform="rotate(-15 198 125)" />
+        <circle cx="55" cy="90" r="14" fill="#dc2626" />
+        <circle cx="285" cy="80" r="12" fill="#dc2626" />
+        <circle cx="300" cy="210" r="16" fill="#dc2626" />
+        <circle cx="80" cy="265" r="13" fill="#dc2626" />
+        <circle cx="225" cy="300" r="10" fill="#dc2626" />
+      </svg>
+      <div class="splat-badge-text">🍅 TOMATE NA CARA! 🍅</div>
+    </div>
   </div>
 
   <!-- MODAL: PODIUM FINAL E TIER LIST -->
@@ -1836,20 +1921,15 @@
               if (pct < 4) {
                 readout.innerText = "Fale no microfone para testar...";
                 readout.style.color = "#888";
-              } else if (pitch) {
-                if (pitch > 260) {
-                  readout.innerText = `AGUDO ⬆️ (${Math.round(pitch)} Hz)`;
-                  readout.style.color = "#00f0ff";
-                } else if (pitch < 155) {
-                  readout.innerText = `GRAVE ⬇️ (${Math.round(pitch)} Hz)`;
-                  readout.style.color = "#ff0077";
-                } else {
-                  readout.innerText = `MÉDIO 🟢 (${Math.round(pitch)} Hz)`;
-                  readout.style.color = "#00f576";
-                }
+              } else if (pct > 65) {
+                readout.innerText = `SOM ALTO 🔊 (${pct}%)`;
+                readout.style.color = "#ff0077";
+              } else if (pct > 25) {
+                readout.innerText = `SOM MÉDIO 🔉 (${pct}%)`;
+                readout.style.color = "#00f576";
               } else {
-                readout.innerText = `Captando voz (${pct}%)`;
-                readout.style.color = "#ffdd00";
+                readout.innerText = `SOM BAIXO 🔈 (${pct}%)`;
+                readout.style.color = "#00f0ff";
               }
             }
           }, 40);
@@ -2085,6 +2165,15 @@
           g.connect(this.outNode());
           osc.start(now);
           osc.stop(now + 0.03);
+        } else if (type === 'splat') {
+          const snd = new Audio('sounds/splat.mp3');
+          snd.play().catch(() => {});
+        } else if (type === 'boo') {
+          const snd = new Audio('sounds/boo.mp3');
+          snd.play().catch(() => {});
+        } else if (type === 'applause') {
+          const snd = new Audio('sounds/applause.mp3');
+          snd.play().catch(() => {});
         }
       },
 
@@ -3097,244 +3186,169 @@
         this.needleAnimFrame = requestAnimationFrame(frame);
       },
 
-      pitchTrailAnimFrame: null,
+      liveWaveAnimFrame: null,
 
-      startLivePitchTrail(durationSeconds) {
+      startLiveWaveform(durationSeconds) {
         const canvas = document.getElementById('pitchTrailCanvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width;
         const H = canvas.height;
+        const midY = H / 2;
         ctx.clearRect(0, 0, W, H);
 
-        if (this.pitchTrailAnimFrame) cancelAnimationFrame(this.pitchTrailAnimFrame);
+        if (this.liveWaveAnimFrame) cancelAnimationFrame(this.liveWaveAnimFrame);
 
         const startTime = performance.now();
         const durMs = Math.max(500, durationSeconds * 1000);
-        const trailPoints = [];
+        const samples = [];
         const timeData = (AudioModule.analyser) ? new Float32Array(AudioModule.analyser.fftSize) : null;
-        const sampleRate = (AudioModule.ctx) ? AudioModule.ctx.sampleRate : 44100;
-        const refPitch = (this.refAnalysis && this.refAnalysis.relativePitch) ? this.refAnalysis.relativePitch : [];
 
         const renderFrame = (now) => {
           const elapsed = now - startTime;
           const progress = Math.min(1, elapsed / durMs);
           const currentX = progress * W;
 
+          let amp = 0.02;
           if (AudioModule.analyser && timeData) {
             AudioModule.analyser.getFloatTimeDomainData(timeData);
-            const pitch = ScoringModule.detectCurrentPitch(timeData, sampleRate);
             let sumSq = 0;
             for (let i = 0; i < timeData.length; i++) sumSq += timeData[i] * timeData[i];
             const rms = Math.sqrt(sumSq / timeData.length);
 
-            if (pitch && rms > 0.015) {
-              const clamped = Math.max(75, Math.min(750, pitch));
-              const norm = (Math.log2(clamped) - Math.log2(75)) / (Math.log2(750) - Math.log2(75));
-              const y = (H - 22) - (norm * (H - 42));
-              trailPoints.push({ x: currentX, y, pitch });
-            } else {
-              trailPoints.push({ x: currentX, y: null, pitch: null });
-            }
+            // Calibração de sensibilidade:
+            // Volume baixo / sussurro -> barra curta próxima da linha rosa central
+            // Volume alto / grito -> barra comprida ocupando a caixa (alto vs baixo)
+            const raw = Math.max(0, rms - 0.008);
+            amp = Math.min(1.0, Math.max(0.03, raw * 4.2));
           }
+
+          const barHeight = Math.max(3, amp * (H * 0.92));
+          samples.push({ x: currentX, barHeight, amp });
 
           ctx.clearRect(0, 0, W, H);
 
-          // 1. Linha pontilhada ciano guia do som de referência
-          if (refPitch.length > 1) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-            ctx.lineWidth = 2.5;
-            ctx.setLineDash([6, 5]);
-            let refStarted = false;
-            for (let i = 0; i < refPitch.length; i++) {
-              const semitone = refPitch[i];
-              const rx = (i / (refPitch.length - 1)) * W;
-              if (semitone !== null && semitone !== undefined) {
-                const clampedSemi = Math.max(-14, Math.min(14, semitone));
-                const ry = (H / 2) - (clampedSemi / 14) * (H * 0.38);
-                if (!refStarted) { ctx.moveTo(rx, ry); refStarted = true; }
-                else { ctx.lineTo(rx, ry); }
-              } else {
-                refStarted = false;
-              }
+          // Desenha a onda da voz do jogador em camadas neon magenta / amarelo / branco
+          for (let i = 0; i < samples.length; i++) {
+            const s = samples[i];
+            const bh = s.barHeight;
+
+            // Camada 1: Rosa / Magenta Neon (Camada externa)
+            ctx.fillStyle = '#ff0077';
+            ctx.fillRect(s.x - 1.5, midY - bh / 2, 3, bh);
+
+            // Camada 2: Amarelo / Dourado Neon (quando o som é alto)
+            if (bh > 10) {
+              ctx.fillStyle = '#ffdd00';
+              ctx.fillRect(s.x - 1, midY - (bh * 0.65) / 2, 2, bh * 0.65);
             }
-            ctx.stroke();
-            ctx.restore();
+
+            // Camada 3: Núcleo Branco brilhante (picos de som alto)
+            if (bh > 22) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(s.x - 0.5, midY - (bh * 0.35) / 2, 1, bh * 0.35);
+            }
           }
 
-          // 2. Rastro de tom neon rosa/magenta em tempo real
-          if (trailPoints.length > 1) {
-            ctx.save();
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = '#ff0077';
-            ctx.strokeStyle = '#ff0077';
-            ctx.lineWidth = 5;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            ctx.beginPath();
-            let drw = false;
-            for (let i = 0; i < trailPoints.length; i++) {
-              const pt = trailPoints[i];
-              if (pt.y !== null) {
-                if (!drw) { ctx.moveTo(pt.x, pt.y); drw = true; }
-                else { ctx.lineTo(pt.x, pt.y); }
-              } else {
-                drw = false;
-              }
-            }
-            ctx.stroke();
-
-            // Centro branco brilhante da linha
-            ctx.beginPath();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            drw = false;
-            for (let i = 0; i < trailPoints.length; i++) {
-              const pt = trailPoints[i];
-              if (pt.y !== null) {
-                if (!drw) { ctx.moveTo(pt.x, pt.y); drw = true; }
-                else { ctx.lineTo(pt.x, pt.y); }
-              } else {
-                drw = false;
-              }
-            }
-            ctx.stroke();
-            ctx.restore();
-          }
-
-          // 3. Cursor luminoso de faísca amarela na ponta
-          const lastVoiced = [...trailPoints].reverse().find(p => p.y !== null);
-          const cursorY = lastVoiced ? lastVoiced.y : (H / 2);
-
+          // Cursor de faísca / agulha que pulsa de acordo com o volume instantâneo da voz
+          const sparkRadius = Math.max(4, Math.min(16, 4 + amp * 12));
           ctx.save();
           ctx.beginPath();
-          ctx.arc(currentX, cursorY, 6, 0, Math.PI * 2);
+          ctx.arc(currentX, midY, sparkRadius, 0, Math.PI * 2);
           ctx.fillStyle = '#ffdd00';
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 16;
           ctx.shadowColor = '#ffdd00';
           ctx.fill();
 
           ctx.beginPath();
-          ctx.arc(currentX, cursorY, 2.5, 0, Math.PI * 2);
+          ctx.arc(currentX, midY, Math.max(2, sparkRadius * 0.45), 0, Math.PI * 2);
           ctx.fillStyle = '#ffffff';
           ctx.fill();
           ctx.restore();
 
           if (progress < 1) {
-            this.pitchTrailAnimFrame = requestAnimationFrame(renderFrame);
+            this.liveWaveAnimFrame = requestAnimationFrame(renderFrame);
           } else {
-            this.pitchTrailAnimFrame = null;
+            this.liveWaveAnimFrame = null;
           }
         };
 
-        this.pitchTrailAnimFrame = requestAnimationFrame(renderFrame);
+        this.liveWaveAnimFrame = requestAnimationFrame(renderFrame);
       },
 
-      simulateBotPitchTrail(durationSeconds) {
+      simulateBotLiveWave(durationSeconds) {
         const canvas = document.getElementById('pitchTrailCanvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width;
         const H = canvas.height;
+        const midY = H / 2;
         ctx.clearRect(0, 0, W, H);
 
-        if (this.pitchTrailAnimFrame) cancelAnimationFrame(this.pitchTrailAnimFrame);
+        if (this.liveWaveAnimFrame) cancelAnimationFrame(this.liveWaveAnimFrame);
 
         const startTime = performance.now();
         const durMs = Math.max(500, durationSeconds * 1000);
-        const botPoints = [];
-        const refPitch = (this.refAnalysis && this.refAnalysis.relativePitch) ? this.refAnalysis.relativePitch : [];
+        const samples = [];
+        const refRms = (this.refAnalysis && this.refAnalysis.rmsEnvelope) ? this.refAnalysis.rmsEnvelope : [];
 
-        const frame = (now) => {
+        const renderFrame = (now) => {
           const elapsed = now - startTime;
           const progress = Math.min(1, elapsed / durMs);
-          const cx = progress * W;
+          const currentX = progress * W;
 
-          let cy = H / 2;
-          if (refPitch.length > 0) {
-            const idx = Math.floor(progress * (refPitch.length - 1));
-            const semi = refPitch[idx];
-            if (semi !== null && semi !== undefined) {
-              const jitter = (Math.random() - 0.5) * 2;
-              cy = (H / 2) - ((semi + jitter) / 14) * (H * 0.36);
-              cy = Math.max(16, Math.min(H - 16, cy));
-              botPoints.push({ x: cx, y: cy });
-            } else {
-              botPoints.push({ x: cx, y: null });
-            }
+          let simAmp = 0.05;
+          if (refRms.length > 0) {
+            const idx = Math.floor(progress * (refRms.length - 1));
+            const r = refRms[idx] || 0.05;
+            const jitter = (Math.random() - 0.5) * 0.08;
+            simAmp = Math.min(1.0, Math.max(0.04, (r + jitter) * 3.5));
           } else {
-            const wobble = Math.sin(progress * Math.PI * 4) * (H * 0.25);
-            cy = (H / 2) + wobble;
-            botPoints.push({ x: cx, y: cy });
+            simAmp = 0.2 + Math.abs(Math.sin(progress * Math.PI * 5)) * 0.6;
           }
+
+          const barHeight = Math.max(3, simAmp * (H * 0.90));
+          samples.push({ x: currentX, barHeight, amp: simAmp });
 
           ctx.clearRect(0, 0, W, H);
 
-          if (refPitch.length > 1) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 4]);
-            let refStarted = false;
-            for (let i = 0; i < refPitch.length; i++) {
-              const s = refPitch[i];
-              const rx = (i / (refPitch.length - 1)) * W;
-              if (s !== null && s !== undefined) {
-                const ry = (H / 2) - (s / 14) * (H * 0.38);
-                if (!refStarted) { ctx.moveTo(rx, ry); refStarted = true; }
-                else { ctx.lineTo(rx, ry); }
-              } else {
-                refStarted = false;
-              }
+          for (let i = 0; i < samples.length; i++) {
+            const s = samples[i];
+            const bh = s.barHeight;
+            ctx.fillStyle = '#00f0ff';
+            ctx.fillRect(s.x - 1.5, midY - bh / 2, 3, bh);
+            if (bh > 10) {
+              ctx.fillStyle = '#70e000';
+              ctx.fillRect(s.x - 1, midY - (bh * 0.6) / 2, 2, bh * 0.6);
             }
-            ctx.stroke();
-            ctx.restore();
+            if (bh > 22) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(s.x - 0.5, midY - (bh * 0.3) / 2, 1, bh * 0.3);
+            }
           }
 
-          if (botPoints.length > 1) {
-            ctx.save();
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#00f0ff';
-            ctx.strokeStyle = '#00f0ff';
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            let drw = false;
-            for (let i = 0; i < botPoints.length; i++) {
-              const pt = botPoints[i];
-              if (pt.y !== null) {
-                if (!drw) { ctx.moveTo(pt.x, pt.y); drw = true; }
-                else { ctx.lineTo(pt.x, pt.y); }
-              } else {
-                drw = false;
-              }
-            }
-            ctx.stroke();
-            ctx.restore();
-          }
-
+          const sparkRadius = Math.max(4, Math.min(16, 4 + simAmp * 12));
           ctx.save();
           ctx.beginPath();
-          ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffdd00';
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = '#ffdd00';
+          ctx.arc(currentX, midY, sparkRadius, 0, Math.PI * 2);
+          ctx.fillStyle = '#00f0ff';
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = '#00f0ff';
           ctx.fill();
           ctx.restore();
 
           if (progress < 1) {
-            this.pitchTrailAnimFrame = requestAnimationFrame(frame);
+            this.liveWaveAnimFrame = requestAnimationFrame(renderFrame);
           } else {
-            this.pitchTrailAnimFrame = null;
+            this.liveWaveAnimFrame = null;
           }
         };
-        this.pitchTrailAnimFrame = requestAnimationFrame(frame);
+
+        this.liveWaveAnimFrame = requestAnimationFrame(renderFrame);
       },
+
+      startLivePitchTrail(d) { this.startLiveWaveform(d); },
+      simulateBotPitchTrail(d) { this.simulateBotLiveWave(d); },
 
       async startNextRound() {
         document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
@@ -3466,7 +3480,7 @@
           p.char3D.audioAmplitude = 0.6;
           const dur = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.2) : 1.5;
           this.animateNeedle(dur);
-          this.simulateBotPitchTrail(dur);
+          this.simulateBotLiveWave(dur);
 
           setTimeout(() => {
             p.char3D.isSinging = false;
@@ -3513,7 +3527,7 @@
             const duration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
             p.char3D.isSinging = true;
             this.animateNeedle(duration);
-            this.startLivePitchTrail(duration);
+            this.startLiveWaveform(duration);
 
             AudioModule.recordTakePCM(duration,
               (prog) => {
@@ -3563,22 +3577,22 @@
         const take = this.roundTakes[this.activePlaybackIndex];
         const p = take.player;
 
-        // O personagem vai até o microfone para ouvir o take
+        // Limpa overlays anteriores de pontuação e tomate
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        const scoreEl = document.getElementById('takeScoreNumber');
+        const memeEl = document.getElementById('takeNarratorMeme');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+        UIModule.hideTomato();
+        UIModule.stopConfetti();
+
+        // Destaca o card do jogador ativo com o ícone de alto-falante 🔊
+        this.highlightActiveCard(p.id);
+
+        // O personagem caminha até o microfone para soltar o som!
         p.char3D.walkTo(0, -0.6);
         p.char3D.isSinging = true;
         p.char3D.audioAmplitude = 0.8;
         Scene3DModule.setCameraView('close_singer');
-
-        const card = document.getElementById('judgementCard');
-        card.style.display = 'flex';
-
-        const scoreEl = document.getElementById('scoreAnimatedNumber');
-        scoreEl.innerText = '0';
-        const nextBtn = document.getElementById('btnNextTake');
-        nextBtn.disabled = true;
-
-        const canvas = document.getElementById('contourCanvas');
-        ScoringModule.drawContourCanvas(canvas, this.refAnalysis, take.userAnalysis, this.currentSound ? this.currentSound.unpitched : false);
 
         // Reproduz o take do jogador
         AudioModule.playAudioBuffer(take.audioBuffer, take.sabotage, () => {
@@ -3587,25 +3601,41 @@
           const finalScore = take.scoreResult.totalScore;
           p.score += finalScore;
           this.updateTopBarCards();
+          this.highlightActiveCard(p.id);
 
+          // Revela a pontuação gigante no chão do palco estilo Mimic Party (Screenshot 63 / 100)
+          if (scoreOverlay) scoreOverlay.style.display = 'flex';
           let cur = 0;
+          const step = Math.max(1, Math.floor(finalScore / 18));
           const t = setInterval(() => {
-            cur += Math.max(1, Math.floor(finalScore / 20));
+            cur += step;
             if (cur >= finalScore) {
               cur = finalScore;
               clearInterval(t);
-              UIModule.triggerTakeReactions(finalScore);
-              nextBtn.disabled = false;
+              AudioModule.playSfx('tick');
 
-              // Auto-avanço de segurança: passa para o próximo take após 4 segundos se o usuário não clicar
+              // Atualiza o meme do narrador
+              if (memeEl) memeEl.innerText = UIModule.getNarratorQuote(finalScore);
+
+              // SE A NOTA FOR RUIM (< 60): Tomate na cara e barulho de vaias!
+              if (finalScore < 60) {
+                UIModule.throwTomato();
+                p.char3D.audioAmplitude = 0;
+              } else {
+                // NOTA BOA (>= 60): Aplausos e chuva de confetes!
+                AudioModule.playSfx('applause');
+                UIModule.startConfetti();
+              }
+
+              // Auto-avanço de segurança: passa para o próximo take após 4.2 segundos
               if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
               this.autoAdvanceTimer = setTimeout(() => {
-                if (card.style.display !== 'none') {
+                if (scoreOverlay && scoreOverlay.style.display !== 'none') {
                   this.advanceTakePlayback();
                 }
-              }, 4000);
+              }, 4200);
             }
-            scoreEl.innerText = cur;
+            if (scoreEl) scoreEl.innerText = `${cur} / 100`;
           }, 30);
         });
       },
@@ -3621,7 +3651,10 @@
           take.player.char3D.audioAmplitude = 0;
           take.player.char3D.walkTo(take.player.char3D.lineupPosition.x, -2.5);
         }
-        document.getElementById('judgementCard').style.display = 'none';
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+        UIModule.hideTomato();
+        UIModule.stopConfetti();
 
         this.activePlaybackIndex++;
         this.playCurrentTakeShowcase();
@@ -3645,13 +3678,16 @@
 
       updateTopBarCards() {
         const container = document.getElementById('playersTopRow');
+        if (!container) return;
         container.innerHTML = '';
         this.players.forEach(p => {
           const card = document.createElement('div');
           card.id = `topcard_${p.id}`;
           card.className = 'player-card-top';
+          const avatarEmoji = p.avatar || (p.isBot ? '🤖' : '😎');
           card.innerHTML = `
-            <div class="p-avatar">👤</div>
+            <span class="p-speaker-icon" style="display:none; position:absolute; top:-12px; right:-6px; font-size:1.25rem; filter:drop-shadow(0 2px 4px #000);">🔊</span>
+            <div class="p-avatar">${avatarEmoji}</div>
             <div class="p-name">${p.name}</div>
             <div class="p-score">${p.score}</div>
           `;
@@ -3660,9 +3696,17 @@
       },
 
       highlightActiveCard(playerId) {
-        document.querySelectorAll('.player-card-top').forEach(c => c.classList.remove('active-turn'));
+        document.querySelectorAll('.player-card-top').forEach(c => {
+          c.classList.remove('active-turn');
+          const spk = c.querySelector('.p-speaker-icon');
+          if (spk) spk.style.display = 'none';
+        });
         const target = document.getElementById(`topcard_${playerId}`);
-        if (target) target.classList.add('active-turn');
+        if (target) {
+          target.classList.add('active-turn');
+          const spk = target.querySelector('.p-speaker-icon');
+          if (spk) spk.style.display = 'inline-block';
+        }
       },
 
       showFinalPodium() {
@@ -3889,19 +3933,55 @@
       },
 
       triggerTakeReactions(score) {
-        const box = document.getElementById('narratorQuoteBox');
+        AudioModule.playSfx(score >= 60 ? 'applause' : 'splat');
+      },
+
+      getNarratorQuote(score) {
         let category = 'mid';
-        let sfx = 'beep';
+        if (score >= 85) category = 'epic';
+        else if (score >= 65) category = 'good';
+        else if (score >= 40) category = 'mid';
+        else if (score >= 20) category = 'bad';
+        else category = 'fail';
 
-        if (score >= 85) { category = 'epic'; sfx = 'airhorn'; }
-        else if (score >= 65) { category = 'good'; sfx = 'beep_go'; }
-        else if (score >= 40) { category = 'mid'; sfx = 'beep'; }
-        else if (score >= 20) { category = 'bad'; sfx = 'vine_boom'; }
-        else { category = 'fail'; sfx = 'vine_boom'; }
+        const list = this.narratorQuotes[category];
+        return list[Math.floor(Math.random() * list.length)];
+      },
 
-        const q = this.narratorQuotes[category];
-        box.innerText = q[Math.floor(Math.random() * q.length)];
-        AudioModule.playSfx(sfx);
+      throwTomato() {
+        const overlay = document.getElementById('tomatoOverlay');
+        const tomato = document.getElementById('flyingTomato');
+        const splat = document.getElementById('tomatoSplatGraphic');
+        if (!overlay || !tomato || !splat) return;
+
+        overlay.style.display = 'flex';
+        splat.style.display = 'none';
+        tomato.style.display = 'block';
+        tomato.classList.remove('thrown');
+
+        // Dispara o vôo do tomate com reflow
+        void tomato.offsetWidth;
+        tomato.classList.add('thrown');
+
+        setTimeout(() => {
+          tomato.style.display = 'none';
+          splat.style.display = 'flex';
+          AudioModule.playSfx('splat');
+          AudioModule.playSfx('boo');
+          this.triggerScreenShake();
+        }, 320);
+      },
+
+      hideTomato() {
+        const overlay = document.getElementById('tomatoOverlay');
+        const splat = document.getElementById('tomatoSplatGraphic');
+        const tomato = document.getElementById('flyingTomato');
+        if (overlay) overlay.style.display = 'none';
+        if (splat) splat.style.display = 'none';
+        if (tomato) {
+          tomato.style.display = 'none';
+          tomato.classList.remove('thrown');
+        }
       },
 
       startConfetti() {
