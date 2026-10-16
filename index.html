@@ -788,6 +788,74 @@
       text-shadow: 1px 1px 0 #000;
     }
 
+    /* CARD DE COMPARAÇÃO VISUAL DAS ONDAS DO SOM */
+    .wave-comparison-card {
+      margin-top: 8px;
+      background: rgba(11, 14, 30, 0.94);
+      border: 3px solid #000;
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 4px 4px 0 #000, 0 0 20px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: auto;
+      width: 480px;
+      max-width: 92vw;
+    }
+    .wave-comp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      font-size: 0.76rem;
+      font-weight: 900;
+      gap: 6px;
+    }
+    .wave-label-ref {
+      color: #00f0ff;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+    }
+    .wave-label-user {
+      color: #ff0077;
+      text-shadow: 0 0 8px rgba(255, 0, 119, 0.4);
+    }
+    .wave-match-badge {
+      background: #000;
+      border: 1px solid #ffdd00;
+      color: #ffdd00;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .wave-canvas-wrap {
+      width: 100%;
+      height: 90px;
+      background: #080b18;
+      border: 2px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.85);
+    }
+    .wave-canvas-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .wave-comp-stats {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      font-size: 0.72rem;
+      color: #bbb;
+      font-weight: 800;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
     /* Overlay de Tomatada na Cara (Nota Ruim) */
     .tomato-overlay {
       position: fixed;
@@ -1955,6 +2023,24 @@
   <div id="takeScoreOverlay" class="take-score-hud" style="display:none;">
     <div id="takeScoreNumber" class="take-score-number">0 / 100</div>
     <div id="takeNarratorMeme" class="take-narrator-meme">"Absolute Cinema!"</div>
+
+    <!-- CARD DE COMPARAÇÃO VISUAL DAS ONDAS DO SOM -->
+    <div id="waveComparisonCard" class="wave-comparison-card">
+      <div class="wave-comp-header">
+        <span class="wave-label-ref">🔊 ONDA DO SOM ORIGINAL</span>
+        <span id="waveMatchBadge" class="wave-match-badge">SIMILARIDADE: 0%</span>
+        <span class="wave-label-user">🎙️ SUA ONDA FALADA</span>
+      </div>
+      <div class="wave-canvas-wrap">
+        <canvas id="canvasWaveComparison" width="480" height="90"></canvas>
+      </div>
+      <div id="waveComparisonStats" class="wave-comp-stats">
+        <span>Forma da Onda: <b id="statWaveShape" style="color:#00f0ff;">0%</b></span>
+        <span>Ritmo / Ataques: <b id="statRhythm" style="color:#ffdd00;">0%</b></span>
+        <span>Volume / Envelope: <b id="statEnvelope" style="color:#00f576;">0%</b></span>
+      </div>
+    </div>
+
     <button id="btnAdvanceTake" class="btn btn-pink btn-sm" style="margin-top:10px; font-size:0.95rem; padding:8px 20px;" onclick="GameModule.advanceTakePlayback()">
       PRÓXIMO TAKE ➡️
     </button>
@@ -3088,8 +3174,9 @@
             if (v > maxPeak) maxPeak = v;
           }
         }
-        // Se o áudio tiver sinal mas estiver baixo ou muito alto, equaliza para targetPeak
-        if (maxPeak > 0.003) {
+        // Se o áudio tiver sinal de voz audível (maxPeak > 0.048), equaliza para targetPeak.
+        // Se for silêncio ou ruído de fundo (<= 0.048), NÃO amplifica o ruído elétrico/chiado!
+        if (maxPeak > 0.048) {
           const gain = Math.min(5.0, targetPeak / maxPeak);
           const normBuf = this.ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
           for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -3639,26 +3726,48 @@
       },
 
       evaluate(refData, userData, isUnpitched = false) {
-        // 1. Verificação de sinal: Silêncio ou ruído nulo -> NOTA 0 (Gera tomate na cara!)
+        // 1. Verificação rigorosa de sinal e silêncio (VAD - Voice Activity Detection)
         if (!userData || !userData.rmsEnvelope || userData.rmsEnvelope.length === 0) {
-          return { totalScore: 0, reason: 'silence' };
+          return {
+            totalScore: 0,
+            waveShapeScore: 0,
+            rhythmScore: 0,
+            envelopeScore: 0,
+            pitchScore: 0,
+            isSilence: true,
+            reason: 'silence'
+          };
         }
 
         let maxRms = 0;
         let sumRms = 0;
+        let voicedFrames = 0;
+        const voiceThreshold = 0.042;
         for (let i = 0; i < userData.rmsEnvelope.length; i++) {
           const v = userData.rmsEnvelope[i];
           if (v > maxRms) maxRms = v;
           sumRms += v;
+          if (v >= voiceThreshold) voicedFrames++;
         }
-        const avgRms = sumRms / userData.rmsEnvelope.length;
+        const avgRms = userData.rmsEnvelope.length > 0 ? (sumRms / userData.rmsEnvelope.length) : 0;
+        const contrast = avgRms > 0.0008 ? (maxRms / avgRms) : 1;
 
-        // Se o usuário não falou nada ou foi apenas ruído imperceptível (< 0.018) -> 0 cravado
-        if (maxRms < 0.018 && avgRms < 0.010) {
-          return { totalScore: 0, reason: 'silence' };
+        // Se o usuário não falou nada ou foi apenas ruído elétrico/fã de PC/fundo:
+        // Exige volume de voz real (maxRms >= 0.048), ao menos 3 quadros audíveis e contraste dinâmico de fala >= 2.0
+        if (maxRms < 0.048 || voicedFrames < 3 || contrast < 2.0) {
+          return {
+            totalScore: 0,
+            waveShapeScore: 0,
+            rhythmScore: 0,
+            envelopeScore: 0,
+            pitchScore: 0,
+            isSilence: true,
+            reason: 'silence'
+          };
         }
 
-        const N = 64; // Resample padrão uniforme no tempo
+        // 2. Comparação Acústica Real da Forma da Onda (Envelope de 80 fatias temporais)
+        const N = 80;
         const rEnv = this.resampleArray(refData.rmsEnvelope, N);
         const uEnv = this.resampleArray(userData.rmsEnvelope, N);
 
@@ -3667,8 +3776,6 @@
         const rNorm = rEnv.map(v => v / rMax);
         const uNorm = uEnv.map(v => v / uMax);
 
-        // 2. CORRELAÇÃO DE ENVELOPE DE VOLUME (ALTO VS BAIXO) - PESO 50%
-        // Mede se o jogador subiu e desceu a voz nos mesmos momentos do áudio
         let rMean = 0, uMean = 0;
         for (let i = 0; i < N; i++) { rMean += rNorm[i]; uMean += uNorm[i]; }
         rMean /= N; uMean /= N;
@@ -3686,12 +3793,16 @@
 
         const den = Math.sqrt(denR * denU);
         const pearsonR = den > 0.0001 ? (num / den) : 0;
-        const corrScore = Math.max(0, Math.min(100, Math.round((pearsonR + 1) * 50)));
-        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.4) * 100)));
-        const volumeScore = Math.round(corrScore * 0.65 + maeScore * 0.35);
 
-        // 3. RITMO E ATAQUES (ONSETS) - PESO 30%
-        let rhythmScore = 40;
+        // Pearson R mede se a onda subiu e desceu nos mesmos exatos momentos
+        // Se R <= 0, a forma não tem nenhuma correlação com a do meme
+        const shapeMatch = Math.max(0, pearsonR);
+        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.35) * 100)));
+        const waveShapeScore = Math.max(0, Math.min(100, Math.round(shapeMatch * 68 + maeScore * 0.32)));
+        const envelopeScore = Math.max(0, Math.min(100, Math.round((1 - mae) * 100)));
+
+        // 3. Ritmo e Ataques dos Picos da Onda (Syllable / Beats Alignment)
+        let rhythmScore = 20;
         const refOnsets = refData.onsets || [];
         const userOnsets = userData.onsets || [];
         const durRef = refData.duration || 2.0;
@@ -3707,19 +3818,20 @@
               const diff = Math.abs(roNorm - uoNorm);
               if (diff < closest) closest = diff;
             });
-            onsetMatches += Math.exp(-closest / 0.15);
+            // Gaussiana com tolerância rítmica de 14% da duração
+            onsetMatches += Math.exp(-Math.pow(closest / 0.14, 2));
           });
           const matchRatio = onsetMatches / refOnsets.length;
           const countRatio = Math.min(refOnsets.length, userOnsets.length) / Math.max(refOnsets.length, userOnsets.length);
           rhythmScore = Math.max(0, Math.min(100, Math.round(matchRatio * 70 + countRatio * 30)));
-        } else if (refOnsets.length === 0 && userOnsets.length === 0) {
-          rhythmScore = 75;
+        } else if (refOnsets.length === 0 && userOnsets.length <= 1) {
+          rhythmScore = 60;
         } else {
-          rhythmScore = 20;
+          rhythmScore = 15;
         }
 
-        // 4. MELODIA / CONTORNO DE PITCH - PESO 20%
-        let pitchScore = volumeScore;
+        // 4. Melodia / Pitch (se musical)
+        let pitchScore = waveShapeScore;
         if (!isUnpitched && refData.relativePitch && userData.relativePitch) {
           const rPitch = this.resampleArray(refData.relativePitch, 40);
           const uPitch = this.resampleArray(userData.relativePitch, 40);
@@ -3737,24 +3849,26 @@
             const avgSemiDist = pitchDiffSum / voicedCount;
             pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgSemiDist / 3.0))));
           } else {
-            pitchScore = Math.round(volumeScore * 0.7);
+            pitchScore = Math.round(waveShapeScore * 0.7);
           }
         }
 
-        // Pontuação final genuinamente comparada
-        let finalScore = Math.round(volumeScore * 0.50 + rhythmScore * 0.30 + pitchScore * 0.20);
-        finalScore = Math.max(0, Math.min(100, finalScore));
+        // 5. Pontuação Final Composta
+        let totalScore = Math.round(waveShapeScore * 0.52 + rhythmScore * 0.30 + pitchScore * 0.18);
 
-        // Se o volume foi muito fraco, teto máximo baixo
-        if (maxRms < 0.035) {
-          finalScore = Math.min(25, finalScore);
+        // Se a correlação foi mínima (< 18) ou o score é risível, zero cravado (leva tomate)
+        if (waveShapeScore < 18 || totalScore < 18) {
+          totalScore = 0;
         }
+        totalScore = Math.max(0, Math.min(100, totalScore));
 
         return {
-          totalScore: finalScore,
-          volumeScore,
+          totalScore,
+          waveShapeScore,
           rhythmScore,
-          pitchScore
+          envelopeScore,
+          pitchScore,
+          isSilence: false
         };
       },
 
@@ -3827,6 +3941,138 @@
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
+      },
+
+      // Desenha o gráfico de comparação direta entre a onda de referência e a onda falada
+      drawWaveComparison(canvas, refBuffer, userBuffer, scoreResult) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width || 480;
+        const H = canvas.height || 90;
+        ctx.clearRect(0, 0, W, H);
+
+        // Fundo escuro estilo osciloscópio de estúdio
+        ctx.fillStyle = '#080b18';
+        ctx.fillRect(0, 0, W, H);
+
+        // Linha divisória horizontal central
+        const midY = Math.floor(H / 2);
+        ctx.strokeStyle = '#1a223f';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        ctx.lineTo(W, midY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Marcadores verticais de tempo (25%, 50%, 75%)
+        ctx.strokeStyle = '#12172d';
+        ctx.lineWidth = 1;
+        for (let f = 0.25; f < 1; f += 0.25) {
+          ctx.beginPath();
+          ctx.moveTo(W * f, 0);
+          ctx.lineTo(W * f, H);
+          ctx.stroke();
+        }
+
+        // TOP HALF: ONDA DO SOM ORIGINAL (CIANO NEON)
+        const topMidY = Math.floor(midY / 2);
+        const topMaxAmp = topMidY - 3;
+        if (refBuffer) {
+          const rData = refBuffer.getChannelData(0);
+          const rStep = Math.ceil(rData.length / W);
+          ctx.fillStyle = '#00f0ff';
+          for (let i = 0; i < W; i++) {
+            let min = 1.0, max = -1.0;
+            const start = i * rStep;
+            const end = Math.min(start + rStep, rData.length);
+            for (let j = start; j < end; j++) {
+              const v = rData[j];
+              if (v < min) min = v;
+              if (v > max) max = v;
+            }
+            const amp = Math.max(0.04, (max - min) / 2);
+            const barH = amp * topMaxAmp * 1.85;
+            ctx.fillRect(i, topMidY - barH / 2, 1, Math.max(1, barH));
+          }
+        }
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.9)';
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillText('🔊 ORIGINAL', 8, 12);
+
+        // BOTTOM HALF: SUA ONDA FALADA (ROSA/VERDE OU LINHA RETA VERMELHA EM SILÊNCIO)
+        const botMidY = midY + Math.floor((H - midY) / 2);
+        const botMaxAmp = Math.floor((H - midY) / 2) - 3;
+
+        const isSilence = !scoreResult || scoreResult.isSilence;
+
+        if (isSilence) {
+          // Linha vermelha estrita indicando silêncio absoluto / sem voz
+          ctx.strokeStyle = '#ff0055';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, botMidY);
+          ctx.lineTo(W, botMidY);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ff3366';
+          ctx.font = 'bold 10px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🔇 SILÊNCIO / NENHUMA VOZ CAPTADA (0 PONTOS)', W / 2, botMidY + 14);
+          ctx.textAlign = 'left';
+        } else if (userBuffer) {
+          const uData = userBuffer.getChannelData(0);
+          const uStep = Math.ceil(uData.length / W);
+          const score = (scoreResult && scoreResult.totalScore) || 0;
+          const waveColor = score >= 70 ? '#00f576' : (score >= 40 ? '#ffdd00' : '#ff0077');
+          ctx.fillStyle = waveColor;
+          for (let i = 0; i < W; i++) {
+            let min = 1.0, max = -1.0;
+            const start = i * uStep;
+            const end = Math.min(start + uStep, uData.length);
+            for (let j = start; j < end; j++) {
+              const v = uData[j];
+              if (v < min) min = v;
+              if (v > max) max = v;
+            }
+            const amp = Math.max(0.04, (max - min) / 2);
+            const barH = amp * botMaxAmp * 1.85;
+            ctx.fillRect(i, botMidY - barH / 2, 1, Math.max(1, barH));
+          }
+        }
+        ctx.fillStyle = isSilence ? '#ff3366' : 'rgba(255, 0, 119, 0.9)';
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillText('🎙️ SUA FALA', 8, midY + 12);
+      },
+
+      renderWaveComparisonUI(refBuffer, userBuffer, scoreResult) {
+        const canvas = document.getElementById('canvasWaveComparison');
+        if (canvas) {
+          this.drawWaveComparison(canvas, refBuffer, userBuffer, scoreResult);
+        }
+
+        const badge = document.getElementById('waveMatchBadge');
+        if (badge) {
+          if (!scoreResult || scoreResult.isSilence) {
+            badge.innerText = 'SILÊNCIO: 0%';
+            badge.style.color = '#ff0055';
+            badge.style.borderColor = '#ff0055';
+          } else {
+            const score = scoreResult.totalScore || 0;
+            badge.innerText = `SIMILARIDADE: ${score}%`;
+            const color = score >= 70 ? '#00f576' : (score >= 40 ? '#ffdd00' : '#ff0077');
+            badge.style.color = color;
+            badge.style.borderColor = color;
+          }
+        }
+
+        const statShape = document.getElementById('statWaveShape');
+        const statRhythm = document.getElementById('statRhythm');
+        const statEnv = document.getElementById('statEnvelope');
+        if (statShape) statShape.innerText = `${(scoreResult && scoreResult.waveShapeScore) || 0}%`;
+        if (statRhythm) statRhythm.innerText = `${(scoreResult && scoreResult.rhythmScore) || 0}%`;
+        if (statEnv) statEnv.innerText = `${(scoreResult && scoreResult.envelopeScore) || 0}%`;
       },
 
       // Desenha o gráfico de Waveform idêntico ao screenshot do Mimic Party (Camadas azul, ciano e branco)
@@ -5898,6 +6144,7 @@
           this.highlightActiveCard(p.id);
 
           if (scoreOverlay) scoreOverlay.style.display = 'flex';
+          ScoringModule.renderWaveComparisonUI(this.refAudioBuffer, take.audioBuffer, take.scoreResult);
           let cur = 0;
           const step = Math.max(1, Math.floor(finalScore / 18));
           const t = setInterval(() => {
