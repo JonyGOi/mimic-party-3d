@@ -1155,7 +1155,7 @@
       </button>
 
       <button class="btn btn-neutral btn-menu-sounds" onclick="UIModule.openSoundPacksModal()">
-        📚 PACOTES DE SONS (<span id="menuSoundsCount">140</span>)
+        📚 PACOTES DE SONS (<span id="menuSoundsCount">157</span>)
       </button>
     </div>
 
@@ -1201,7 +1201,7 @@
 
       <!-- Botão para Selecionar Áudios antes de Começar -->
       <button class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703;">
-        🎵 SELECIONAR MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">140</span>)
+        🎵 SELECIONAR MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">157</span>)
       </button>
 
       <div style="text-align:left;">
@@ -1247,7 +1247,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <h2 class="modal-title" style="margin-bottom:2px;">BIBLIOTECA DE PACOTES 📚</h2>
-          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">16 de 16 pacotes instalados (140 sons)</span>
+          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">17 de 17 pacotes instalados (157 sons)</span>
         </div>
         <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPacks')">
           ✖ FECHAR
@@ -1256,7 +1256,7 @@
 
       <!-- Barra de Filtros por Categoria -->
       <div class="pack-filter-bar" id="packFilterBar">
-        <button class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS (140)</button>
+        <button class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS (157)</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MEME BR', this)">🔥 MEME BR</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('TV', this)">📺 TV & RATINHO</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('CHAVES', this)">👦 CHAVES</button>
@@ -2794,7 +2794,7 @@
     };
 
     /* ==========================================================================
-       5. PACKSMODULE: BIBLIOTECA DE 16 PACOTES (140 SONS VOCAIS DO MYINSTANTS)
+       5. PACKSMODULE: BIBLIOTECA DE 17 PACOTES (157 SONS VOCAIS DO MYINSTANTS)
        ========================================================================== */
     const PacksModule = {
       currentFilter: 'TODOS',
@@ -2909,7 +2909,12 @@
             { id: 'chaves_choro', name: 'Pipipipipi! (Chaves Chorando) 😭', shortName: 'PIPIPIPI', tag: 'Chaves Clássico', icon: '😭', file: 'sounds/chaves-choro.mp3', unpitched: false },
             { id: 'kiko_cale_se', name: 'Cale-se, Você me Deixa Louco! 🗯️', shortName: 'CALE-SE!', tag: 'Kiko Tesouro', icon: '🗯️', file: 'sounds/kiko-cale-se.mp3', unpitched: false },
             { id: 'madruga_toma', name: 'Toma! (Seu Madruga) 🥊', shortName: 'TOMA!', tag: 'Seu Madruga', icon: '🥊', file: 'sounds/seu-madruga-toma.mp3', unpitched: false },
-            { id: 'zacarias', name: 'Risada do Zacarias 🤣', shortName: 'ZACARIAS', tag: 'Os Trapalhões', icon: '🤣', file: 'sounds/zacarias.mp3', unpitched: false }
+            { id: 'zacarias', name: 'Risada do Zacarias 🤣', shortName: 'ZACARIAS', tag: 'Os Trapalhões', icon: '🤣', file: 'sounds/zacarias.mp3', unpitched: false },
+            { id: 'nao_contavam', name: 'Não Contavam com Minha Astúcia! 🦗', shortName: 'ASTÚCIA', tag: 'Chapolin Colorado', icon: '🦗', file: 'sounds/nao-contavam-astucia.mp3', unpitched: false },
+            { id: 'sigam_me', name: 'Sigam-me os Bons! 🦸‍♂️', shortName: 'SIGAM-ME', tag: 'Chapolin Colorado', icon: '🦸‍♂️', file: 'sounds/sigam-me-os-bons.mp3', unpitched: false },
+            { id: 'sem_querer', name: 'Foi Sem Querer Querendo! 😇', shortName: 'SEM QUERER', tag: 'Chaves Dublado', icon: '😇', file: 'sounds/sem-querer-querendo.mp3', unpitched: false },
+            { id: 'ninguem_paciencia', name: 'Ninguém Tem Paciência Comigo! 😤', shortName: 'PACIÊNCIA', tag: 'Chaves Dublado', icon: '😤', file: 'sounds/ninguem-paciencia.mp3', unpitched: false },
+            { id: 'quico_risada', name: 'Risada do Quico (Gargalhada) 😹', shortName: 'RISADA QUICO', tag: 'Kiko Tesouro', icon: '😹', file: 'sounds/quico-risada.mp3', unpitched: false }
           ]
         },
         {
@@ -3060,25 +3065,25 @@
         },
         {
           id: 'pack_desenhos',
-          title: 'DESENHOS & INFÂNCIA',
+          title: 'DESENHOS DUBLADOS (BR)',
           category: 'DESENHOS',
-          author: '@nostalgia_kids',
+          author: '@dublagem_nostalgia',
           rating: '5.0',
-          downloads: '4.7k',
+          downloads: '5.9k',
           color: '#ff9f1c',
           icon: '🎪',
           enabled: true,
           sounds: [
-            { id: 'bob_risada', name: 'Risada do Bob Esponja 🧽', shortName: 'BOB ESPONJA', tag: 'Bob Esponja', icon: '🧽', file: 'sounds/bob-risada.mp3', unpitched: false },
-            { id: 'anos_depois', name: '2000 Anos Depois... ⏳', shortName: 'ANOS DEPOIS', tag: 'Narrador Francês', icon: '⏳', file: 'sounds/anos-depois.mp3', unpitched: false },
-            { id: 'scooby_doo', name: 'Scooby-Dooby-Doo! 🐕', shortName: 'SCOOBY-DOO', tag: 'Mistério S/A', icon: '🐕', file: 'sounds/scooby-doo.mp3', unpitched: false },
-            { id: 'homer_doh', name: "D'oh! (Homer Simpson) 🍩", shortName: "D'OH!", tag: 'Os Simpsons', icon: '🍩', file: 'sounds/homer-doh.mp3', unpitched: false },
-            { id: 'homer_woohoo', name: 'Woohoo! (Homer Simpson) 🥳', shortName: 'WOOHOO!', tag: 'Os Simpsons', icon: '🥳', file: 'sounds/homer-woohoo.mp3', unpitched: false },
-            { id: 'pato_donald', name: 'Pato Donald com Raiva 🦆', shortName: 'PATO DONALD', tag: 'Disney Classic', icon: '🦆', file: 'sounds/pato-donald.mp3', unpitched: false },
-            { id: 'ben10_heroi', name: 'Hora de Virar Herói! (Ben 10) ⌚', shortName: 'BEN 10', tag: 'Omnitrix', icon: '⌚', file: 'sounds/ben10-heroi.mp3', unpitched: false },
-            { id: 'mickey_mouse', name: 'Haha! (Mickey Mouse) 🐭', shortName: 'MICKEY', tag: 'Disney Classic', icon: '🐭', file: 'sounds/mickey-mouse.mp3', unpitched: false },
-            { id: 'shrek_ronco', name: 'Faz o Ronco! (Shrek) 🧅', shortName: 'SHREK', tag: 'Tão Tão Distante', icon: '🧅', file: 'sounds/shrek-ronco.mp3', unpitched: false },
-            { id: 'peppa_pig', name: 'Ronco da Peppa Pig 🐷', shortName: 'PEPPA PIG', tag: 'Desenho Infantil', icon: '🐷', file: 'sounds/peppa-pig.mp3', unpitched: false }
+            { id: 'fui_tapeado', name: 'Fui Tapeado! (Pica-Pau) 🐦', shortName: 'FUI TAPEADO', tag: 'Pica-Pau Dublado', icon: '🐦', file: 'sounds/fui-tapeado.mp3', unpitched: false },
+            { id: 'e_la_vamos_nos', name: 'E Lá Vamos Nós! (Bruxa do Pica-Pau) 🧙‍♀️', shortName: 'LÁ VAMOS NÓS', tag: 'Bruxa Pica-Pau', icon: '🧙‍♀️', file: 'sounds/e-la-vamos-nos.mp3', unpitched: false },
+            { id: 'industria_vital', name: 'Nessa Indústria Vital... (Pica-Pau) 🎩', shortName: 'INDÚSTRIA VITAL', tag: 'Pica-Pau Clássico', icon: '🎩', file: 'sounds/industria-vital.mp3', unpitched: false },
+            { id: 'estou_pronto', name: 'Estou Pronto! Estou Pronto! 🧽', shortName: 'ESTOU PRONTO', tag: 'Bob Esponja Dublado', icon: '🧽', file: 'sounds/estou-pronto.mp3', unpitched: false },
+            { id: 'sirigueijo_dinheiro', name: 'Dinheiro, Dinheiro, Dinheiro! 🦀', shortName: 'DINHEIRO!', tag: 'Seu Sirigueijo', icon: '🦀', file: 'sounds/sirigueijo-dinheiro.mp3', unpitched: false },
+            { id: 'buzz_infinito', name: 'Ao Infinito e Além! 🚀', shortName: 'AO INFINITO', tag: 'Buzz Lightyear', icon: '🚀', file: 'sounds/buzz-infinito.mp3', unpitched: false },
+            { id: 'oi_goku', name: 'Oi, Eu Sou o Goku! 🥋', shortName: 'SOU O GOKU', tag: 'Dragon Ball Z BR', icon: '🥋', file: 'sounds/oi-eu-sou-goku.mp3', unpitched: false },
+            { id: 'bob_esponja_br', name: 'Risada do Bob Esponja (Dublado) 😂', shortName: 'BOB ESPONJA', tag: 'Dublagem BR', icon: '😂', file: 'sounds/bob-esponja-risada-br.mp3', unpitched: false },
+            { id: 'pica_pau_risada', name: 'Risada do Pica-Pau 🐦', shortName: 'PICA-PAU', tag: 'Desenho Animado', icon: '🐦', file: 'sounds/pica-pau.mp3', unpitched: false },
+            { id: 'kamehameha', name: 'Kamehameha! (Goku Dublado) 💥', shortName: 'KAMEHAMEHA', tag: 'Dragon Ball Z', icon: '💥', file: 'sounds/kamehameha.mp3', unpitched: false }
           ]
         },
         {
@@ -3148,6 +3153,31 @@
             { id: 'all_star', name: 'Somebody Once Told Me (All Star) 🌟', shortName: 'ALL STAR', tag: 'Smash Mouth', icon: '🌟', file: 'sounds/all-star.mp3', unpitched: false },
             { id: 'crab_rave', name: 'Crab Rave Beat 🦀', shortName: 'CRAB RAVE', tag: 'Noisestorm', icon: '🦀', file: 'sounds/crab-rave.mp3', unpitched: false },
             { id: 'bad_romance', name: 'Bad Romance (Rah Rah) 💃', shortName: 'BAD ROMANCE', tag: 'Lady Gaga', icon: '💃', file: 'sounds/bad-romance.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_memes_lendarios',
+          title: 'MEMES LENDÁRIOS & STREAMERS',
+          category: 'MEME BR',
+          author: '@memes_raiz_br',
+          rating: '5.0',
+          downloads: '6.4k',
+          color: '#06d6a0',
+          icon: '🔥',
+          enabled: true,
+          sounds: [
+            { id: 'meteu_essa', name: 'Meteu Essa?! (Casimiro) 🤨', shortName: 'METEU ESSA', tag: 'Casimiro Miguel', icon: '🤨', file: 'sounds/meteu-essa.mp3', unpitched: false },
+            { id: 'bambam_show', name: 'Hora do Show, Porra! (Bambam) 💪', shortName: 'HORA DO SHOW', tag: 'Kléber Bambam', icon: '💪', file: 'sounds/bambam-show.mp3', unpitched: false },
+            { id: 'bambam_monstro', name: 'Tá Saindo da Jaula o Monstro! 🦁', shortName: 'O MONSTRO', tag: 'Kléber Bambam', icon: '🦁', file: 'sounds/bambam-monstro.mp3', unpitched: false },
+            { id: 'achou_errado', name: 'Achou Errado, Otário! 🎬', shortName: 'ACHOU ERRADO', tag: 'Choque de Cultura', icon: '🎬', file: 'sounds/achou-errado.mp3', unpitched: false },
+            { id: 'sabe_de_nada', name: 'Sabe de Nada, Inocente! 🏖️', shortName: 'INOCENTE!', tag: 'É o Tchan', icon: '🏖️', file: 'sounds/sabe-de-nada.mp3', unpitched: false },
+            { id: 'delicia_cara', name: 'Ai que Delícia, Cara! 🍊', shortName: 'QUE DELÍCIA', tag: 'Jailson Mendes', icon: '🍊', file: 'sounds/delicia-cara.mp3', unpitched: false },
+            { id: 'pegando_fogo', name: 'TÁ PEGANDO FOGO, BICHO! 🔥', shortName: 'FOGO BICHO', tag: 'Faustão Clássico', icon: '🔥', file: 'sounds/pegando-fogo.mp3', unpitched: false },
+            { id: 'tiro_foi_esse', name: 'Que Tiro Foi Esse?! 💥', shortName: 'QUE TIRO', tag: 'Jojo Todynho', icon: '💥', file: 'sounds/tiro-foi-esse.mp3', unpitched: false },
+            { id: 'olha_o_gas', name: 'Olha o Gás! 🛢️', shortName: 'OLHA O GÁS', tag: 'Funk do Botijão', icon: '🛢️', file: 'sounds/olha-o-gas-meme.mp3', unpitched: false },
+            { id: 'abestado', name: 'Abestado! (Tiririca) 🤡', shortName: 'ABESTADO', tag: 'Tiririca', icon: '🤡', file: 'sounds/abestado.mp3', unpitched: false },
+            { id: 'silvio_maoe', name: 'Mah Oê! Hi Hi! (Silvio Santos) 🎙️', shortName: 'MAH OÊ!', tag: 'Silvio Santos', icon: '🎙️', file: 'sounds/silvio-maoe.mp3', unpitched: false },
+            { id: 'ines_gracas', name: 'Alô Alô, Graças a Deus! 💃', shortName: 'GRAÇAS A DEUS', tag: 'Inês Brasil', icon: '💃', file: 'sounds/ines-gracas.mp3', unpitched: false }
           ]
         }
       ],
