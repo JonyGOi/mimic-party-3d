@@ -3794,15 +3794,21 @@
         const den = Math.sqrt(denR * denU);
         const pearsonR = den > 0.0001 ? (num / den) : 0;
 
-        // Pearson R mede se a onda subiu e desceu nos mesmos exatos momentos
-        // Se R <= 0, a forma não tem nenhuma correlação com a do meme
-        const shapeMatch = Math.max(0, pearsonR);
-        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.35) * 100)));
-        const waveShapeScore = Math.max(0, Math.min(100, Math.round(shapeMatch * 68 + maeScore * 0.32)));
+        // Pearson R mede o alinhamento das cristas e vales da onda ao longo do tempo:
+        // R <= 0.22: Desalinhado / fala fora do tempo (shapeMatch = 0)
+        // R >= 0.88: Muito bom / excelente alinhamento temporal
+        let shapeMatch = 0;
+        if (pearsonR > 0.22) {
+          shapeMatch = Math.min(1.0, (pearsonR - 0.22) / (0.88 - 0.22));
+        }
+
+        // MAE avalia a discrepância absoluta entre volumes normalizados
+        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.5) * 100)));
+        const waveShapeScore = Math.max(0, Math.min(100, Math.round(shapeMatch * 75 + maeScore * 0.25)));
         const envelopeScore = Math.max(0, Math.min(100, Math.round((1 - mae) * 100)));
 
-        // 3. Ritmo e Ataques dos Picos da Onda (Syllable / Beats Alignment)
-        let rhythmScore = 20;
+        // 3. Ritmo e Ataques dos Picos da Onda (Syllables & Attacks)
+        let rhythmScore = 15;
         const refOnsets = refData.onsets || [];
         const userOnsets = userData.onsets || [];
         const durRef = refData.duration || 2.0;
@@ -3818,16 +3824,16 @@
               const diff = Math.abs(roNorm - uoNorm);
               if (diff < closest) closest = diff;
             });
-            // Gaussiana com tolerância rítmica de 14% da duração
-            onsetMatches += Math.exp(-Math.pow(closest / 0.14, 2));
+            // Tolerância acústica humana estrita (~8% da duração, cerca de 160ms por sílaba)
+            onsetMatches += Math.exp(-Math.pow(closest / 0.08, 2));
           });
           const matchRatio = onsetMatches / refOnsets.length;
           const countRatio = Math.min(refOnsets.length, userOnsets.length) / Math.max(refOnsets.length, userOnsets.length);
-          rhythmScore = Math.max(0, Math.min(100, Math.round(matchRatio * 70 + countRatio * 30)));
+          rhythmScore = Math.max(0, Math.min(100, Math.round(matchRatio * 75 + countRatio * 25)));
         } else if (refOnsets.length === 0 && userOnsets.length <= 1) {
           rhythmScore = 60;
         } else {
-          rhythmScore = 15;
+          rhythmScore = 10;
         }
 
         // 4. Melodia / Pitch (se musical)
@@ -3853,21 +3859,36 @@
           }
         }
 
-        // 5. Pontuação Final Composta
-        let totalScore = Math.round(waveShapeScore * 0.52 + rhythmScore * 0.30 + pitchScore * 0.18);
+        // 5. Pontuação Final Composta e Curva Estrita Anti-Generosidade
+        let rawScore = Math.round(waveShapeScore * 0.52 + rhythmScore * 0.32 + pitchScore * 0.16);
 
-        // Se a correlação foi mínima (< 18) ou o score é risível, zero cravado (leva tomate)
-        if (waveShapeScore < 18 || totalScore < 18) {
+        // SE FOR RUIM -> NOTA 0 (Leva tomatada na cara e pum de meme)
+        // Critérios de performance ruim:
+        // - Correlação de forma acústica fraca (waveShapeScore < 38 ou pearsonR < 0.22)
+        // - Ritmo fora do tempo (rhythmScore < 28) se o som original tiver ataques
+        // - Pontuação composta crua < 45%
+        const isRuim = rawScore < 45 || waveShapeScore < 38 || (refOnsets.length >= 2 && rhythmScore < 28) || pearsonR < 0.22;
+
+        let totalScore = 0;
+        if (isRuim) {
           totalScore = 0;
+        } else {
+          // Curva estrita: aumenta drasticamente a chance de nota baixa (12 a 45).
+          // NOTAS ALTAS (>= 70) SOMENTE quando a performance for verdadeiramente MUITO BOA!
+          const normalized = (rawScore - 45) / (100 - 45); // [0, 1]
+          const curved = Math.pow(normalized, 1.65);
+          totalScore = Math.round(12 + curved * 88);
+          totalScore = Math.max(12, Math.min(100, totalScore));
         }
-        totalScore = Math.max(0, Math.min(100, totalScore));
 
         return {
           totalScore,
+          rawScore,
           waveShapeScore,
           rhythmScore,
           envelopeScore,
           pitchScore,
+          isRuim,
           isSilence: false
         };
       },
@@ -4006,6 +4027,7 @@
         const botMaxAmp = Math.floor((H - midY) / 2) - 3;
 
         const isSilence = !scoreResult || scoreResult.isSilence;
+        const score = (scoreResult && scoreResult.totalScore) || 0;
 
         if (isSilence) {
           // Linha vermelha estrita indicando silêncio absoluto / sem voz
@@ -4024,8 +4046,17 @@
         } else if (userBuffer) {
           const uData = userBuffer.getChannelData(0);
           const uStep = Math.ceil(uData.length / W);
-          const score = (scoreResult && scoreResult.totalScore) || 0;
-          const waveColor = score >= 70 ? '#00f576' : (score >= 40 ? '#ffdd00' : '#ff0077');
+
+          // Cores por faixa:
+          // 0: Vermelho tomate #ff0055 (Ruim)
+          // 1 a 39: Coral #ff6b6b (Nota baixa)
+          // 40 a 69: Amarelo ouro #ffdd00 (Regular)
+          // >= 70: Verde neon #00f576 (Muito bom!)
+          let waveColor = '#ff0055';
+          if (score >= 70) waveColor = '#00f576';
+          else if (score >= 40) waveColor = '#ffdd00';
+          else if (score > 0) waveColor = '#ff6b6b';
+
           ctx.fillStyle = waveColor;
           for (let i = 0; i < W; i++) {
             let min = 1.0, max = -1.0;
@@ -4040,8 +4071,16 @@
             const barH = amp * botMaxAmp * 1.85;
             ctx.fillRect(i, botMidY - barH / 2, 1, Math.max(1, barH));
           }
+
+          if (score === 0) {
+            ctx.fillStyle = '#ff3366';
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('❌ IMITAÇÃO RUIM / DESALINHADA (0 PONTOS) 🍅', W / 2, botMidY + 14);
+            ctx.textAlign = 'left';
+          }
         }
-        ctx.fillStyle = isSilence ? '#ff3366' : 'rgba(255, 0, 119, 0.9)';
+        ctx.fillStyle = (score === 0 || isSilence) ? '#ff3366' : (score >= 70 ? '#00f576' : 'rgba(255, 107, 107, 0.9)');
         ctx.font = 'bold 9px Inter, sans-serif';
         ctx.fillText('🎙️ SUA FALA', 8, midY + 12);
       },
@@ -4058,12 +4097,25 @@
             badge.innerText = 'SILÊNCIO: 0%';
             badge.style.color = '#ff0055';
             badge.style.borderColor = '#ff0055';
+          } else if (scoreResult.totalScore === 0) {
+            badge.innerText = 'RUIM / TOMATADA: 0%';
+            badge.style.color = '#ff0055';
+            badge.style.borderColor = '#ff0055';
           } else {
             const score = scoreResult.totalScore || 0;
-            badge.innerText = `SIMILARIDADE: ${score}%`;
-            const color = score >= 70 ? '#00f576' : (score >= 40 ? '#ffdd00' : '#ff0077');
-            badge.style.color = color;
-            badge.style.borderColor = color;
+            if (score >= 70) {
+              badge.innerText = `MUITO BOM: ${score}%`;
+              badge.style.color = '#00f576';
+              badge.style.borderColor = '#00f576';
+            } else if (score >= 40) {
+              badge.innerText = `REGULAR: ${score}%`;
+              badge.style.color = '#ffdd00';
+              badge.style.borderColor = '#ffdd00';
+            } else {
+              badge.innerText = `NOTA BAIXA: ${score}%`;
+              badge.style.color = '#ff6b6b';
+              badge.style.borderColor = '#ff6b6b';
+            }
           }
         }
 
@@ -6088,14 +6140,35 @@
         const outBuf = AudioModule.ctx.createBuffer(1, len, sr);
         const outData = outBuf.getChannelData(0);
 
-        const jitter = (1 - skill) * 0.28;
-        const speed = 0.97 + Math.random() * 0.06 * (1 - skill);
+        // Chance de falhar ("ruim" -> nota 0, toma tomate)
+        const flubChance = Math.max(0.12, (1 - skill) * 0.45);
+        const isFlub = Math.random() < flubChance;
+
+        if (isFlub) {
+          // Erro feio: entra com atraso rítmico ou mumble que gera correlação baixa (< 38%)
+          const delaySamples = Math.floor(sr * (0.35 + Math.random() * 0.45));
+          const garbleRate = 0.45 + Math.random() * 0.35;
+          for (let i = 0; i < len; i++) {
+            if (i < delaySamples) {
+              outData[i] = (Math.random() - 0.5) * 0.008;
+            } else {
+              const srcIdx = Math.min(len - 1, Math.floor((i - delaySamples) * garbleRate));
+              outData[i] = refData[srcIdx] * (0.28 + Math.random() * 0.35);
+            }
+          }
+          return outBuf;
+        }
+
+        // Performance normal: variação humana rítmica e temporal proporcional à skill
+        const speed = 0.93 + Math.random() * 0.14 * (1 - skill * 0.5);
+        const timingOffset = Math.floor((Math.random() - 0.5) * sr * 0.18 * (1 - skill));
+        const jitter = (1 - skill) * 0.42;
 
         for (let i = 0; i < len; i++) {
-          const srcIdx = Math.min(len - 1, Math.floor(i * speed));
+          const srcIdx = Math.min(len - 1, Math.max(0, Math.floor(i * speed + timingOffset)));
           let s = refData[srcIdx];
           if (jitter > 0) {
-            s += (Math.random() - 0.5) * jitter * 0.07;
+            s += (Math.random() - 0.5) * jitter * 0.10;
           }
           outData[i] = Math.max(-1, Math.min(1, s));
         }
@@ -6156,17 +6229,18 @@
 
               if (memeEl) memeEl.innerText = UIModule.getNarratorQuote(finalScore);
 
-              // TOMATE EXCLUSIVAMENTE COM NOTA 0/100 (Silêncio absoluto / erro total)
+              // TOMATE QUANDO A NOTA FOR 0/100 (Silêncio ou performance ruim!)
               if (finalScore === 0) {
                 UIModule.throwTomato();
                 Scene3DModule.throwTomatoesAt(p.char3D, 4);
                 AudioModule.playMemeFart();
                 p.char3D.audioAmplitude = 0;
-              } else if (finalScore >= 60) {
+              } else if (finalScore >= 70) {
+                // NOTA ALTA (>= 70): Somente quando for MUITO BOM!
                 AudioModule.playSfx('applause');
                 UIModule.startConfetti();
               } else {
-                // NOTA INTERMEDIÁRIA (1 a 59): Não leva tomate! Som neutro
+                // NOTA BAIXA OU MÉDIA (1 a 69): Não leva tomate, som neutro
                 AudioModule.playSfx('tick');
               }
 
@@ -6626,7 +6700,7 @@
       triggerTakeReactions(score) {
         if (score === 0) {
           AudioModule.playSfx('splat');
-        } else if (score >= 60) {
+        } else if (score >= 70) {
           AudioModule.playSfx('applause');
         } else {
           AudioModule.playSfx('tick');
@@ -6635,10 +6709,10 @@
 
       getNarratorQuote(score) {
         let category = 'mid';
-        if (score >= 85) category = 'epic';
-        else if (score >= 65) category = 'good';
+        if (score >= 88) category = 'epic';
+        else if (score >= 70) category = 'good';
         else if (score >= 40) category = 'mid';
-        else if (score >= 20) category = 'bad';
+        else if (score >= 12) category = 'bad';
         else category = 'fail';
 
         const list = this.narratorQuotes[category];
