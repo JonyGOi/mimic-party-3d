@@ -558,6 +558,69 @@
       box-shadow: 4px 4px 0 #000;
     }
 
+    /* Banner de Intervalo / Escolhendo Próximo Som (5 segundos de conversa) */
+    .intermission-hud {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14, 11, 30, 0.94);
+      border: 3.5px solid #00f0ff;
+      border-radius: 22px;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5), 4px 4px 0 #000;
+      padding: 14px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 55;
+      text-align: center;
+      max-width: 550px;
+      width: 90%;
+      animation: scorePop 0.3s ease;
+    }
+
+    .intermission-badge {
+      background: #ff0077;
+      color: #fff;
+      font-weight: 900;
+      font-size: 0.8rem;
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1.5px solid #000;
+      letter-spacing: 0.5px;
+    }
+
+    .intermission-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: #ffffff;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .intermission-subtitle {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #cbd5e1;
+    }
+
+    .intermission-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid #000;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .intermission-progress-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff0077, #ffdd00, #00f0ff);
+      transition: width 1s linear;
+    }
+
     /* Seletor de Áudios de Memes */
     .sound-item-row {
       display: flex;
@@ -1329,6 +1392,18 @@
     </div>
   </div>
 
+  <!-- BANNER DE INTERVALO / ESCOLHENDO PRÓXIMO SOM (5 SEGUNDOS DE CONVERSA) -->
+  <div id="intermissionHUD" class="intermission-hud" style="display:none;">
+    <div class="intermission-badge">💬 HORA DE CONVERSAR</div>
+    <div id="intermissionTitle" class="intermission-title">
+      🎧 Escolhendo próximo som... <span id="intermissionSeconds" style="color:#ffdd00;">5s</span>
+    </div>
+    <div class="intermission-subtitle">Aproveitem para rir dos takes e zoar quem levou tomate! 🗣️🔥</div>
+    <div class="intermission-progress-bar">
+      <div id="intermissionProgressFill" class="intermission-progress-fill"></div>
+    </div>
+  </div>
+
   <!-- MODAL: PODIUM FINAL E TIER LIST -->
   <div id="modalFinalPodium" class="modal-overlay" style="display:none;">
     <div class="modal-box" style="max-width:650px;">
@@ -1949,6 +2024,15 @@
         }
       },
 
+      isVoiceChatOpen: false,
+      setVoiceChatActive(isActive) {
+        this.isVoiceChatOpen = isActive;
+        // Durante a gravação: ninguém se ouve. Durante roleta e intervalo: todos se ouvem!
+        document.querySelectorAll('.remote-voice-player').forEach(el => {
+          el.muted = !isActive;
+        });
+      },
+
       // Gravação 100% Real da Voz usando MediaRecorder com fallback PCM
       recordTakePCM(durationSeconds, onProgress, onFinish) {
         this.ensureContext();
@@ -2316,49 +2400,138 @@
       },
 
       evaluate(refData, userData, isUnpitched = false) {
-        if (!userData || userData.rmsEnvelope.length === 0) return { totalScore: 10 };
+        // 1. Verificação de sinal: Silêncio ou ruído nulo -> NOTA 0 (Gera tomate na cara!)
+        if (!userData || !userData.rmsEnvelope || userData.rmsEnvelope.length === 0) {
+          return { totalScore: 0, reason: 'silence' };
+        }
 
-        let pitchScore = 80;
-        if (!isUnpitched) {
-          let diffSum = 0;
-          let count = 0;
-          const len = Math.min(refData.relativePitch.length, userData.relativePitch.length);
-          for (let i = 0; i < len; i++) {
-            const r = refData.relativePitch[i];
-            const u = userData.relativePitch[i];
-            if (r !== null && u !== null) {
-              diffSum += Math.abs(r - u);
-              count++;
+        let maxRms = 0;
+        let sumRms = 0;
+        for (let i = 0; i < userData.rmsEnvelope.length; i++) {
+          const v = userData.rmsEnvelope[i];
+          if (v > maxRms) maxRms = v;
+          sumRms += v;
+        }
+        const avgRms = sumRms / userData.rmsEnvelope.length;
+
+        // Se o usuário não falou nada ou foi apenas ruído imperceptível (< 0.018) -> 0 cravado
+        if (maxRms < 0.018 && avgRms < 0.010) {
+          return { totalScore: 0, reason: 'silence' };
+        }
+
+        const N = 64; // Resample padrão uniforme no tempo
+        const rEnv = this.resampleArray(refData.rmsEnvelope, N);
+        const uEnv = this.resampleArray(userData.rmsEnvelope, N);
+
+        const rMax = Math.max(0.001, ...rEnv);
+        const uMax = Math.max(0.001, ...uEnv);
+        const rNorm = rEnv.map(v => v / rMax);
+        const uNorm = uEnv.map(v => v / uMax);
+
+        // 2. CORRELAÇÃO DE ENVELOPE DE VOLUME (ALTO VS BAIXO) - PESO 50%
+        // Mede se o jogador subiu e desceu a voz nos mesmos momentos do áudio
+        let rMean = 0, uMean = 0;
+        for (let i = 0; i < N; i++) { rMean += rNorm[i]; uMean += uNorm[i]; }
+        rMean /= N; uMean /= N;
+
+        let num = 0, denR = 0, denU = 0, mae = 0;
+        for (let i = 0; i < N; i++) {
+          const dr = rNorm[i] - rMean;
+          const du = uNorm[i] - uMean;
+          num += dr * du;
+          denR += dr * dr;
+          denU += du * du;
+          mae += Math.abs(rNorm[i] - uNorm[i]);
+        }
+        mae /= N;
+
+        const den = Math.sqrt(denR * denU);
+        const pearsonR = den > 0.0001 ? (num / den) : 0;
+        const corrScore = Math.max(0, Math.min(100, Math.round((pearsonR + 1) * 50)));
+        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.4) * 100)));
+        const volumeScore = Math.round(corrScore * 0.65 + maeScore * 0.35);
+
+        // 3. RITMO E ATAQUES (ONSETS) - PESO 30%
+        let rhythmScore = 40;
+        const refOnsets = refData.onsets || [];
+        const userOnsets = userData.onsets || [];
+        const durRef = refData.duration || 2.0;
+        const durUser = userData.duration || 2.0;
+
+        if (refOnsets.length > 0 && userOnsets.length > 0) {
+          let onsetMatches = 0;
+          refOnsets.forEach(ro => {
+            const roNorm = ro.time / durRef;
+            let closest = Infinity;
+            userOnsets.forEach(uo => {
+              const uoNorm = uo.time / durUser;
+              const diff = Math.abs(roNorm - uoNorm);
+              if (diff < closest) closest = diff;
+            });
+            onsetMatches += Math.exp(-closest / 0.15);
+          });
+          const matchRatio = onsetMatches / refOnsets.length;
+          const countRatio = Math.min(refOnsets.length, userOnsets.length) / Math.max(refOnsets.length, userOnsets.length);
+          rhythmScore = Math.max(0, Math.min(100, Math.round(matchRatio * 70 + countRatio * 30)));
+        } else if (refOnsets.length === 0 && userOnsets.length === 0) {
+          rhythmScore = 75;
+        } else {
+          rhythmScore = 20;
+        }
+
+        // 4. MELODIA / CONTORNO DE PITCH - PESO 20%
+        let pitchScore = volumeScore;
+        if (!isUnpitched && refData.relativePitch && userData.relativePitch) {
+          const rPitch = this.resampleArray(refData.relativePitch, 40);
+          const uPitch = this.resampleArray(userData.relativePitch, 40);
+          let pitchDiffSum = 0;
+          let voicedCount = 0;
+          for (let i = 0; i < 40; i++) {
+            const rp = rPitch[i];
+            const up = uPitch[i];
+            if (rp !== null && up !== null && !isNaN(rp) && !isNaN(up)) {
+              pitchDiffSum += Math.abs(rp - up);
+              voicedCount++;
             }
           }
-          const avgDist = count > 0 ? diffSum / count : 4.0;
-          pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgDist / 2.8))));
-        } else {
-          let envDiffSum = 0;
-          const len = Math.min(refData.rmsEnvelope.length, userData.rmsEnvelope.length);
-          for (let i = 0; i < len; i++) {
-            envDiffSum += Math.abs(refData.rmsEnvelope[i] - userData.rmsEnvelope[i]);
+          if (voicedCount >= 4) {
+            const avgSemiDist = pitchDiffSum / voicedCount;
+            pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgSemiDist / 3.0))));
+          } else {
+            pitchScore = Math.round(volumeScore * 0.7);
           }
-          const avgEnvDist = len > 0 ? envDiffSum / len : 0.5;
-          pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgEnvDist / 0.4))));
         }
 
-        let timingScore = 75;
-        if (refData.onsets.length > 0 && userData.onsets.length > 0) {
-          let sum = 0;
-          refData.onsets.forEach(ro => {
-            let minD = Infinity;
-            userData.onsets.forEach(uo => {
-              const d = Math.abs(ro.time - uo.time);
-              if (d < minD) minD = d;
-            });
-            sum += Math.exp(-minD / 0.25);
-          });
-          timingScore = Math.min(100, Math.round((sum / refData.onsets.length) * 100));
+        // Pontuação final genuinamente comparada
+        let finalScore = Math.round(volumeScore * 0.50 + rhythmScore * 0.30 + pitchScore * 0.20);
+        finalScore = Math.max(0, Math.min(100, finalScore));
+
+        // Se o volume foi muito fraco, teto máximo baixo
+        if (maxRms < 0.035) {
+          finalScore = Math.min(25, finalScore);
         }
 
-        const total = Math.round(pitchScore * 0.5 + timingScore * 0.5);
-        return { totalScore: Math.max(15, Math.min(100, total)) };
+        return {
+          totalScore: finalScore,
+          volumeScore,
+          rhythmScore,
+          pitchScore
+        };
+      },
+
+      resampleArray(arr, targetLen) {
+        if (!arr || arr.length === 0) return new Array(targetLen).fill(0);
+        const result = [];
+        for (let i = 0; i < targetLen; i++) {
+          const pos = (i / (targetLen - 1)) * (arr.length - 1);
+          const low = Math.floor(pos);
+          const high = Math.min(arr.length - 1, Math.ceil(pos));
+          const weight = pos - low;
+          const vLow = arr[low] !== null && !isNaN(arr[low]) ? arr[low] : 0;
+          const vHigh = arr[high] !== null && !isNaN(arr[high]) ? arr[high] : 0;
+          result.push(vLow * (1 - weight) + vHigh * weight);
+        }
+        return result;
       },
 
       drawContourCanvas(canvas, refData, userData, isUnpitched) {
@@ -2885,6 +3058,17 @@
           this.updateWaitingRoomUI();
         });
 
+        this.peer.on('call', (call) => {
+          try {
+            call.answer(AudioModule.micStream || undefined);
+            call.on('stream', (remoteStream) => {
+              this.handleIncomingVoiceStream(remoteStream, call.peer);
+            });
+          } catch (e) {
+            console.warn("Peer on call error:", e);
+          }
+        });
+
         this.peer.on('connection', (conn) => {
           this.connections.push(conn);
           this.setupConnectionHandlers(conn);
@@ -2924,7 +3108,19 @@
             });
             UIModule.closeModal('modalJoinRoom');
             GameModule.startOnlineClientMode();
+            setTimeout(() => this.setupVoiceCall(targetPeerId), 1000);
           });
+        });
+
+        this.peer.on('call', (call) => {
+          try {
+            call.answer(AudioModule.micStream || undefined);
+            call.on('stream', (remoteStream) => {
+              this.handleIncomingVoiceStream(remoteStream, call.peer);
+            });
+          } catch (e) {
+            console.warn("Peer on call error:", e);
+          }
         });
       },
 
@@ -2935,6 +3131,33 @@
         });
       },
 
+      setupVoiceCall(remotePeerId) {
+        if (!this.peer || !AudioModule.micStream) return;
+        try {
+          const call = this.peer.call(remotePeerId, AudioModule.micStream);
+          if (call) {
+            call.on('stream', (remoteStream) => {
+              this.handleIncomingVoiceStream(remoteStream, remotePeerId);
+            });
+          }
+        } catch (e) {
+          console.warn("setupVoiceCall err:", e);
+        }
+      },
+
+      handleIncomingVoiceStream(stream, peerId) {
+        let audioEl = document.getElementById(`voice_${peerId}`);
+        if (!audioEl) {
+          audioEl = document.createElement('audio');
+          audioEl.id = `voice_${peerId}`;
+          audioEl.className = 'remote-voice-player';
+          audioEl.autoplay = true;
+          document.body.appendChild(audioEl);
+        }
+        audioEl.srcObject = stream;
+        audioEl.muted = !AudioModule.isVoiceChatOpen;
+      },
+
       broadcast(msg) {
         this.connections.forEach(conn => { if (conn.open) conn.send(msg); });
       },
@@ -2943,6 +3166,7 @@
         if (msg.type === 'PLAYER_JOIN' && this.isHost) {
           GameModule.addOnlinePlayer(msg.name, msg.hair, msg.shirtColor, senderConn.peer);
           this.broadcastRoomState();
+          setTimeout(() => this.setupVoiceCall(senderConn.peer), 800);
         } else if (msg.type === 'ROOM_STATE') {
           GameModule.syncOnlinePlayers(msg.players);
         } else if (msg.type === 'START_GAME') {
@@ -3088,10 +3312,10 @@
         this.isOnline = false;
 
         const botConfigs = [
-          { name: 'Cap', hair: 'bald', shirt: '#ff0044' },
-          { name: 'Sangras', hair: 'brown_parted', shirt: '#0066ff' },
-          { name: 'MrFall', hair: 'bald', shirt: '#ff0044' },
-          { name: 'Gaga', hair: 'brown_parted', shirt: '#0066ff' }
+          { name: 'Cap', hair: 'bald', shirt: '#ff0044', skill: 0.78 },
+          { name: 'Sangras', hair: 'brown_parted', shirt: '#0066ff', skill: 0.65 },
+          { name: 'MrFall', hair: 'bald', shirt: '#ffbb00', skill: 0.52 },
+          { name: 'Gaga', hair: 'brown_parted', shirt: '#00f576', skill: 0.84 }
         ];
 
         this.players = [this.localPlayer];
@@ -3107,6 +3331,7 @@
             id: 'bot_' + idx,
             name: b.name,
             isBot: true,
+            botSkill: b.skill,
             score: 0,
             char3D: bChar
           });
@@ -3404,11 +3629,10 @@
           const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
           this.animateNeedle(dur);
           AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
-            // Concluiu a escuta da referência, prepara para gravar!
+            // Concluiu a escuta da referência, prepara para gravar TODOS AO MESMO TEMPO!
             setTimeout(() => {
               this.roundTakes = [];
-              this.currentTurnIndex = 0;
-              this.runTurnRecording();
+              this.startSimultaneousRecording();
             }, 600);
           });
         }, 500);
@@ -3447,23 +3671,22 @@
 
         const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
         this.animateNeedle(dur);
-        AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {});
+        AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
+          setTimeout(() => {
+            this.roundTakes = [];
+            this.startSimultaneousRecording();
+          }, 600);
+        });
       },
 
-      async runTurnRecording() {
-        if (this.currentTurnIndex >= this.players.length) {
-          // Esconde overlay de gravação e abre julgamento dos takes
-          document.getElementById('soundShowcaseOverlay').style.display = 'none';
-          this.startTakesShowcase();
-          return;
-        }
+      // Gravação Simultânea: Todos gravam o mesmo áudio ao mesmo tempo, mas ninguém se ouve!
+      async startSimultaneousRecording() {
+        await AudioModule.initMic();
 
-        const p = this.players[this.currentTurnIndex];
-        this.highlightActiveCard(p.id);
+        // Durante a gravação: ninguém se ouve!
+        AudioModule.setVoiceChatActive(false);
 
-        // O boneco da vez caminha até o microfone!
-        p.char3D.walkTo(0, -0.6);
-        Scene3DModule.setCameraView('close_singer');
+        Scene3DModule.setCameraView('stage_lineup');
 
         const overlay = document.getElementById('soundShowcaseOverlay');
         const subtitleEl = document.getElementById('showcaseSubtitle');
@@ -3472,43 +3695,9 @@
         overlay.style.display = 'flex';
         needle.style.left = '0%';
 
-        // Se for BOT: simula o take com rapidez e animação
-        if (p.isBot) {
-          subtitleEl.innerText = `Vez de: ${p.name.toUpperCase()} (BOT) 🤖`;
-          countBadge.style.display = 'none';
-          p.char3D.isSinging = true;
-          p.char3D.audioAmplitude = 0.6;
-          const dur = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.2) : 1.5;
-          this.animateNeedle(dur);
-          this.simulateBotLiveWave(dur);
-
-          setTimeout(() => {
-            p.char3D.isSinging = false;
-            p.char3D.audioAmplitude = 0;
-            const botTakeBuffer = this.refAudioBuffer;
-            const botAnalysis = ScoringModule.analyzeBuffer(botTakeBuffer);
-            const scoreRes = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
-
-            this.roundTakes.push({
-              player: p,
-              audioBuffer: botTakeBuffer,
-              userAnalysis: botAnalysis,
-              scoreResult: scoreRes
-            });
-
-            // Boneco volta para a fila
-            p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
-            this.currentTurnIndex++;
-            setTimeout(() => this.runTurnRecording(), 400);
-          }, Math.max(900, Math.floor(dur * 1000)));
-          return;
-        }
-
-        // Jogador Humano: garante microfone pronto
-        await AudioModule.initMic();
-
-        subtitleEl.innerText = `Sua vez! Prepare-se para imitar... 🎤`;
+        subtitleEl.innerText = 'Preparem-se todos para imitar! 🎤';
         countBadge.style.display = 'block';
+
         let count = 3;
         countBadge.innerText = count;
         AudioModule.playSfx('beep');
@@ -3523,42 +3712,100 @@
             AudioModule.playSfx('beep_go');
             clearInterval(interval);
 
-            subtitleEl.innerText = `Gravando sua voz... IMITE O SOM! 🗣️`;
+            subtitleEl.innerText = '🗣️ GRAVANDO TODOS AO MESMO TEMPO! IMITEM O SOM!';
             const duration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
-            p.char3D.isSinging = true;
+
+            // Todos os bonecos cantam e pulam juntos no palco!
+            this.players.forEach(p => {
+              p.char3D.isSinging = true;
+              p.char3D.audioAmplitude = 0.6;
+            });
+
+            // Agulha corre sobre a onda de referência
             this.animateNeedle(duration);
+            // Desenha a forma de onda ao vivo da voz do jogador local
             this.startLiveWaveform(duration);
 
             AudioModule.recordTakePCM(duration,
               (prog) => {
-                p.char3D.audioAmplitude = 0.5 + Math.random() * 0.4;
+                if (this.localPlayer && this.localPlayer.char3D) {
+                  this.localPlayer.char3D.audioAmplitude = 0.5 + Math.random() * 0.4;
+                }
               },
               (userBuf) => {
                 try {
                   countBadge.style.display = 'none';
+
+                  // Todos os bonecos param de cantar
+                  this.players.forEach(p => {
+                    p.char3D.isSinging = false;
+                    p.char3D.audioAmplitude = 0;
+                  });
+
+                  // Avaliação real do take do microfone (silêncio total dá 0/100)
                   const userAnalysis = ScoringModule.analyzeBuffer(userBuf);
                   const scoreRes = ScoringModule.evaluate(this.refAnalysis, userAnalysis, this.currentSound ? this.currentSound.unpitched : false);
 
                   this.roundTakes.push({
-                    player: p,
+                    player: this.localPlayer,
                     audioBuffer: userBuf,
                     userAnalysis,
-                    scoreResult: scoreRes
+                    scoreResult: scoreRes,
+                    sabotage: this.localPlayer.pendingSabotage || null
                   });
+                  this.localPlayer.pendingSabotage = null;
+
+                  // Bots geram takes audíveis com variação realista
+                  this.players.forEach(p => {
+                    if (p.isBot) {
+                      const botBuf = this.generateBotAudioBuffer(this.refAudioBuffer, p.botSkill || 0.7);
+                      const botAnalysis = ScoringModule.analyzeBuffer(botBuf);
+                      const botScore = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
+                      this.roundTakes.push({
+                        player: p,
+                        audioBuffer: botBuf,
+                        userAnalysis: botAnalysis,
+                        scoreResult: botScore,
+                        sabotage: p.pendingSabotage || null
+                      });
+                      p.pendingSabotage = null;
+                    }
+                  });
+
                 } catch (err) {
-                  console.error("Erro na análise do take:", err);
+                  console.error("Erro ao finalizar gravação simultânea:", err);
                 } finally {
-                  // O BONECO VOLTA COM 100% DE CERTEZA
-                  p.char3D.isSinging = false;
-                  p.char3D.audioAmplitude = 0;
-                  p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
-                  this.currentTurnIndex++;
-                  setTimeout(() => this.runTurnRecording(), 600);
+                  document.getElementById('soundShowcaseOverlay').style.display = 'none';
+                  setTimeout(() => {
+                    this.startTakesShowcase();
+                  }, 400);
                 }
               }
             );
           }
         }, 850);
+      },
+
+      generateBotAudioBuffer(refBuf, skill = 0.7) {
+        if (!refBuf || !AudioModule.ctx) return AudioModule.createSilentBuffer(1.5);
+        const sr = refBuf.sampleRate;
+        const refData = refBuf.getChannelData(0);
+        const len = refData.length;
+        const outBuf = AudioModule.ctx.createBuffer(1, len, sr);
+        const outData = outBuf.getChannelData(0);
+
+        const jitter = (1 - skill) * 0.28;
+        const speed = 0.97 + Math.random() * 0.06 * (1 - skill);
+
+        for (let i = 0; i < len; i++) {
+          const srcIdx = Math.min(len - 1, Math.floor(i * speed));
+          let s = refData[srcIdx];
+          if (jitter > 0) {
+            s += (Math.random() - 0.5) * jitter * 0.07;
+          }
+          outData[i] = Math.max(-1, Math.min(1, s));
+        }
+        return outBuf;
       },
 
       startTakesShowcase() {
@@ -3577,7 +3824,6 @@
         const take = this.roundTakes[this.activePlaybackIndex];
         const p = take.player;
 
-        // Limpa overlays anteriores de pontuação e tomate
         const scoreOverlay = document.getElementById('takeScoreOverlay');
         const scoreEl = document.getElementById('takeScoreNumber');
         const memeEl = document.getElementById('takeNarratorMeme');
@@ -3585,16 +3831,13 @@
         UIModule.hideTomato();
         UIModule.stopConfetti();
 
-        // Destaca o card do jogador ativo com o ícone de alto-falante 🔊
         this.highlightActiveCard(p.id);
 
-        // O personagem caminha até o microfone para soltar o som!
         p.char3D.walkTo(0, -0.6);
         p.char3D.isSinging = true;
         p.char3D.audioAmplitude = 0.8;
         Scene3DModule.setCameraView('close_singer');
 
-        // Reproduz o take do jogador
         AudioModule.playAudioBuffer(take.audioBuffer, take.sabotage, () => {
           p.char3D.isSinging = false;
           p.char3D.audioAmplitude = 0;
@@ -3603,7 +3846,6 @@
           this.updateTopBarCards();
           this.highlightActiveCard(p.id);
 
-          // Revela a pontuação gigante no chão do palco estilo Mimic Party (Screenshot 63 / 100)
           if (scoreOverlay) scoreOverlay.style.display = 'flex';
           let cur = 0;
           const step = Math.max(1, Math.floor(finalScore / 18));
@@ -3614,20 +3856,20 @@
               clearInterval(t);
               AudioModule.playSfx('tick');
 
-              // Atualiza o meme do narrador
               if (memeEl) memeEl.innerText = UIModule.getNarratorQuote(finalScore);
 
-              // SE A NOTA FOR RUIM (< 60): Tomate na cara e barulho de vaias!
-              if (finalScore < 60) {
+              // TOMATE EXCLUSIVAMENTE COM NOTA 0/100 (Silêncio absoluto / erro total)
+              if (finalScore === 0) {
                 UIModule.throwTomato();
                 p.char3D.audioAmplitude = 0;
-              } else {
-                // NOTA BOA (>= 60): Aplausos e chuva de confetes!
+              } else if (finalScore >= 60) {
                 AudioModule.playSfx('applause');
                 UIModule.startConfetti();
+              } else {
+                // NOTA INTERMEDIÁRIA (1 a 59): Não leva tomate! Som neutro
+                AudioModule.playSfx('tick');
               }
 
-              // Auto-avanço de segurança: passa para o próximo take após 4.2 segundos
               if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
               this.autoAdvanceTimer = setTimeout(() => {
                 if (scoreOverlay && scoreOverlay.style.display !== 'none') {
@@ -3666,14 +3908,63 @@
           return;
         }
 
+        // Ativa o chat de voz quando a roleta abre para que todos conversem!
+        AudioModule.setVoiceChatActive(true);
+
         document.getElementById('modalRoulette').style.display = 'flex';
         WheelModule.init();
       },
 
+      applyRouletteSegment(seg) {
+        if (!seg) return;
+        if (seg.type === 'bonus') {
+          if (this.localPlayer) this.localPlayer.score += seg.val;
+          this.updateTopBarCards();
+        } else if (seg.type === 'mult') {
+          this.scoreMultiplier = seg.val;
+        } else if (seg.type === 'sabotage') {
+          const sorted = [...this.players].sort((a, b) => b.score - a.score);
+          const target = sorted[0];
+          if (target) {
+            target.pendingSabotage = seg.sub;
+          }
+        }
+      },
+
+      startIntermissionChat(seconds = 5) {
+        // Mantém chat de voz ativo durante o intervalo de conversa
+        AudioModule.setVoiceChatActive(true);
+        Scene3DModule.setCameraView('stage_lineup');
+
+        const hud = document.getElementById('intermissionHUD');
+        const secSpan = document.getElementById('intermissionSeconds');
+        if (hud) hud.style.display = 'flex';
+        let remaining = seconds;
+        if (secSpan) secSpan.innerText = `${remaining}s`;
+
+        if (this.intermissionInterval) clearInterval(this.intermissionInterval);
+        this.intermissionInterval = setInterval(() => {
+          remaining--;
+          if (secSpan) secSpan.innerText = `${remaining}s`;
+          AudioModule.playSfx('tick');
+
+          if (remaining <= 0) {
+            clearInterval(this.intermissionInterval);
+            this.intermissionInterval = null;
+            if (hud) hud.style.display = 'none';
+
+            // Silencia chat de voz antes de começar a rodada de imitação
+            AudioModule.setVoiceChatActive(false);
+
+            this.currentRound++;
+            this.startNextRound();
+          }
+        }, 1000);
+      },
+
       proceedAfterRoulette() {
         UIModule.closeModal('modalRoulette');
-        this.currentRound++;
-        this.startNextRound();
+        this.startIntermissionChat(5);
       },
 
       updateTopBarCards() {
@@ -3793,10 +4084,25 @@
       init() {
         this.canvas = document.getElementById('wheelCanvas');
         this.ctx = this.canvas.getContext('2d');
-        document.getElementById('wheelResultBox').style.display = 'none';
-        document.getElementById('btnProceedAfterWheel').style.display = 'none';
-        document.getElementById('btnSpinWheel').style.display = 'inline-flex';
+        const box = document.getElementById('wheelResultBox');
+        const btnNext = document.getElementById('btnProceedAfterWheel');
+        const btnSpin = document.getElementById('btnSpinWheel');
+        if (box) box.style.display = 'none';
+        if (btnNext) btnNext.style.display = 'none';
+        if (btnSpin) {
+          btnSpin.style.display = 'inline-flex';
+          btnSpin.innerText = '🎰 GIRANDO ROLETA...';
+          btnSpin.disabled = true;
+        }
         this.draw();
+
+        // Ativa o chat de voz quando a roleta roda para que todos se ouçam e conversem!
+        AudioModule.setVoiceChatActive(true);
+
+        // GIRA AUTOMATICAMENTE!
+        setTimeout(() => {
+          this.spin();
+        }, 380);
       },
 
       draw() {
@@ -3860,11 +4166,25 @@
         const desc = document.getElementById('wheelResultDesc');
         const btnNext = document.getElementById('btnProceedAfterWheel');
 
-        box.style.display = 'block';
-        btnNext.style.display = 'inline-flex';
-        title.innerText = seg.label;
-        desc.innerText = 'Efeito aplicado com sucesso para a próxima rodada!';
+        if (box) box.style.display = 'block';
+        if (btnNext) btnNext.style.display = 'none';
+        if (title) title.innerText = seg.label;
+        if (desc) {
+          if (seg.type === 'bonus') desc.innerText = `Bônus concedido! Ganhou +${seg.val} pontos!`;
+          else if (seg.type === 'sabotage') desc.innerText = `Sabotagem (${seg.sub}) aplicada ao líder da partida!`;
+          else if (seg.type === 'mult') desc.innerText = `Multiplicador x${seg.val} ativado!`;
+          else desc.innerText = 'Escudo protetor ativado contra sabotagens!';
+        }
         AudioModule.playSfx('beep_go');
+
+        // Aplica o efeito no GameModule
+        GameModule.applyRouletteSegment(seg);
+
+        // Exibe o resultado por 2.4s, fecha a roleta e inicia o intervalo de conversa de 5 segundos!
+        setTimeout(() => {
+          UIModule.closeModal('modalRoulette');
+          GameModule.startIntermissionChat(5);
+        }, 2400);
       }
     };
 
@@ -3933,7 +4253,13 @@
       },
 
       triggerTakeReactions(score) {
-        AudioModule.playSfx(score >= 60 ? 'applause' : 'splat');
+        if (score === 0) {
+          AudioModule.playSfx('splat');
+        } else if (score >= 60) {
+          AudioModule.playSfx('applause');
+        } else {
+          AudioModule.playSfx('tick');
+        }
       },
 
       getNarratorQuote(score) {
