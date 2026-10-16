@@ -288,6 +288,151 @@
       border-color: var(--accent-cyan);
     }
 
+    /* BATE-PAPO DA SALA (LOBBY CHAT) */
+    .lobby-chat-container {
+      background: #111424;
+      border: 3px solid #000;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 4px 4px 0 #000;
+      text-align: left;
+    }
+    .lobby-chat-header {
+      background: #1d2138;
+      padding: 8px 12px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: #ffdd00;
+      border-bottom: 2px solid #000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .lobby-chat-messages {
+      height: 140px;
+      overflow-y: auto;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #0d101c;
+    }
+    .lobby-chat-msg {
+      font-size: 0.85rem;
+      line-height: 1.3;
+      background: #1b2034;
+      padding: 5px 8px;
+      border-radius: 8px;
+      border-left: 3px solid #00f576;
+      word-break: break-word;
+    }
+    .lobby-chat-msg.system {
+      background: rgba(255, 221, 0, 0.12);
+      border-left-color: #ffdd00;
+      color: #ffdd00;
+      font-style: italic;
+      font-size: 0.8rem;
+    }
+    .lobby-chat-msg.me {
+      background: #252b47;
+      border-left-color: #00e5ff;
+    }
+    .lobby-chat-sender {
+      font-weight: 900;
+      color: #00f576;
+      margin-right: 4px;
+    }
+    .lobby-chat-sender.me {
+      color: #00e5ff;
+    }
+    .lobby-chat-time {
+      font-size: 0.68rem;
+      opacity: 0.55;
+      float: right;
+      margin-left: 6px;
+    }
+    .lobby-chat-form {
+      display: flex;
+      gap: 6px;
+      padding: 6px 8px;
+      background: #171b2d;
+      border-top: 2px solid #000;
+    }
+    .lobby-chat-input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 2px solid #000;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .lobby-chat-send-btn {
+      background: #00f576;
+      color: #000;
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-weight: 900;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .lobby-chat-send-btn:active {
+      transform: translate(1px, 1px);
+    }
+
+    /* PRESETS DO CRIADOR DE PERSONAGEM */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .preset-btn {
+      background: #1c223a;
+      border: 2px solid #000;
+      border-radius: 10px;
+      padding: 6px 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.12s ease;
+      box-shadow: 2px 2px 0 #000;
+      color: #fff;
+    }
+    .preset-btn:hover {
+      background: #2b3356;
+      transform: translateY(-2px);
+      border-color: #ffdd00;
+    }
+    .preset-btn.active {
+      background: #ffdd00;
+      color: #000;
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(255, 221, 0, 0.6);
+      font-weight: 900;
+    }
+    .preset-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+    .preset-name {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
     /* Menu Principal Overlay (Screenshot 1) */
     .main-menu-overlay {
       position: absolute;
@@ -1159,17 +1304,27 @@
       </button>
     </div>
 
-    <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO COM TESTADOR DE MICROFONE -->
-    <div id="localPlayerProfileCard" class="interactive" onclick="UIModule.openNicknameModal()" style="cursor:pointer; position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.85); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;" title="Clique para alterar seu Nickname">
+    <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO COM TESTADOR DE MICROFONE E GANHO -->
+    <div id="localPlayerProfileCard" class="interactive" onclick="UIModule.openNicknameModal()" style="cursor:pointer; position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.88); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;" title="Clique para alterar seu Nickname">
       <div id="localAvatarFaceIcon" style="font-size:2.2rem; background:#ffdd00; border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border:2px solid #000;">
         🧔
       </div>
       <div>
         <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST) ✏️</div>
-        <button id="btnTestMicQuick" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; margin-top:2px;" onclick="event.stopPropagation(); AudioModule.testMicInteractive()">
-          🎙️ TESTAR MICROFONE
-        </button>
-        <div id="vuMeterWrap" style="width:130px; margin-top:4px; display:none;">
+        <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
+          <button id="btnTestMicQuick" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px;" onclick="event.stopPropagation(); AudioModule.testMicInteractive()">
+            🎙️ TESTAR
+          </button>
+          <button class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; border-color:#00f576; color:#00f576;" onclick="event.stopPropagation(); UIModule.openCustomizeModal()">
+            🎨 ROUPAS
+          </button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;" onclick="event.stopPropagation()">
+          <span style="font-size:0.72rem; font-weight:800; color:#aaa;">MIC:</span>
+          <input type="range" class="mic-gain-slider" min="0.3" max="3.0" step="0.1" value="1.2" style="width:75px; accent-color:#00f576; cursor:pointer;" oninput="AudioModule.setMicGain(this.value)">
+          <span class="mic-gain-display-val" style="font-size:0.75rem; font-weight:900; color:#00f576;">120%</span>
+        </div>
+        <div id="vuMeterWrap" style="width:140px; margin-top:4px; display:none;">
           <div class="vu-meter-bar"><div id="vuMeterFill" class="vu-meter-fill"></div></div>
           <div id="vuPitchReadout" style="font-size:0.7rem; font-weight:900; color:#00f576; margin-top:2px;">Fale para testar...</div>
         </div>
@@ -1182,42 +1337,70 @@
        MODAIS E TELAS DO JOGO
        ========================================================================= -->
 
-  <!-- MODAL: CRIAR SALA ONLINE -->
+  <!-- MODAL: SALA DE ESPERA ONLINE / CRIAR SALA (COM BATE-PAPO AO VIVO) -->
   <div id="modalCreateRoom" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
-      <h2 class="modal-title">CRIAR SALA ONLINE 🌐</h2>
-      <p style="font-weight:700; opacity:0.85;">Passe o código ou link para seus amigos no WhatsApp ou Discord!</p>
+    <div class="modal-box" style="max-width:680px;">
+      <h2 id="lobbyModalTitle" class="modal-title">SALA DE JOGO ONLINE 🌐</h2>
+      <p id="lobbyModalSubtitle" style="font-weight:700; opacity:0.85; font-size:0.92rem; margin-top:-8px;">
+        Passe o código ou link para seus amigos no WhatsApp ou Discord!
+      </p>
 
-      <div style="background:#111; border:3px solid #000; border-radius:12px; padding:12px;">
-        <span style="font-size:0.8rem; font-weight:800; color:#ffdd00;">CÓDIGO DA SALA:</span>
-        <div id="displayRoomCode" style="font-family:var(--font-display); font-size:3rem; color:#00f576; letter-spacing:3px;">
-          CONECTANDO...
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:center;">
+        <div style="background:#111; border:3px solid #000; border-radius:12px; padding:10px;">
+          <span style="font-size:0.75rem; font-weight:800; color:#ffdd00;">CÓDIGO DA SALA:</span>
+          <div id="displayRoomCode" style="font-family:var(--font-display); font-size:2.4rem; color:#00f576; letter-spacing:3px; line-height:1.1;">
+            CONECTANDO...
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn btn-create" style="padding:10px 14px; font-size:0.9rem;" onclick="NetworkModule.copyRoomLink()">
+            📋 COPIAR LINK DE CONVITE
+          </button>
+          <!-- Botão para Selecionar Áudios antes de Começar (apenas host) -->
+          <button id="btnLobbySoundPacks" class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703; padding:8px 10px;">
+            🎵 MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">157</span>)
+          </button>
         </div>
       </div>
 
-      <button class="btn btn-create" onclick="NetworkModule.copyRoomLink()">
-        📋 COPIAR LINK DE CONVITE
-      </button>
+      <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:12px; text-align:left; margin-top:4px;">
+        <!-- Coluna da Esquerda: Jogadores Conectados -->
+        <div style="display:flex; flex-direction:column;">
+          <span style="font-weight:900; font-size:0.85rem; margin-bottom:6px; color:#ffdd00;">
+            AMIGOS NA SALA (<span id="waitingPlayerCount">1</span>/5):
+          </span>
+          <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; background:#111424; padding:8px; border-radius:10px; border:2px solid #000;">
+            <!-- Lista de jogadores conectados -->
+          </div>
+        </div>
 
-      <!-- Botão para Selecionar Áudios antes de Começar -->
-      <button class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703;">
-        🎵 SELECIONAR MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">157</span>)
-      </button>
-
-      <div style="text-align:left;">
-        <span style="font-weight:900; font-size:0.9rem;">AMIGOS NA SALA (<span id="waitingPlayerCount">1</span>/5):</span>
-        <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
-          <!-- Lista de jogadores conectados (apenas humanos reais!) -->
+        <!-- Coluna da Direita: BATE-PAPO DA SALA (LOBBY CHAT) -->
+        <div class="lobby-chat-container">
+          <div class="lobby-chat-header">
+            <span>💬 BATE-PAPO DA SALA</span>
+            <span style="font-size:0.7rem; color:#00f576;">AO VIVO</span>
+          </div>
+          <div id="lobbyChatMessages" class="lobby-chat-messages">
+            <div class="lobby-chat-msg system">👋 Bem-vindo ao lobby! Converse com a galera enquanto o jogo não começa.</div>
+          </div>
+          <form class="lobby-chat-form" onsubmit="event.preventDefault(); NetworkModule.sendLobbyChatMessage();">
+            <input id="lobbyChatInput" type="text" class="lobby-chat-input" placeholder="Conversar na sala..." maxlength="80" autocomplete="off">
+            <button type="submit" class="lobby-chat-send-btn">ENVIAR 🚀</button>
+          </form>
         </div>
       </div>
 
-      <div style="display:flex; justify-content:space-between; gap:10px; margin-top:10px;">
-        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalCreateRoom')">
-          CANCELAR
+      <!-- Rodapé da Sala com Botões -->
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:8px;">
+        <button class="btn btn-neutral" onclick="NetworkModule.leaveOrCancelRoom()">
+          SAIR DA SALA 🚪
         </button>
         <button id="btnStartOnlineGame" class="btn btn-play" onclick="NetworkModule.hostStartGame()">
           INICIAR PARTIDA! 🚀
         </button>
+        <div id="clientWaitingNotice" style="display:none; font-weight:900; color:#ffdd00; align-items:center; gap:6px; font-size:0.95rem;">
+          ⏳ Aguardando o Host iniciar a partida...
+        </div>
       </div>
     </div>
   </div>
@@ -1322,41 +1505,149 @@
     </div>
   </div>
 
-  <!-- MODAL: PERSONALIZAÇÃO DO PERSONAGEM 3D -->
+  <!-- MODAL: CRIADOR DE PERSONAGEM 3D E CONFIGURAÇÕES DE ÁUDIO -->
   <div id="modalCustomize" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
-      <h2 class="modal-title">MEU PERSONAGEM 3D 🎨</h2>
+    <div class="modal-box" style="max-width:620px; max-height:88vh;">
+      <h2 class="modal-title">CRIADOR DE PERSONAGEM 🎨</h2>
 
       <div>
-        <label style="font-weight:900; display:block; text-align:left; margin-bottom:4px;">Seu Nome de Jogador:</label>
+        <label style="font-weight:900; display:block; text-align:left; margin-bottom:4px; font-size:0.9rem;">SEU NICKNAME:</label>
         <input type="text" id="inputPlayerName" class="input-box" value="Tigrezo" maxlength="14" onchange="GameModule.updateLocalPlayerName(this.value)">
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; text-align:left;">
-        <div>
-          <label style="font-weight:900; font-size:0.9rem;">Cabelo:</label>
-          <select id="selectHairStyle" class="input-box" style="padding:8px; font-size:0.9rem;" onchange="GameModule.updateLocalSkin()">
-            <option value="brown_parted">Cabelo Castanho Partido (Screenshot)</option>
-            <option value="bald">Careca Reluzente (Cap/MrFall)</option>
-            <option value="black_spiky">Espetado Preto</option>
-            <option value="blond">Loiro Surfista</option>
-          </select>
-        </div>
-
-        <div>
-          <label style="font-weight:900; font-size:0.9rem;">Cor da Camisa:</label>
-          <select id="selectShirtColor" class="input-box" style="padding:8px; font-size:0.9rem;" onchange="GameModule.updateLocalSkin()">
-            <option value="#0066ff">Azul Royal</option>
-            <option value="#ff0044">Vermelho Vibrante</option>
-            <option value="#00e676">Verde Limão</option>
-            <option value="#ffdd00">Amarelo Mostarda</option>
-            <option value="#9d4edd">Roxo Neon</option>
-            <option value="#111111">Preto Noturno</option>
-          </select>
+      <!-- SEÇÃO 1: ROUPAS E SKINS DE PERSONAGENS FAMOSOS (PRESETS 1-CLICK) -->
+      <div style="text-align:left;">
+        <label style="font-weight:900; font-size:0.9rem; color:#ffdd00;">✨ SKINS DE PERSONAGENS FAMOSOS (1-CLICK):</label>
+        <div class="preset-grid">
+          <button class="preset-btn" data-preset="goku" onclick="GameModule.applyCharacterPreset('goku')">
+            <span class="preset-icon">🥋</span>
+            <span class="preset-name">Goku</span>
+          </button>
+          <button class="preset-btn" data-preset="chaves" onclick="GameModule.applyCharacterPreset('chaves')">
+            <span class="preset-icon">🧢</span>
+            <span class="preset-name">Chaves</span>
+          </button>
+          <button class="preset-btn" data-preset="mario" onclick="GameModule.applyCharacterPreset('mario')">
+            <span class="preset-icon">🍄</span>
+            <span class="preset-name">Mario</span>
+          </button>
+          <button class="preset-btn" data-preset="mib" onclick="GameModule.applyCharacterPreset('mib')">
+            <span class="preset-icon">🕶️</span>
+            <span class="preset-name">MIB Terno</span>
+          </button>
+          <button class="preset-btn" data-preset="brasil" onclick="GameModule.applyCharacterPreset('brasil')">
+            <span class="preset-icon">🇧🇷</span>
+            <span class="preset-name">Canarinho</span>
+          </button>
+          <button class="preset-btn" data-preset="gamer" onclick="GameModule.applyCharacterPreset('gamer')">
+            <span class="preset-icon">🎧</span>
+            <span class="preset-name">Gamer Pro</span>
+          </button>
+          <button class="preset-btn" data-preset="rei_pop" onclick="GameModule.applyCharacterPreset('rei_pop')">
+            <span class="preset-icon">🕺</span>
+            <span class="preset-name">Rei do Pop</span>
+          </button>
+          <button class="preset-btn" data-preset="churrasco" onclick="GameModule.applyCharacterPreset('churrasco')">
+            <span class="preset-icon">🥩</span>
+            <span class="preset-name">Churrasco</span>
+          </button>
+          <button class="preset-btn" data-preset="rei" onclick="GameModule.applyCharacterPreset('rei')">
+            <span class="preset-icon">👑</span>
+            <span class="preset-name">Rei Ouro</span>
+          </button>
         </div>
       </div>
 
-      <div style="display:flex; justify-content:center; margin-top:8px;">
+      <!-- SEÇÃO 2: CUSTOMIZAÇÃO INDIVIDUAL PEÇA POR PEÇA -->
+      <div style="text-align:left; background:rgba(0,0,0,0.4); padding:10px; border-radius:12px; border:2px solid #222;">
+        <label style="font-weight:900; font-size:0.9rem; color:#00f0ff; display:block; margin-bottom:8px;">
+          ✂️ CUSTOMIZAÇÃO INDIVIDUAL DE ROUPAS:
+        </label>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">💇 Cabelo / Chapéu:</label>
+            <select id="selectHairStyle" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+              <option value="brown_parted">Castanho Partido</option>
+              <option value="saiyajin_gold">Super Saiyajin (Goku)</option>
+              <option value="black_spiky">Espetado Preto (Anime)</option>
+              <option value="afro">Black Power Estiloso</option>
+              <option value="blond">Loiro Surfista</option>
+              <option value="bald">Careca Reluzente</option>
+              <option value="cap_red">Boné Vermelho (Mario)</option>
+              <option value="chaves_hat">Gorro Verde (Chaves)</option>
+              <option value="fedora">Chapéu Fedora (MIB)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">👕 Camisa / Tronco:</label>
+            <select id="selectShirtColor" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+              <option value="#0066ff">Azul Royal</option>
+              <option value="#ff0044">Vermelho Vibrante (Mario)</option>
+              <option value="#ff6600">Laranja Goku</option>
+              <option value="#ffdd00">Amarelo Canarinho</option>
+              <option value="#c4b07b">Bege Listrado (Chaves)</option>
+              <option value="#00e676">Verde Limão</option>
+              <option value="#9d4edd">Roxo Neon</option>
+              <option value="#ff5d8f">Rosa Tropical</option>
+              <option value="#111111">Preto Noturno (Terno)</option>
+              <option value="#ffffff">Branco Clássico</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">👖 Calça / Pernas:</label>
+            <select id="selectPantsColor" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+              <option value="#223366">Jeans Azul Escuro</option>
+              <option value="#0044cc">Azul Seleção</option>
+              <option value="#ff6600">Laranja Goku</option>
+              <option value="#8a7246">Bermuda Bege (Chaves)</option>
+              <option value="#111111">Calça Preta Formal</option>
+              <option value="#e63946">Calça Vermelha</option>
+              <option value="#2a9d8f">Bermuda Verde</option>
+              <option value="#f4a261">Cáqui Areia</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">👓 Acessório de Rosto:</label>
+            <select id="selectAccessory" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+              <option value="none">Nenhum</option>
+              <option value="sunglasses">Óculos Escuros (MIB / Juliete)</option>
+              <option value="mustache">Bigodão (Mario / Madruga)</option>
+              <option value="gamer_headset">Headset Gamer Neon</option>
+              <option value="crown">Coroa Real de Ouro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 3: AJUSTE DE VOLUME / GANHO DO MICROFONE -->
+      <div style="background:#111424; border:2px solid #333; border-radius:12px; padding:10px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label style="font-weight:900; font-size:0.85rem; color:#00f576;">🎙️ SENSIBILIDADE / VOLUME DO MICROFONE:</label>
+          <span class="mic-gain-display-val" style="font-weight:900; color:#00f576; font-size:1.05rem;">120%</span>
+        </div>
+        <input type="range" class="mic-gain-slider" min="0.3" max="3.0" step="0.1" value="1.2"
+          style="width:100%; accent-color:#00f576; cursor:pointer; margin-top:6px;"
+          oninput="AudioModule.setMicGain(this.value)">
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; opacity:0.6; margin-top:2px;">
+          <span>Baixo (30%)</span>
+          <span>Normal (100%)</span>
+          <span>Alto (200%)</span>
+          <span>Super Alto (300%)</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+          <button class="btn btn-neutral btn-sm" onclick="AudioModule.testMicInteractive()" style="font-size:0.75rem; padding:4px 10px;">
+            🎙️ TESTAR MICROFONE
+          </button>
+          <div id="modalVuMeterWrap" style="flex:1; display:none;">
+            <div class="vu-meter-bar"><div id="modalVuMeterFill" class="vu-meter-fill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; margin-top:4px;">
         <button class="btn btn-green" onclick="UIModule.closeModal('modalCustomize')">
           SALVAR PERSONAGEM ✅
         </button>
@@ -1765,6 +2056,8 @@
         this.hairType = data.hair || 'brown_parted';
         this.shirtColor = data.shirtColor || '#0066ff';
         this.pantsColor = data.pantsColor || '#223366';
+        this.accessoryType = data.accessory || 'none';
+        this.preset = data.preset || 'custom';
         this.skinColor = 0xf8c291;
 
         this.group = new THREE.Group();
@@ -1813,6 +2106,7 @@
         this.headGroup.add(this.mouthMesh);
 
         this.buildHair();
+        this.buildAccessory();
         this.headGroup.position.y = 1.6;
         this.group.add(this.headGroup);
 
@@ -1903,35 +2197,197 @@
         this.group.add(this.nameSprite);
       }
 
+      buildAccessory() {
+        if (this.accessoryMesh) {
+          this.headGroup.remove(this.accessoryMesh);
+          this.accessoryMesh = null;
+        }
+        if (!this.accessoryType || this.accessoryType === 'none') return;
+
+        this.accessoryMesh = new THREE.Group();
+
+        if (this.accessoryType === 'sunglasses') {
+          const glassMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.1, metalness: 0.85 });
+          const frameMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.3, metalness: 0.7 });
+          const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.04), glassMat);
+          l1.position.set(-0.16, 0.08, 0.50);
+          const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.04), glassMat);
+          l2.position.set(0.16, 0.08, 0.50);
+          const br = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.03), frameMat);
+          br.position.set(0, 0.1, 0.50);
+          this.accessoryMesh.add(l1);
+          this.accessoryMesh.add(l2);
+          this.accessoryMesh.add(br);
+        } else if (this.accessoryType === 'mustache') {
+          const musMat = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 0.9 });
+          const m = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.07, 0.08), musMat);
+          m.position.set(0, -0.09, 0.48);
+          this.accessoryMesh.add(m);
+        } else if (this.accessoryType === 'gamer_headset') {
+          const bandMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5 });
+          const cupMat = new THREE.MeshStandardMaterial({ color: 0x00f576, emissive: 0x008833, roughness: 0.3 });
+          const band = new THREE.Mesh(new THREE.TorusGeometry(0.51, 0.04, 8, 24, Math.PI), bandMat);
+          band.position.set(0, 0.1, 0);
+          band.rotation.z = Math.PI;
+          const cupL = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 16), cupMat);
+          cupL.position.set(-0.5, 0.08, 0);
+          cupL.rotation.z = Math.PI / 2;
+          const cupR = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 16), cupMat);
+          cupR.position.set(0.5, 0.08, 0);
+          cupR.rotation.z = Math.PI / 2;
+          this.accessoryMesh.add(band);
+          this.accessoryMesh.add(cupL);
+          this.accessoryMesh.add(cupR);
+        } else if (this.accessoryType === 'crown') {
+          const goldMat = new THREE.MeshStandardMaterial({ color: 0xffdd00, roughness: 0.2, metalness: 0.8 });
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.37, 0.12, 16), goldMat);
+          base.position.set(0, 0.52, 0);
+          this.accessoryMesh.add(base);
+          for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 4), goldMat);
+            spike.position.set(Math.cos(angle) * 0.34, 0.65, Math.sin(angle) * 0.34);
+            this.accessoryMesh.add(spike);
+          }
+        }
+
+        this.headGroup.add(this.accessoryMesh);
+      }
+
       buildHair() {
-        if (this.hairMesh) this.headGroup.remove(this.hairMesh);
+        if (this.hairMesh) {
+          this.headGroup.remove(this.hairMesh);
+          this.hairMesh = null;
+        }
         if (this.hairType === 'bald') return;
 
-        let hairColor = 0x3d2314;
-        if (this.hairType === 'blond') hairColor = 0xd4a373;
-        if (this.hairType === 'black_spiky') hairColor = 0x111111;
-
-        const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
-        const hairGeo = new THREE.SphereGeometry(0.51, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-        this.hairMesh = new THREE.Mesh(hairGeo, hairMat);
-        this.hairMesh.position.y = 0.02;
+        this.hairMesh = new THREE.Group();
 
         if (this.hairType === 'brown_parted') {
-          const fringe = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.18, 0.18), hairMat);
+          const mat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.8 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.51, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+          dome.position.y = 0.02;
+          const fringe = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.18, 0.18), mat);
           fringe.position.set(-0.06, 0.42, 0.38);
           fringe.rotation.z = -0.15;
+          this.hairMesh.add(dome);
           this.hairMesh.add(fringe);
+        } else if (this.hairType === 'black_spiky') {
+          const mat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.50, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+          dome.position.y = 0.02;
+          this.hairMesh.add(dome);
+          for (let i = -2; i <= 2; i++) {
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 5), mat);
+            spike.position.set(i * 0.12, 0.52, 0.05);
+            spike.rotation.x = -0.25;
+            spike.rotation.z = -i * 0.15;
+            this.hairMesh.add(spike);
+          }
+        } else if (this.hairType === 'saiyajin_gold') {
+          const mat = new THREE.MeshStandardMaterial({ color: 0xffd000, emissive: 0x553300, roughness: 0.4, metalness: 0.3 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.51, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+          dome.position.y = 0.02;
+          this.hairMesh.add(dome);
+          const spikeCoords = [
+            [0, 0.65, -0.05, 0.18, 0.55, 0, 0],
+            [-0.2, 0.60, 0.05, 0.15, 0.45, 0.2, -0.3],
+            [0.2, 0.60, 0.05, 0.15, 0.45, 0.2, 0.3],
+            [-0.32, 0.45, -0.1, 0.14, 0.42, -0.2, -0.5],
+            [0.32, 0.45, -0.1, 0.14, 0.42, -0.2, 0.5],
+            [0, 0.55, -0.25, 0.16, 0.48, -0.4, 0],
+            [-0.15, 0.42, 0.38, 0.10, 0.35, 0.5, -0.2]
+          ];
+          spikeCoords.forEach(([x, y, z, r, h, rx, rz]) => {
+            const sp = new THREE.Mesh(new THREE.ConeGeometry(r, h, 6), mat);
+            sp.position.set(x, y, z);
+            sp.rotation.x = rx;
+            sp.rotation.z = rz;
+            this.hairMesh.add(sp);
+          });
+        } else if (this.hairType === 'afro') {
+          const mat = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 1.0 });
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.64, 20, 20), mat);
+          puff.position.set(0, 0.25, -0.05);
+          this.hairMesh.add(puff);
+        } else if (this.hairType === 'blond') {
+          const mat = new THREE.MeshStandardMaterial({ color: 0xf4d35e, roughness: 0.7 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.51, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+          dome.position.y = 0.02;
+          const hairL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.45, 0.25), mat);
+          hairL.position.set(-0.46, -0.05, 0);
+          const hairR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.45, 0.25), mat);
+          hairR.position.set(0.46, -0.05, 0);
+          this.hairMesh.add(dome);
+          this.hairMesh.add(hairL);
+          this.hairMesh.add(hairR);
+        } else if (this.hairType === 'cap_red') {
+          const capMat = new THREE.MeshStandardMaterial({ color: 0xee1111, roughness: 0.6 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
+          dome.position.y = 0.08;
+          const brim = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.05, 0.30), capMat);
+          brim.position.set(0, 0.16, 0.52);
+          brim.rotation.x = -0.15;
+          this.hairMesh.add(dome);
+          this.hairMesh.add(brim);
+        } else if (this.hairType === 'chaves_hat') {
+          const hatMat = new THREE.MeshStandardMaterial({ color: 0x5a7d5a, roughness: 0.8 });
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), hatMat);
+          dome.position.y = 0.08;
+          const flapL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 0.25), hatMat);
+          flapL.position.set(-0.48, -0.05, 0);
+          const flapR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 0.25), hatMat);
+          flapR.position.set(0.48, -0.05, 0);
+          const brim = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.22), hatMat);
+          brim.position.set(0, 0.14, 0.48);
+          brim.rotation.x = -0.2;
+          this.hairMesh.add(dome);
+          this.hairMesh.add(flapL);
+          this.hairMesh.add(flapR);
+          this.hairMesh.add(brim);
+        } else if (this.hairType === 'fedora') {
+          const mat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
+          const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 0.28, 16), mat);
+          crown.position.set(0, 0.48, -0.02);
+          crown.scale.set(1, 1, 1.15);
+          const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.04, 24), mat);
+          brim.position.set(0, 0.36, -0.02);
+          brim.scale.set(1, 1, 1.15);
+          brim.rotation.x = 0.05;
+          this.hairMesh.add(crown);
+          this.hairMesh.add(brim);
         }
+
         this.headGroup.add(this.hairMesh);
       }
 
-      setSkin(hair, shirtColor) {
-        this.hairType = hair;
-        this.shirtColor = shirtColor;
+      setCustomOutfit(outfit = {}) {
+        if (outfit.hair !== undefined) this.hairType = outfit.hair;
+        if (outfit.shirtColor !== undefined) this.shirtColor = outfit.shirtColor;
+        if (outfit.pantsColor !== undefined) this.pantsColor = outfit.pantsColor;
+        if (outfit.accessory !== undefined) this.accessoryType = outfit.accessory;
+        if (outfit.preset !== undefined) this.preset = outfit.preset;
+
         this.buildHair();
-        this.torso.material.color.set(shirtColor);
-        this.armL.children[0].material.color.set(shirtColor);
-        this.armR.children[0].material.color.set(shirtColor);
+        this.buildAccessory();
+
+        if (this.torso && this.torso.material) this.torso.material.color.set(this.shirtColor);
+        if (this.armL && this.armL.children[0] && this.armL.children[0].material) {
+          this.armL.children[0].material.color.set(this.shirtColor);
+        }
+        if (this.armR && this.armR.children[0] && this.armR.children[0].material) {
+          this.armR.children[0].material.color.set(this.shirtColor);
+        }
+        if (this.legL && this.legL.children[0] && this.legL.children[0].material) {
+          this.legL.children[0].material.color.set(this.pantsColor);
+        }
+        if (this.legR && this.legR.children[0] && this.legR.children[0].material) {
+          this.legR.children[0].material.color.set(this.pantsColor);
+        }
+      }
+
+      setSkin(hair, shirtColor, pantsColor, accessory) {
+        this.setCustomOutfit({ hair, shirtColor, pantsColor, accessory });
       }
 
       walkTo(targetX, targetZ) {
@@ -1981,6 +2437,9 @@
       isBgmPlaying: false,
       bgmTimer: null,
       isMicReady: false,
+      micGain: parseFloat(localStorage.getItem('mimic_mic_gain') || '1.2'),
+      micGainNode: null,
+      compressorNode: null,
 
       ensureContext() {
         if (!this.ctx) {
@@ -1988,6 +2447,16 @@
           this.ctx = new AudioContextClass();
           this.masterGainNode = this.ctx.createGain();
           this.masterGainNode.gain.value = this.savedVolume;
+
+          // COMPRESSOR DINÂMICO PARA NIVELAR TODOS OS SONS NO MESMO VOLUME
+          this.compressorNode = this.ctx.createDynamicsCompressor();
+          this.compressorNode.threshold.setValueAtTime(-18, this.ctx.currentTime);
+          this.compressorNode.knee.setValueAtTime(10, this.ctx.currentTime);
+          this.compressorNode.ratio.setValueAtTime(6, this.ctx.currentTime);
+          this.compressorNode.attack.setValueAtTime(0.003, this.ctx.currentTime);
+          this.compressorNode.release.setValueAtTime(0.18, this.ctx.currentTime);
+
+          this.compressorNode.connect(this.masterGainNode);
           this.masterGainNode.connect(this.ctx.destination);
         }
         if (this.ctx.state === 'suspended') {
@@ -1997,7 +2466,45 @@
       },
 
       outNode() {
-        return this.masterGainNode || this.ctx.destination;
+        return this.compressorNode || this.masterGainNode || (this.ctx ? this.ctx.destination : null);
+      },
+
+      setMicGain(val) {
+        this.micGain = Math.max(0.2, Math.min(3.5, parseFloat(val)));
+        localStorage.setItem('mimic_mic_gain', this.micGain.toString());
+        if (this.micGainNode && this.ctx) {
+          this.micGainNode.gain.setValueAtTime(this.micGain, this.ctx.currentTime);
+        }
+        const displays = document.querySelectorAll('.mic-gain-display-val');
+        displays.forEach(el => el.innerText = `${Math.round(this.micGain * 100)}%`);
+        const sliders = document.querySelectorAll('.mic-gain-slider');
+        sliders.forEach(el => el.value = this.micGain);
+      },
+
+      normalizeBuffer(buffer, targetPeak = 0.92) {
+        if (!buffer || !this.ctx) return buffer;
+        let maxPeak = 0;
+        for (let c = 0; c < buffer.numberOfChannels; c++) {
+          const data = buffer.getChannelData(c);
+          for (let i = 0; i < data.length; i++) {
+            const v = Math.abs(data[i]);
+            if (v > maxPeak) maxPeak = v;
+          }
+        }
+        // Se o áudio tiver sinal mas estiver baixo ou muito alto, equaliza para targetPeak
+        if (maxPeak > 0.003) {
+          const gain = Math.min(5.0, targetPeak / maxPeak);
+          const normBuf = this.ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+          for (let c = 0; c < buffer.numberOfChannels; c++) {
+            const src = buffer.getChannelData(c);
+            const dst = normBuf.getChannelData(c);
+            for (let i = 0; i < src.length; i++) {
+              dst[i] = Math.max(-1.0, Math.min(1.0, src[i] * gain));
+            }
+          }
+          return normBuf;
+        }
+        return buffer;
       },
 
       vuTestInterval: null,
@@ -2039,8 +2546,13 @@
           this.analyser = this.ctx.createAnalyser();
           this.analyser.fftSize = 1024;
           this.analyser.smoothingTimeConstant = 0.25;
+
+          this.micGainNode = this.ctx.createGain();
+          this.micGainNode.gain.setValueAtTime(this.micGain, this.ctx.currentTime);
+
           const source = this.ctx.createMediaStreamSource(stream);
-          source.connect(this.analyser);
+          source.connect(this.micGainNode);
+          this.micGainNode.connect(this.analyser);
         } catch (e) {
           console.warn("Erro ao ligar analyser ao mic:", e);
         }
@@ -2061,7 +2573,11 @@
           const fill = document.getElementById('vuMeterFill');
           const readout = document.getElementById('vuPitchReadout');
           const btn = document.getElementById('btnTestMicQuick');
+          const modalWrap = document.getElementById('modalVuMeterWrap');
+          const modalFill = document.getElementById('modalVuMeterFill');
+
           if (wrap) wrap.style.display = 'block';
+          if (modalWrap) modalWrap.style.display = 'block';
           if (btn) btn.innerText = "🟢 MIC ATIVO";
 
           if (this.vuTestInterval) clearInterval(this.vuTestInterval);
@@ -2078,6 +2594,7 @@
             const avg = sum / data.length;
             const pct = Math.min(100, Math.round((avg / 110) * 100));
             if (fill) fill.style.width = pct + '%';
+            if (modalFill) modalFill.style.width = pct + '%';
 
             const pitch = ScoringModule.detectCurrentPitch(timeData, AudioModule.ctx.sampleRate);
             if (readout) {
@@ -2180,7 +2697,8 @@
                 const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                 const arrayBuffer = await blob.arrayBuffer();
                 const decodedBuf = await this.ctx.decodeAudioData(arrayBuffer);
-                complete(decodedBuf);
+                const balancedBuf = this.normalizeBuffer(decodedBuf, 0.92);
+                complete(balancedBuf);
               } catch (decErr) {
                 console.warn("Decode fallback:", decErr);
                 complete(this.createSilentBuffer(durationSeconds));
@@ -2216,8 +2734,9 @@
           return;
         }
 
+        const normalizedBuffer = this.normalizeBuffer(buffer, 0.92);
         const source = this.ctx.createBufferSource();
-        source.buffer = buffer;
+        source.buffer = normalizedBuffer;
         let lastNode = source;
 
         if (sabotageType === 'saturacao') {
@@ -3320,7 +3839,8 @@
         try {
           const resp = await fetch(soundItem.file);
           const arrayBuf = await resp.arrayBuffer();
-          return await AudioModule.ctx.decodeAudioData(arrayBuf);
+          const decoded = await AudioModule.ctx.decodeAudioData(arrayBuf);
+          return AudioModule.normalizeBuffer(decoded, 0.92);
         } catch (e) {
           console.warn("Erro ao carregar MP3, gerando fallback:", e);
           const b = AudioModule.ctx.createBuffer(1, AudioModule.ctx.sampleRate * 1.5, AudioModule.ctx.sampleRate);
@@ -3367,8 +3887,19 @@
     };
 
     /* ==========================================================================
-       6. NETWORKMODULE: MULTIPLAYER WEBRTC VIA PEERJS (ONLINE ENTRE AMIGOS)
+        6. NETWORKMODULE: MULTIPLAYER WEBRTC VIA PEERJS (ONLINE ENTRE AMIGOS)
        ========================================================================== */
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
     const NetworkModule = {
       peer: null,
       myPeerId: null,
@@ -3383,6 +3914,23 @@
 
         this.roomCode = 'MP' + Math.floor(100 + Math.random() * 900);
         this.isHost = true;
+
+        const title = document.getElementById('lobbyModalTitle');
+        const subtitle = document.getElementById('lobbyModalSubtitle');
+        const startBtn = document.getElementById('btnStartOnlineGame');
+        const packsBtn = document.getElementById('btnLobbySoundPacks');
+        const waitingNotice = document.getElementById('clientWaitingNotice');
+        if (title) title.innerText = 'CRIAR SALA ONLINE 🌐';
+        if (subtitle) subtitle.innerText = 'Passe o código ou link para seus amigos no WhatsApp ou Discord!';
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (packsBtn) packsBtn.style.display = 'inline-block';
+        if (waitingNotice) waitingNotice.style.display = 'none';
+
+        // Reseta o bate-papo do lobby para o host
+        const chatBox = document.getElementById('lobbyChatMessages');
+        if (chatBox) {
+          chatBox.innerHTML = '<div class="lobby-chat-msg system">👋 Sala criada! Passe o código para seus amigos e conversem aqui no bate-papo.</div>';
+        }
 
         const peerId = `mimicparty-${this.roomCode}`;
         this.peer = new Peer(peerId, { debug: 1 });
@@ -3439,10 +3987,34 @@
               type: 'PLAYER_JOIN',
               name: GameModule.localPlayer.name,
               hair: GameModule.localPlayer.hair,
-              shirtColor: GameModule.localPlayer.shirtColor
+              shirtColor: GameModule.localPlayer.shirtColor,
+              pantsColor: GameModule.localPlayer.pantsColor,
+              accessory: GameModule.localPlayer.accessory,
+              preset: GameModule.localPlayer.preset
             });
             UIModule.closeModal('modalJoinRoom');
             GameModule.startOnlineClientMode();
+
+            // Abre o modal de espera com chat para o cliente
+            document.getElementById('modalCreateRoom').style.display = 'flex';
+            const title = document.getElementById('lobbyModalTitle');
+            const subtitle = document.getElementById('lobbyModalSubtitle');
+            const startBtn = document.getElementById('btnStartOnlineGame');
+            const packsBtn = document.getElementById('btnLobbySoundPacks');
+            const waitingNotice = document.getElementById('clientWaitingNotice');
+            if (title) title.innerText = 'SALA DE ESPERA ONLINE 🌐';
+            if (subtitle) subtitle.innerText = 'Conectado à sala! Aguarde o Host selecionar os memes e iniciar a partida.';
+            if (startBtn) startBtn.style.display = 'none';
+            if (packsBtn) packsBtn.style.display = 'none';
+            if (waitingNotice) waitingNotice.style.display = 'inline-flex';
+            document.getElementById('displayRoomCode').innerText = this.roomCode;
+
+            const chatBox = document.getElementById('lobbyChatMessages');
+            if (chatBox) {
+              chatBox.innerHTML = '<div class="lobby-chat-msg system">👋 Você entrou na sala! Diga um oi no bate-papo.</div>';
+            }
+
+            this.updateWaitingRoomUI();
             setTimeout(() => this.setupVoiceCall(targetPeerId), 1000);
           });
         });
@@ -3463,6 +4035,7 @@
         conn.on('data', (data) => this.handleNetworkMessage(data, conn));
         conn.on('close', () => {
           this.connections = this.connections.filter(c => c !== conn);
+          this.updateWaitingRoomUI();
         });
       },
 
@@ -3497,14 +4070,82 @@
         this.connections.forEach(conn => { if (conn.open) conn.send(msg); });
       },
 
+      sendLobbyChatMessage() {
+        const input = document.getElementById('lobbyChatInput');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+
+        const sender = GameModule.localPlayer.name || 'Jogador';
+        const msg = {
+          type: 'LOBBY_CHAT',
+          sender: sender,
+          text: text,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        input.value = '';
+        input.focus();
+
+        this.appendLobbyChatMessage(msg, true);
+
+        if (this.isHost) {
+          this.broadcast(msg);
+        } else if (this.hostConnection && this.hostConnection.open) {
+          this.hostConnection.send(msg);
+        }
+      },
+
+      appendLobbyChatMessage(msg, isMe = false) {
+        const chatBox = document.getElementById('lobbyChatMessages');
+        if (!chatBox) return;
+
+        const div = document.createElement('div');
+        if (msg.isSystem) {
+          div.className = 'lobby-chat-msg system';
+          div.innerText = msg.text;
+        } else {
+          div.className = 'lobby-chat-msg' + (isMe ? ' me' : '');
+          const timeStr = msg.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const senderClass = isMe ? 'lobby-chat-sender me' : 'lobby-chat-sender';
+          div.innerHTML = `<span class="${senderClass}">${escapeHtml(msg.sender)}:</span> ${escapeHtml(msg.text)} <span class="lobby-chat-time">${timeStr}</span>`;
+          if (!isMe) {
+            AudioModule.playSfx('beep_short');
+          }
+        }
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      },
+
       handleNetworkMessage(msg, senderConn) {
         if (msg.type === 'PLAYER_JOIN' && this.isHost) {
-          GameModule.addOnlinePlayer(msg.name, msg.hair, msg.shirtColor, senderConn.peer);
+          GameModule.addOnlinePlayer(msg.name, msg.hair, msg.shirtColor, msg.pantsColor, msg.accessory, senderConn.peer, msg.preset);
           this.broadcastRoomState();
+
+          const sysMsg = {
+            type: 'LOBBY_CHAT',
+            sender: 'SISTEMA',
+            text: `🎉 ${msg.name} entrou na sala!`,
+            isSystem: true
+          };
+          this.appendLobbyChatMessage(sysMsg);
+          this.broadcast(sysMsg);
+
           setTimeout(() => this.setupVoiceCall(senderConn.peer), 800);
+        } else if (msg.type === 'LOBBY_CHAT') {
+          this.appendLobbyChatMessage(msg, false);
+          if (this.isHost) {
+            // Re-transmite a mensagem para todos os outros clientes conectados
+            this.connections.forEach(c => {
+              if (c.open && c !== senderConn) c.send(msg);
+            });
+          }
         } else if (msg.type === 'ROOM_STATE') {
           GameModule.syncOnlinePlayers(msg.players);
+          this.updateWaitingRoomUI();
         } else if (msg.type === 'START_GAME') {
+          UIModule.closeModal('modalCreateRoom');
           GameModule.beginMatch(msg.rounds);
         } else if (msg.type === 'RESTART_GAME') {
           GameModule.restartMatchSamePlayers(false);
@@ -3522,6 +4163,9 @@
             name: p.name,
             hair: p.char3D.hairType,
             shirtColor: p.char3D.shirtColor,
+            pantsColor: p.char3D.pantsColor,
+            accessory: p.char3D.accessoryType,
+            preset: p.char3D.preset,
             score: p.score
           }))
         };
@@ -3537,8 +4181,9 @@
         count.innerText = GameModule.players.length;
         GameModule.players.forEach(p => {
           const item = document.createElement('div');
-          item.style.cssText = 'background:#222; padding:6px 12px; border-radius:8px; font-weight:800; display:flex; justify-content:space-between;';
-          item.innerHTML = `<span>👤 ${p.name}</span> <span style="color:#00f576;">PRONTO</span>`;
+          item.style.cssText = 'background:#1a2035; padding:6px 10px; border-radius:8px; font-weight:800; display:flex; justify-content:space-between; align-items:center; border-left:3px solid #00f576; font-size:0.85rem;';
+          const isLocal = p.id === GameModule.localPlayer.id;
+          item.innerHTML = `<span>👤 ${escapeHtml(p.name)} ${isLocal ? '<span style="font-size:0.75rem; color:#ffdd00;">(VOCÊ)</span>' : ''}</span> <span style="color:#00f576; font-size:0.75rem;">PRONTO</span>`;
           list.appendChild(item);
         });
       },
@@ -3560,6 +4205,21 @@
         const code = document.getElementById('inputRoomCode').value;
         if (!code) return;
         this.joinRoom(code);
+      },
+
+      leaveOrCancelRoom() {
+        UIModule.closeModal('modalCreateRoom');
+        if (this.peer) {
+          try { this.peer.destroy(); } catch (e) {}
+          this.peer = null;
+        }
+        this.connections = [];
+        this.hostConnection = null;
+        this.isHost = false;
+        GameModule.cleanupBotsAndReset();
+        Scene3DModule.setCameraView('menu');
+        document.getElementById('mainMenuOverlay').style.display = 'flex';
+        document.getElementById('mainLogoContainer').style.display = 'flex';
       }
     };
 
@@ -3575,8 +4235,11 @@
       localPlayer: {
         id: 'host_p1',
         name: 'Tigrezo',
-        hair: 'brown_parted',
-        shirtColor: '#0066ff',
+        hair: localStorage.getItem('mimic_hair') || 'brown_parted',
+        shirtColor: localStorage.getItem('mimic_shirt') || '#0066ff',
+        pantsColor: localStorage.getItem('mimic_pants') || '#223366',
+        accessory: localStorage.getItem('mimic_accessory') || 'none',
+        preset: localStorage.getItem('mimic_preset') || 'custom',
         score: 0
       },
       currentSound: null,
@@ -3588,6 +4251,18 @@
       autoAdvanceTimer: null,
       needleAnimFrame: null,
 
+      characterPresets: {
+        goku: { name: 'Goku', hair: 'saiyajin_gold', shirtColor: '#ff6600', pantsColor: '#ff6600', accessory: 'none' },
+        chaves: { name: 'Chaves', hair: 'chaves_hat', shirtColor: '#c4b07b', pantsColor: '#8a7246', accessory: 'none' },
+        mario: { name: 'Mario', hair: 'cap_red', shirtColor: '#ff0044', pantsColor: '#223366', accessory: 'mustache' },
+        mib: { name: 'MIB Terno', hair: 'fedora', shirtColor: '#111111', pantsColor: '#111111', accessory: 'sunglasses' },
+        brasil: { name: 'Canarinho', hair: 'black_spiky', shirtColor: '#ffdd00', pantsColor: '#0044cc', accessory: 'none' },
+        gamer: { name: 'Gamer Pro', hair: 'saiyajin_gold', shirtColor: '#9d4edd', pantsColor: '#111111', accessory: 'gamer_headset' },
+        rei_pop: { name: 'Rei do Pop', hair: 'fedora', shirtColor: '#ff0044', pantsColor: '#111111', accessory: 'sunglasses' },
+        churrasco: { name: 'Churrasco', hair: 'bald', shirtColor: '#ff5d8f', pantsColor: '#2a9d8f', accessory: 'mustache' },
+        rei: { name: 'Rei Ouro', hair: 'brown_parted', shirtColor: '#9d4edd', pantsColor: '#111111', accessory: 'crown' }
+      },
+
       init() {
         const savedNick = localStorage.getItem('mimic_nickname');
         if (savedNick) {
@@ -3596,11 +4271,25 @@
           if (displayEl) displayEl.innerText = `${savedNick.toUpperCase()} ✏️`;
         }
 
+        const savedHair = localStorage.getItem('mimic_hair');
+        if (savedHair) this.localPlayer.hair = savedHair;
+        const savedShirt = localStorage.getItem('mimic_shirt');
+        if (savedShirt) this.localPlayer.shirtColor = savedShirt;
+        const savedPants = localStorage.getItem('mimic_pants');
+        if (savedPants) this.localPlayer.pantsColor = savedPants;
+        const savedAcc = localStorage.getItem('mimic_accessory');
+        if (savedAcc) this.localPlayer.accessory = savedAcc;
+        const savedPreset = localStorage.getItem('mimic_preset');
+        if (savedPreset) this.localPlayer.preset = savedPreset;
+
         const char = new Character3D({
           id: this.localPlayer.id,
           name: this.localPlayer.name,
           hair: this.localPlayer.hair,
-          shirtColor: this.localPlayer.shirtColor
+          shirtColor: this.localPlayer.shirtColor,
+          pantsColor: this.localPlayer.pantsColor,
+          accessory: this.localPlayer.accessory,
+          preset: this.localPlayer.preset
         });
         char.group.position.set(0, 0, 0);
         Scene3DModule.characters.push(char);
@@ -3609,6 +4298,8 @@
 
         Scene3DModule.setCameraView('menu');
         PacksModule.initUI();
+        this.syncCustomizationUI();
+        AudioModule.setMicGain(AudioModule.micGain);
 
         const urlParams = new URLSearchParams(window.location.search);
         const salaParam = urlParams.get('sala');
@@ -3643,11 +4334,11 @@
         }
       },
 
-      // LIMPEZA TOTAL DE BOTS: Evita que bots apareçam na sala online!
+      // LIMPEZA TOTAL DE BOTS E PLAYERS REMOTOS AO SAIR/RESETAR
       cleanupBotsAndReset() {
-        this.players.filter(p => p.isBot).forEach(bot => {
-          if (bot.char3D && bot.char3D.group) {
-            Scene3DModule.scene.remove(bot.char3D.group);
+        this.players.filter(p => p.id !== this.localPlayer.id).forEach(other => {
+          if (other.char3D && other.char3D.group) {
+            Scene3DModule.scene.remove(other.char3D.group);
           }
         });
         Scene3DModule.characters = Scene3DModule.characters.filter(c => c.id === this.localPlayer.id);
@@ -3659,12 +4350,124 @@
         this.isOnline = false;
       },
 
+      applyCharacterPreset(presetKey) {
+        const p = this.characterPresets[presetKey];
+        if (!p) return;
+        this.localPlayer.preset = presetKey;
+        this.localPlayer.hair = p.hair;
+        this.localPlayer.shirtColor = p.shirtColor;
+        this.localPlayer.pantsColor = p.pantsColor;
+        this.localPlayer.accessory = p.accessory;
+
+        localStorage.setItem('mimic_preset', presetKey);
+        localStorage.setItem('mimic_hair', p.hair);
+        localStorage.setItem('mimic_shirt', p.shirtColor);
+        localStorage.setItem('mimic_pants', p.pantsColor);
+        localStorage.setItem('mimic_accessory', p.accessory);
+
+        if (this.localPlayer.char3D) {
+          this.localPlayer.char3D.setCustomOutfit({
+            hair: p.hair,
+            shirtColor: p.shirtColor,
+            pantsColor: p.pantsColor,
+            accessory: p.accessory,
+            preset: presetKey
+          });
+        }
+
+        this.syncCustomizationUI();
+        AudioModule.playSfx('beep_short');
+
+        if (this.isOnline) {
+          if (NetworkModule.isHost) {
+            NetworkModule.broadcastRoomState();
+          } else if (NetworkModule.hostConnection && NetworkModule.hostConnection.open) {
+            NetworkModule.hostConnection.send({
+              type: 'PLAYER_JOIN',
+              name: this.localPlayer.name,
+              hair: this.localPlayer.hair,
+              shirtColor: this.localPlayer.shirtColor,
+              pantsColor: this.localPlayer.pantsColor,
+              accessory: this.localPlayer.accessory,
+              preset: presetKey
+            });
+          }
+        }
+      },
+
+      updateLocalSkinFromUI() {
+        const hairEl = document.getElementById('selectHairStyle');
+        const shirtEl = document.getElementById('selectShirtColor');
+        const pantsEl = document.getElementById('selectPantsColor');
+        const accEl = document.getElementById('selectAccessory');
+
+        if (!hairEl || !shirtEl || !pantsEl || !accEl) return;
+
+        this.localPlayer.preset = 'custom';
+        this.localPlayer.hair = hairEl.value;
+        this.localPlayer.shirtColor = shirtEl.value;
+        this.localPlayer.pantsColor = pantsEl.value;
+        this.localPlayer.accessory = accEl.value;
+
+        localStorage.setItem('mimic_preset', 'custom');
+        localStorage.setItem('mimic_hair', hairEl.value);
+        localStorage.setItem('mimic_shirt', shirtEl.value);
+        localStorage.setItem('mimic_pants', pantsEl.value);
+        localStorage.setItem('mimic_accessory', accEl.value);
+
+        if (this.localPlayer.char3D) {
+          this.localPlayer.char3D.setCustomOutfit({
+            hair: hairEl.value,
+            shirtColor: shirtEl.value,
+            pantsColor: pantsEl.value,
+            accessory: accEl.value,
+            preset: 'custom'
+          });
+        }
+
+        this.syncCustomizationUI();
+
+        if (this.isOnline) {
+          if (NetworkModule.isHost) {
+            NetworkModule.broadcastRoomState();
+          } else if (NetworkModule.hostConnection && NetworkModule.hostConnection.open) {
+            NetworkModule.hostConnection.send({
+              type: 'PLAYER_JOIN',
+              name: this.localPlayer.name,
+              hair: this.localPlayer.hair,
+              shirtColor: this.localPlayer.shirtColor,
+              pantsColor: this.localPlayer.pantsColor,
+              accessory: this.localPlayer.accessory,
+              preset: 'custom'
+            });
+          }
+        }
+      },
+
+      syncCustomizationUI() {
+        const hairEl = document.getElementById('selectHairStyle');
+        const shirtEl = document.getElementById('selectShirtColor');
+        const pantsEl = document.getElementById('selectPantsColor');
+        const accEl = document.getElementById('selectAccessory');
+        const nameEl = document.getElementById('inputPlayerName');
+
+        if (hairEl) hairEl.value = this.localPlayer.hair;
+        if (shirtEl) shirtEl.value = this.localPlayer.shirtColor;
+        if (pantsEl) pantsEl.value = this.localPlayer.pantsColor;
+        if (accEl) accEl.value = this.localPlayer.accessory;
+        if (nameEl) nameEl.value = this.localPlayer.name;
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+          if (btn.dataset.preset === this.localPlayer.preset) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      },
+
       updateLocalSkin() {
-        const hair = document.getElementById('selectHairStyle').value;
-        const color = document.getElementById('selectShirtColor').value;
-        this.localPlayer.hair = hair;
-        this.localPlayer.shirtColor = color;
-        this.localPlayer.char3D.setSkin(hair, color);
+        this.updateLocalSkinFromUI();
       },
 
       updateLocalPlayerName(name) {
@@ -3684,10 +4487,10 @@
         this.isOnline = false;
 
         const botConfigs = [
-          { name: 'Cap', hair: 'bald', shirt: '#ff0044', skill: 0.78 },
-          { name: 'Sangras', hair: 'brown_parted', shirt: '#0066ff', skill: 0.65 },
-          { name: 'MrFall', hair: 'bald', shirt: '#ffbb00', skill: 0.52 },
-          { name: 'Gaga', hair: 'brown_parted', shirt: '#00f576', skill: 0.84 }
+          { name: 'Cap', hair: 'bald', shirt: '#ff0044', pants: '#223366', accessory: 'none', skill: 0.78 },
+          { name: 'Sangras', hair: 'brown_parted', shirt: '#0066ff', pants: '#111111', accessory: 'sunglasses', skill: 0.65 },
+          { name: 'MrFall', hair: 'chaves_hat', shirt: '#c4b07b', pants: '#8a7246', accessory: 'none', skill: 0.52 },
+          { name: 'Gaga', hair: 'saiyajin_gold', shirt: '#ff6600', pants: '#ff6600', accessory: 'gamer_headset', skill: 0.84 }
         ];
 
         this.players = [this.localPlayer];
@@ -3696,7 +4499,9 @@
             id: 'bot_' + idx,
             name: b.name,
             hair: b.hair,
-            shirtColor: b.shirt
+            shirtColor: b.shirt,
+            pantsColor: b.pants,
+            accessory: b.accessory
           });
           Scene3DModule.characters.push(bChar);
           this.players.push({
@@ -3720,14 +4525,92 @@
         Scene3DModule.setCameraView('stage_lineup');
       },
 
-      addOnlinePlayer(name, hair, shirtColor, peerId) {
-        const char = new Character3D({ id: peerId, name, hair, shirtColor });
-        Scene3DModule.characters.push(char);
-        this.players.push({ id: peerId, name, score: 0, char3D: char });
+      addOnlinePlayer(name, hair, shirtColor, pantsColor, accessory, peerId, preset) {
+        let existing = this.players.find(p => p.id === peerId);
+        if (!existing) {
+          const char = new Character3D({
+            id: peerId,
+            name,
+            hair,
+            shirtColor,
+            pantsColor: pantsColor || '#223366',
+            accessory: accessory || 'none',
+            preset: preset || 'custom'
+          });
+          Scene3DModule.characters.push(char);
+          this.players.push({ id: peerId, name, score: 0, char3D: char });
+        } else {
+          existing.name = name;
+          if (existing.char3D) {
+            existing.char3D.setName(name);
+            existing.char3D.setCustomOutfit({
+              hair,
+              shirtColor,
+              pantsColor: pantsColor || '#223366',
+              accessory: accessory || 'none',
+              preset: preset || 'custom'
+            });
+          }
+        }
         this.repositionLineup();
       },
 
       syncOnlinePlayers(playersData) {
+        if (!Array.isArray(playersData)) return;
+
+        // Atualiza ou instancia personagens de outros jogadores
+        playersData.forEach(pData => {
+          if (pData.id === this.localPlayer.id) {
+            this.localPlayer.score = pData.score || 0;
+            return;
+          }
+          let existing = this.players.find(p => p.id === pData.id);
+          if (!existing) {
+            const char = new Character3D({
+              id: pData.id,
+              name: pData.name,
+              hair: pData.hair,
+              shirtColor: pData.shirtColor,
+              pantsColor: pData.pantsColor,
+              accessory: pData.accessory,
+              preset: pData.preset
+            });
+            Scene3DModule.characters.push(char);
+            existing = {
+              id: pData.id,
+              name: pData.name,
+              score: pData.score || 0,
+              char3D: char
+            };
+            this.players.push(existing);
+          } else {
+            existing.name = pData.name;
+            existing.score = pData.score || 0;
+            if (existing.char3D) {
+              existing.char3D.setName(pData.name);
+              existing.char3D.setCustomOutfit({
+                hair: pData.hair,
+                shirtColor: pData.shirtColor,
+                pantsColor: pData.pantsColor,
+                accessory: pData.accessory,
+                preset: pData.preset
+              });
+            }
+          }
+        });
+
+        // Remove jogadores que saíram
+        this.players = this.players.filter(p => {
+          if (p.id === this.localPlayer.id) return true;
+          const found = playersData.find(pd => pd.id === p.id);
+          if (!found && p.char3D && p.char3D.group) {
+            Scene3DModule.scene.remove(p.char3D.group);
+            Scene3DModule.characters = Scene3DModule.characters.filter(c => c.id !== p.id);
+            return false;
+          }
+          return true;
+        });
+
         this.repositionLineup();
       },
 
@@ -4670,6 +5553,11 @@
       },
 
       openCustomizeModal() {
+        GameModule.syncCustomizationUI();
+        const sliders = document.querySelectorAll('.mic-gain-slider');
+        sliders.forEach(s => s.value = AudioModule.micGain);
+        const displays = document.querySelectorAll('.mic-gain-display-val');
+        displays.forEach(d => d.innerText = `${Math.round(AudioModule.micGain * 100)}%`);
         document.getElementById('modalCustomize').style.display = 'flex';
       },
 
