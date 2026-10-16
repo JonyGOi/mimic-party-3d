@@ -664,6 +664,210 @@
       margin-top: 6px;
     }
 
+    /* Rótulos de Agudo e Grave na Waveform */
+    .pitch-label-high {
+      position: absolute;
+      top: 6px;
+      right: 14px;
+      font-size: 0.8rem;
+      font-weight: 900;
+      color: #00f0ff;
+      text-shadow: 1px 1px 0 #000, 0 0 8px rgba(0,240,255,0.6);
+      letter-spacing: 0.5px;
+      z-index: 6;
+      pointer-events: none;
+    }
+    .pitch-label-low {
+      position: absolute;
+      bottom: 6px;
+      right: 14px;
+      font-size: 0.8rem;
+      font-weight: 900;
+      color: #ff0077;
+      text-shadow: 1px 1px 0 #000, 0 0 8px rgba(255,0,119,0.6);
+      letter-spacing: 0.5px;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    /* ESTILOS DA BIBLIOTECA DE PACOTES DE SONS (SCREENSHOTS DO USUÁRIO) */
+    .packs-library-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .pack-filter-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .pack-filter-chip {
+      background: #1e1b4b;
+      border: 2px solid #4338ca;
+      color: #e0e7ff;
+      font-size: 0.8rem;
+      font-weight: 900;
+      padding: 6px 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .pack-filter-chip.active, .pack-filter-chip:hover {
+      background: #4f46e5;
+      border-color: #00f0ff;
+      color: #fff;
+      transform: scale(1.04);
+    }
+
+    .packs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .pack-card {
+      background: #14112e;
+      border: 3px solid #000;
+      border-radius: 18px;
+      box-shadow: 4px 4px 0 #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 10px;
+      position: relative;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .pack-card:hover {
+      transform: translateY(-3px);
+      border-color: #00f0ff;
+    }
+    .pack-card.installed {
+      border-color: #00f576;
+    }
+
+    .pack-badge-num {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #ffb703;
+      color: #000;
+      font-weight: 900;
+      font-size: 0.75rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      border: 2px solid #000;
+      box-shadow: 1px 1px 0 #000;
+    }
+
+    .pack-cover-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 12px rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      background: radial-gradient(circle, #3b2d71, #130d2d);
+      margin-top: 6px;
+    }
+
+    .pack-title-ribbon {
+      background: #6366f1;
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      padding: 3px 12px;
+      border-radius: 12px;
+      border: 2px solid #000;
+      box-shadow: 2px 2px 0 #000;
+      margin-top: -10px;
+      letter-spacing: 0.5px;
+      text-align: center;
+      width: 90%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pack-author {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #a5b4fc;
+      margin-top: 4px;
+    }
+
+    .pack-stats-row {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .pack-btn-install {
+      width: 100%;
+      margin-top: 8px;
+      padding: 6px 8px;
+      font-weight: 900;
+      font-size: 0.82rem;
+      border: 2px solid #000;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #000;
+      transition: all 0.15s ease;
+    }
+    .pack-btn-install.active {
+      background: #00f576;
+      color: #000;
+    }
+    .pack-btn-install.inactive {
+      background: #38bdf8;
+      color: #000;
+    }
+
+    /* Modal de Sons Individuais do Pacote */
+    .pack-sound-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(0,0,0,0.45);
+      border: 2px solid #2e2640;
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+
+    /* Widget do Testador de Microfone */
+    .vu-meter-bar {
+      width: 100%;
+      height: 14px;
+      background: #111;
+      border-radius: 8px;
+      border: 2px solid #000;
+      overflow: hidden;
+      position: relative;
+    }
+    .vu-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00f576 0%, #ffdd00 65%, #ff0055 100%);
+      transition: width 0.04s linear;
+    }
+
     /* Responsividade */
     @media (max-width: 768px) {
       .main-menu-overlay {
@@ -752,18 +956,24 @@
       </button>
 
       <button class="btn btn-neutral" onclick="UIModule.openSoundPacksModal()">
-        📦 ESCOLHER MEMES (<span id="menuSoundsCount">16</span>)
+        📚 BIBLIOTECA DE PACOTES (<span id="menuSoundsCount">40</span> SONS)
       </button>
     </div>
 
-    <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO (Screenshot 1) -->
-    <div id="localPlayerProfileCard" class="interactive" style="position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.8); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;">
+    <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO COM TESTADOR DE MICROFONE -->
+    <div id="localPlayerProfileCard" class="interactive" style="position:absolute; left:40px; bottom:30px; background:rgba(0,0,0,0.85); border:3px solid #000; border-radius:14px; padding:10px 16px; display:flex; align-items:center; gap:12px; box-shadow:3px 3px 0 #000;">
       <div id="localAvatarFaceIcon" style="font-size:2.2rem; background:#ffdd00; border-radius:50%; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border:2px solid #000;">
         🧔
       </div>
       <div>
         <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST)</div>
-        <div style="font-size:0.8rem; font-weight:800; color:#00f576;">MICROFONE PRONTO 🎙️</div>
+        <button id="btnTestMicQuick" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; margin-top:2px;" onclick="AudioModule.testMicInteractive()">
+          🎙️ TESTAR MICROFONE
+        </button>
+        <div id="vuMeterWrap" style="width:130px; margin-top:4px; display:none;">
+          <div class="vu-meter-bar"><div id="vuMeterFill" class="vu-meter-fill"></div></div>
+          <div id="vuPitchReadout" style="font-size:0.7rem; font-weight:900; color:#00f576; margin-top:2px;">Fale para testar...</div>
+        </div>
       </div>
     </div>
 
@@ -832,30 +1042,41 @@
     </div>
   </div>
 
-  <!-- MODAL: SELETOR DE ÁUDIOS DE MEMES (MYINSTANTS + WEB) -->
+  <!-- MODAL: BIBLIOTECA DE PACOTES DE SONS (SCREENSHOTS DO USUÁRIO) -->
   <div id="modalPacks" class="modal-overlay" style="display:none;">
-    <div class="modal-box" style="max-width:680px;">
-      <h2 class="modal-title">MEMES DO MYINSTANTS & WEB 📦</h2>
-      <p style="font-weight:700; opacity:0.85;">Selecione os áudios que tocarão na partida e ouça a prévia antes de começar!</p>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <button class="btn btn-neutral btn-sm" onclick="PacksModule.selectAll(true)">
-          ✅ MARCAR TODOS
-        </button>
-        <button class="btn btn-neutral btn-sm" onclick="PacksModule.selectAll(false)">
-          ❌ DESMARCAR TODOS
+    <div class="modal-box" style="max-width:860px; width:95%;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h2 class="modal-title" style="margin-bottom:2px;">BIBLIOTECA DE PACOTES 📚</h2>
+          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">7 de 7 pacotes instalados (40 sons)</span>
+        </div>
+        <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPacks')">
+          ✖ FECHAR
         </button>
       </div>
 
-      <!-- Lista de Áudios de Memes com Prévia e Seleção -->
-      <div id="soundsGridList" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; padding-right:6px;">
-        <!-- Injetado dinamicamente via JS -->
+      <!-- Barra de Filtros por Categoria -->
+      <div class="pack-filter-bar" id="packFilterBar">
+        <button class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MEME BR', this)">🔥 MEME BR</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('GAMES', this)">🎮 MARIO & GAMES</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MICHAEL', this)">🕺 MICHAEL JACKSON</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('ANIME', this)">⚡ ANIME</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('RISADAS', this)">😂 RISADAS</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('ANIMAIS', this)">🐶 ANIMAIS</button>
       </div>
 
-      <!-- Adicionar Áudio Personalizado do Myinstants ou Arquivo -->
-      <div style="background:rgba(0,0,0,0.5); border:2px dashed #00f0ff; border-radius:12px; padding:12px; text-align:left;">
-        <strong style="font-size:0.9rem; color:#00f0ff;">➕ Adicionar Link Direto de Áudio (ex: Myinstants .mp3):</strong>
-        <div style="display:flex; gap:8px; margin-top:6px;">
+      <!-- Grid de Pacotes Estilo Mimic Party -->
+      <div class="packs-library-container">
+        <div id="packsGridCards" class="packs-grid">
+          <!-- Injetado dinamicamente via PacksModule -->
+        </div>
+      </div>
+
+      <!-- Adicionar Áudio Personalizado do Myinstants ou Web -->
+      <div style="background:rgba(0,0,0,0.5); border:2px dashed #00f0ff; border-radius:12px; padding:10px; text-align:left;">
+        <strong style="font-size:0.85rem; color:#00f0ff;">➕ Adicionar Novo Som via Link Direto (ex: Myinstants .mp3):</strong>
+        <div style="display:flex; gap:8px; margin-top:4px;">
           <input type="text" id="inputCustomUrl" class="input-box" style="text-align:left; font-size:0.85rem; padding:8px;" placeholder="https://www.myinstants.com/media/sounds/...">
           <button class="btn btn-green btn-sm" onclick="PacksModule.addFromUrlInput()">
             ADICIONAR
@@ -863,9 +1084,35 @@
         </div>
       </div>
 
-      <button class="btn btn-green" onclick="UIModule.closeModal('modalPacks')">
-        CONFIRMAR SELEÇÃO ✅
-      </button>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn btn-neutral btn-sm" onclick="PacksModule.toggleAllPacks(true)">
+          ✅ ATIVAR TODOS
+        </button>
+        <button class="btn btn-green" onclick="UIModule.closeModal('modalPacks')">
+          CONFIRMAR E JOGAR ✅
+        </button>
+        <button class="btn btn-neutral btn-sm" onclick="PacksModule.toggleAllPacks(false)">
+          ❌ DESATIVAR TODOS
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALHES E PREVIEW DOS SONS DE UM PACOTE -->
+  <div id="modalPackDetail" class="modal-overlay" style="display:none; z-index:90;">
+    <div class="modal-box" style="max-width:580px;">
+      <h2 id="packDetailTitle" class="modal-title">PACOTE: MEME BR</h2>
+      <p id="packDetailSubtitle" style="font-weight:700; opacity:0.85;">Ouça a prévia de cada som antes de jogar:</p>
+      
+      <div id="packDetailSoundsList" style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; padding-right:6px;">
+        <!-- Injetado via JS -->
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalPackDetail')">
+          VOLTAR À BIBLIOTECA ⬅️
+        </button>
+      </div>
     </div>
   </div>
 
@@ -925,10 +1172,13 @@
     <div id="showcaseSoundTitle" class="showcase-title">Calma Calabreso!</div>
     <div id="showcaseSoundTag" class="showcase-tag">Meme Brasileiro</div>
 
-    <!-- Caixa de Waveform com Borda Ciano e Agulha Vermelha de Varredura -->
+    <!-- Caixa de Waveform com Borda Ciano, Agulha Vermelha e Rastro de Tom Agudo/Grave -->
     <div class="waveform-box">
+      <span class="pitch-label-high">AGUDO ⬆️</span>
+      <span class="pitch-label-low">GRAVE ⬇️</span>
       <div class="waveform-center-line"></div>
       <canvas id="waveformCanvas" width="480" height="110"></canvas>
+      <canvas id="pitchTrailCanvas" width="480" height="110" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:4; pointer-events:none;"></canvas>
       <div id="waveformNeedle" class="waveform-needle"></div>
     </div>
 
@@ -1502,32 +1752,108 @@
         return this.masterGainNode || this.ctx.destination;
       },
 
+      vuTestInterval: null,
+
       async initMic() {
         this.ensureContext();
-        if (this.isMicReady && this.micStream) return true;
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+        if (this.isMicReady && this.micStream && this.micStream.active) return true;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert("Seu navegador não suporta captura de microfone.");
+          return false;
+        }
 
+        let stream = null;
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
+          // Tenta primeiro sem processamento para máxima pureza acústica
+          stream = await navigator.mediaDevices.getUserMedia({
             audio: {
               echoCancellation: false,
               noiseSuppression: false,
               autoGainControl: false
             }
           });
+        } catch (e1) {
+          console.warn("Restrições estritas falharam, usando microfone padrão:", e1);
+          try {
+            // Fallback essencial para compatibilidade com Chrome / Windows / Realtek
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch (e2) {
+            console.error("Microfone não autorizado ou desconectado:", e2);
+            alert("⚠️ Microfone bloqueado ou indisponível!\nPor favor, clique no ícone de cadeado/permissões ao lado da barra de endereço do seu navegador e autorize o Microfone para jogar.");
+            return false;
+          }
+        }
 
-          this.micStream = stream;
-          const source = this.ctx.createMediaStreamSource(stream);
+        if (!stream) return false;
+        this.micStream = stream;
+
+        try {
           this.analyser = this.ctx.createAnalyser();
           this.analyser.fftSize = 1024;
+          this.analyser.smoothingTimeConstant = 0.25;
+          const source = this.ctx.createMediaStreamSource(stream);
           source.connect(this.analyser);
-
-          this.isMicReady = true;
-          return true;
         } catch (e) {
-          console.warn("Permissão de microfone:", e);
-          return false;
+          console.warn("Erro ao ligar analyser ao mic:", e);
         }
+
+        this.isMicReady = true;
+        const profileEl = document.getElementById('localPlayerProfileCard');
+        if (profileEl) {
+          const statusTxt = profileEl.querySelector('#localPlayerNameDisplay + button + div #vuPitchReadout');
+          if (statusTxt) statusTxt.innerText = "MICROFONE CONECTADO! ✅";
+        }
+        return true;
+      },
+
+      testMicInteractive() {
+        this.initMic().then(ready => {
+          if (!ready) return;
+          const wrap = document.getElementById('vuMeterWrap');
+          const fill = document.getElementById('vuMeterFill');
+          const readout = document.getElementById('vuPitchReadout');
+          const btn = document.getElementById('btnTestMicQuick');
+          if (wrap) wrap.style.display = 'block';
+          if (btn) btn.innerText = "🟢 MIC ATIVO";
+
+          if (this.vuTestInterval) clearInterval(this.vuTestInterval);
+          const data = new Uint8Array(this.analyser.frequencyBinCount);
+          const timeData = new Float32Array(this.analyser.fftSize);
+
+          this.vuTestInterval = setInterval(() => {
+            if (!this.analyser) return;
+            this.analyser.getByteFrequencyData(data);
+            this.analyser.getFloatTimeDomainData(timeData);
+
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) sum += data[i];
+            const avg = sum / data.length;
+            const pct = Math.min(100, Math.round((avg / 110) * 100));
+            if (fill) fill.style.width = pct + '%';
+
+            const pitch = ScoringModule.detectCurrentPitch(timeData, AudioModule.ctx.sampleRate);
+            if (readout) {
+              if (pct < 4) {
+                readout.innerText = "Fale no microfone para testar...";
+                readout.style.color = "#888";
+              } else if (pitch) {
+                if (pitch > 260) {
+                  readout.innerText = `AGUDO ⬆️ (${Math.round(pitch)} Hz)`;
+                  readout.style.color = "#00f0ff";
+                } else if (pitch < 155) {
+                  readout.innerText = `GRAVE ⬇️ (${Math.round(pitch)} Hz)`;
+                  readout.style.color = "#ff0077";
+                } else {
+                  readout.innerText = `MÉDIO 🟢 (${Math.round(pitch)} Hz)`;
+                  readout.style.color = "#00f576";
+                }
+              } else {
+                readout.innerText = `Captando voz (${pct}%)`;
+                readout.style.color = "#ffdd00";
+              }
+            }
+          }, 40);
+        });
       },
 
       toggleMasterMute() {
@@ -1543,96 +1869,90 @@
         }
       },
 
-      // Gravação com Proteção Total contra travamentos (Zero TDZ, Try/Catch Total)
+      // Gravação 100% Real da Voz usando MediaRecorder com fallback PCM
       recordTakePCM(durationSeconds, onProgress, onFinish) {
         this.ensureContext();
-        const sampleRate = this.ctx.sampleRate;
-        const totalSamples = Math.floor(sampleRate * durationSeconds);
-        const recordedPCM = new Float32Array(totalSamples);
-        let sampleIndex = 0;
+        const durationMs = durationSeconds * 1000;
+        const startTime = Date.now();
         let isDone = false;
-        let processor = null;
-        let source = null;
-        let silenceGain = null;
         let progressTimer = null;
         let hardTimeout = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
 
-        const complete = () => {
+        const complete = (buffer) => {
           if (isDone) return;
           isDone = true;
           if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
           if (hardTimeout) { clearTimeout(hardTimeout); hardTimeout = null; }
 
-          if (processor) {
-            processor.onaudioprocess = null;
-            try { if (source) source.disconnect(processor); } catch (e) {}
-            try { processor.disconnect(); } catch (e) {}
-            try { if (silenceGain) silenceGain.disconnect(); } catch (e) {}
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            try { mediaRecorder.stop(); } catch (e) {}
           }
 
-          let audioBuf = null;
-          try {
-            audioBuf = AudioModule.ctx.createBuffer(1, Math.max(1024, sampleIndex), sampleRate);
-            audioBuf.copyToChannel(recordedPCM.subarray(0, audioBuf.length), 0);
-          } catch (e) {
-            console.warn("Buffer fallback:", e);
-            audioBuf = AudioModule.ctx.createBuffer(1, Math.max(1024, totalSamples), sampleRate);
-          }
-
-          if (onProgress) try { onProgress(1); } catch (e) {}
-          if (onFinish) try { onFinish(audioBuf, recordedPCM); } catch (e) { console.error("onFinish err:", e); }
+          if (onProgress) try { onProgress(1.0); } catch (e) {}
+          if (onFinish) try { onFinish(buffer); } catch (e) { console.error("onFinish err:", e); }
         };
-
-        const durationMs = durationSeconds * 1000;
-        const startTime = Date.now();
 
         progressTimer = setInterval(() => {
           const elapsed = Date.now() - startTime;
-          if (onProgress) try { onProgress(Math.min(1, elapsed / durationMs)); } catch (e) {}
+          if (onProgress) try { onProgress(Math.min(1.0, elapsed / durationMs)); } catch (e) {}
         }, 30);
 
         hardTimeout = setTimeout(() => {
-          complete();
-        }, durationMs + 200);
+          complete(this.createSilentBuffer(durationSeconds));
+        }, durationMs + 400);
 
-        if (!this.micStream) {
-          // Microfone indisponível: preenche com tom suave simulado e completa sem travar!
-          for (let i = 0; i < totalSamples; i++) {
-            const t = i / sampleRate;
-            recordedPCM[i] = Math.sin(TWO_PI * 320 * t) * 0.15;
-          }
-          sampleIndex = totalSamples;
-          setTimeout(() => complete(), durationMs);
+        if (!this.micStream || !this.micStream.active) {
+          console.warn("Nenhum stream de mic ativo, aguardando...");
+          setTimeout(() => complete(this.createSilentBuffer(durationSeconds)), durationMs);
           return;
         }
 
-        try {
-          const bufferSize = 2048;
-          processor = this.ctx.createScriptProcessor(bufferSize, 1, 1);
-          source = this.ctx.createMediaStreamSource(this.micStream);
-          source.connect(processor);
+        // Usa MediaRecorder para captura nativa com 100% de clareza vocal
+        if (window.MediaRecorder) {
+          try {
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+              ? 'audio/webm;codecs=opus'
+              : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
 
-          silenceGain = this.ctx.createGain();
-          silenceGain.gain.value = 0;
-          processor.connect(silenceGain);
-          silenceGain.connect(this.ctx.destination);
+            mediaRecorder = mimeType ? new MediaRecorder(this.micStream, { mimeType }) : new MediaRecorder(this.micStream);
+            audioChunks = [];
 
-          processor.onaudioprocess = (e) => {
-            if (isDone) return;
-            const channel = e.inputBuffer.getChannelData(0);
-            for (let i = 0; i < channel.length; i++) {
-              if (sampleIndex < totalSamples) {
-                recordedPCM[sampleIndex++] = channel[i];
+            mediaRecorder.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+              try {
+                const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                const arrayBuffer = await blob.arrayBuffer();
+                const decodedBuf = await this.ctx.decodeAudioData(arrayBuffer);
+                complete(decodedBuf);
+              } catch (decErr) {
+                console.warn("Decode fallback:", decErr);
+                complete(this.createSilentBuffer(durationSeconds));
               }
-            }
-            if (sampleIndex >= totalSamples) {
-              complete();
-            }
-          };
-        } catch (err) {
-          console.warn("Erro ao iniciar captura do mic, usando fallback:", err);
-          setTimeout(() => complete(), durationMs);
+            };
+
+            mediaRecorder.start(40);
+            setTimeout(() => {
+              if (mediaRecorder && mediaRecorder.state === 'recording') {
+                try { mediaRecorder.stop(); } catch (e) {}
+              }
+            }, durationMs);
+            return;
+          } catch (mrErr) {
+            console.warn("MediaRecorder indisponível, usando fallback de gravação:", mrErr);
+          }
         }
+
+        setTimeout(() => complete(this.createSilentBuffer(durationSeconds)), durationMs);
+      },
+
+      createSilentBuffer(durationSeconds) {
+        const sr = this.ctx ? this.ctx.sampleRate : 44100;
+        return this.ctx.createBuffer(1, Math.floor(sr * durationSeconds), sr);
       },
 
       playAudioBuffer(buffer, sabotageType, onEnded) {
@@ -2070,74 +2390,324 @@
           const barHeight = amp * (H * 0.35);
           ctx.fillRect(i, midY - barHeight / 2, 1, barHeight);
         }
+      },
+
+      detectCurrentPitch(timeData, sampleRate) {
+        if (!timeData || timeData.length < 64 || !sampleRate) return null;
+        let sumSq = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          sumSq += timeData[i] * timeData[i];
+        }
+        const rms = Math.sqrt(sumSq / timeData.length);
+        if (rms < 0.015) return null; // Limiar de silêncio
+
+        // Faixa vocal humana: ~70 Hz (grave) a ~900 Hz (agudo)
+        const minPeriod = Math.max(1, Math.floor(sampleRate / 900));
+        const maxPeriod = Math.min(timeData.length - 2, Math.floor(sampleRate / 70));
+
+        let bestPeriod = -1;
+        let maxCorr = -Infinity;
+        const corrs = new Float32Array(maxPeriod + 2);
+
+        for (let tau = minPeriod; tau <= maxPeriod; tau++) {
+          let corr = 0;
+          const len = timeData.length - tau;
+          for (let i = 0; i < len; i++) {
+            corr += timeData[i] * timeData[i + tau];
+          }
+          corrs[tau] = corr / len;
+          if (corrs[tau] > maxCorr) {
+            maxCorr = corrs[tau];
+            bestPeriod = tau;
+          }
+        }
+
+        let zeroLag = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          zeroLag += timeData[i] * timeData[i];
+        }
+        zeroLag /= timeData.length;
+
+        if (bestPeriod > minPeriod && bestPeriod < maxPeriod && zeroLag > 0.0001) {
+          if (maxCorr / zeroLag > 0.35) {
+            const y1 = corrs[bestPeriod - 1];
+            const y2 = corrs[bestPeriod];
+            const y3 = corrs[bestPeriod + 1];
+            const denom = 2 * (2 * y2 - y1 - y3);
+            const delta = denom !== 0 ? (y3 - y1) / denom : 0;
+            const period = bestPeriod + delta;
+            return sampleRate / period;
+          }
+        }
+        return null;
       }
     };
 
     /* ==========================================================================
-       5. PACKSMODULE: 16 MEMES DO MYINSTANTS (LOCAL MP3) COM SELETOR & PRÉVIA
+       5. PACKSMODULE: BIBLIOTECA DE 7 PACOTES (40 SONS VOCAIS DO MYINSTANTS)
        ========================================================================== */
     const PacksModule = {
-      // 16 Memes lendários com arquivos MP3 servidos na pasta sounds/
-      library: [
-        { id: 'calabreso', name: 'Calma Calabreso! 🗣️', shortName: 'CALABRESO', tag: 'Meme Brasileiro', icon: '🗣️', file: 'sounds/calma-calabreso.mp3', unpitched: false, selected: true },
-        { id: 'receba', name: 'Receba! Graças a Deus! ⚽', shortName: 'RECEBA', tag: 'Luva de Pedreiro', icon: '⚽', file: 'sounds/receba.mp3', unpitched: false, selected: true },
-        { id: 'pare', name: 'PARE! (Rodrigo Faro) ✋', shortName: 'PARE!', tag: 'Vai Dar Namoro', icon: '✋', file: 'sounds/pare-rodrigo-faro.mp3', unpitched: false, selected: true },
-        { id: 'danca_gatinho', name: 'Dança Gatinho, Dança! 🕺', shortName: 'GATINHO', tag: 'Rodrigo Faro', icon: '🕺', file: 'sounds/danca-gatinho.mp3', unpitched: false, selected: true },
-        { id: 'cavalo', name: 'Cavaaaalo! (Rodrigo Faro) 🐴', shortName: 'CAVALO', tag: 'Rodrigo Faro', icon: '🐴', file: 'sounds/cavalo.mp3', unpitched: false, selected: true },
-        { id: 'filho_calma', name: 'Que Isso Meu Filho, Calma! 🤦', shortName: 'MEU FILHO', tag: 'Programa do Ratinho', icon: '🤦‍♂️', file: 'sounds/que-isso-meu-filho.mp3', unpitched: false, selected: true },
-        { id: 'uepa', name: 'Uêpa! (Ratinho) 🤠', shortName: 'UÊPA!', tag: 'Programa do Ratinho', icon: '🤠', file: 'sounds/uepa.mp3', unpitched: false, selected: true },
-        { id: 'rapaz', name: 'Rapaaaaz! (Xaropinho) 🐭', shortName: 'RAPAZ', tag: 'Programa do Ratinho', icon: '🐭', file: 'sounds/rapaz.mp3', unpitched: false, selected: true },
-        { id: 'errou', name: 'Errou! (Faustão) ❌', shortName: 'ERROU!', tag: 'Domingão do Faustão', icon: '❌', file: 'sounds/errou.mp3', unpitched: false, selected: true },
-        { id: 'win_error', name: 'Erro do Windows XP 💻', shortName: 'WINDOWS XP', tag: 'Nostalgia Tech', icon: '💻', file: 'sounds/windows-xp-error.mp3', unpitched: false, selected: true },
-        { id: 'bruh', name: 'Efeito Bruh 🗿', shortName: 'BRUH', tag: 'Internet Meme', icon: '🗿', file: 'sounds/bruh.mp3', unpitched: false, selected: true },
-        { id: 'airhorn', name: 'Buzina Airhorn MLG 🎺', shortName: 'AIRHORN', tag: 'Efeito Sonoro MLG', icon: '🎺', file: 'sounds/airhorn.mp3', unpitched: false, selected: true },
-        { id: 'sad_trombone', name: 'Trombone Triste 😢', shortName: 'TROMBONE', tag: 'Fracasso Total', icon: '😢', file: 'sounds/sad-trombone.mp3', unpitched: false, selected: true },
-        { id: 'vine_boom', name: 'Vine Boom 💥', shortName: 'VINE BOOM', tag: 'Efeito Sonoro', icon: '💥', file: 'sounds/vine-boom.mp3', unpitched: true, selected: true },
-        { id: 'galo', name: 'Galo Cocoricó 🐓', shortName: 'GALO', tag: 'Sons de Animais', icon: '🐓', file: 'sounds/galo.mp3', unpitched: false, selected: true },
-        { id: 'miau', name: 'Miau Bravo 🐱', shortName: 'MIAU', tag: 'Gato Ofendido', icon: '😾', file: 'sounds/miau.mp3', unpitched: false, selected: true }
-      ],
-
+      currentFilter: 'TODOS',
+      customSounds: [],
       previewAudio: null,
 
+      packs: [
+        {
+          id: 'pack_meme_br',
+          title: 'MEME BR',
+          category: 'MEME BR',
+          author: '@folies_br',
+          rating: '5.0',
+          downloads: '2.4k',
+          color: '#ff0077',
+          icon: '🔥',
+          enabled: true,
+          sounds: [
+            { id: 'calabreso', name: 'Calma Calabreso! 🗣️', shortName: 'CALABRESO', tag: 'Meme Brasileiro', icon: '🗣️', file: 'sounds/calma-calabreso.mp3', unpitched: false },
+            { id: 'receba', name: 'Receba! Graças a Deus! ⚽', shortName: 'RECEBA', tag: 'Luva de Pedreiro', icon: '⚽', file: 'sounds/receba.mp3', unpitched: false },
+            { id: 'bora_bill', name: 'Bora Bill! Bora Fi do Bill! 📢', shortName: 'BORA BILL', tag: 'Meme Nordeste', icon: '📢', file: 'sounds/bora-bill.mp3', unpitched: false },
+            { id: 'acertou_mizeravi', name: 'Acertou, Mizerávi! 🤓', shortName: 'MIZERÁVI', tag: 'Meme Brasileiro', icon: '🤓', file: 'sounds/acertou-mizeravi.mp3', unpitched: false },
+            { id: 'la_ele', name: 'Lá Ele Mil Vezes! 🙅‍♂️', shortName: 'LÁ ELE', tag: 'Bahia Memes', icon: '🙅‍♂️', file: 'sounds/la-ele.mp3', unpitched: false },
+            { id: 'olha_a_pedra', name: 'Olha a Pedra! 🪨', shortName: 'A PEDRA', tag: 'Meme Viral', icon: '🪨', file: 'sounds/olha-a-pedra.mp3', unpitched: false },
+            { id: 'ze_manga', name: 'Zé da Manga! 🥭', shortName: 'ZÉ DA MANGA', tag: 'Áudio do Zap', icon: '🥭', file: 'sounds/ze-da-manga.mp3', unpitched: false },
+            { id: 'ai_preto', name: 'Ai Preto! 🎵', shortName: 'AI PRETO', tag: 'Funk Carioca', icon: '🎵', file: 'sounds/ai-preto.mp3', unpitched: false },
+            { id: 'brincadeira_hein', name: 'É Brincadeira, Hein! 😤', shortName: 'BRINCADEIRA', tag: 'Craque Neto', icon: '😤', file: 'sounds/e-brincadeira-hein.mp3', unpitched: false },
+            { id: 'chaves', name: 'Isso Isso Isso (Chaves) 👦', shortName: 'CHAVES', tag: 'Vila do Chaves', icon: '👦', file: 'sounds/chaves.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_tv_faro',
+          title: 'TV & RATINHO',
+          category: 'MEME BR',
+          author: '@tv_nostalgia',
+          rating: '5.0',
+          downloads: '1.9k',
+          color: '#ffaa00',
+          icon: '📺',
+          enabled: true,
+          sounds: [
+            { id: 'pare', name: 'PARE! (Rodrigo Faro) ✋', shortName: 'PARE!', tag: 'Vai Dar Namoro', icon: '✋', file: 'sounds/pare-rodrigo-faro.mp3', unpitched: false },
+            { id: 'danca_gatinho', name: 'Dança Gatinho, Dança! 🕺', shortName: 'GATINHO', tag: 'Rodrigo Faro', icon: '🕺', file: 'sounds/danca-gatinho.mp3', unpitched: false },
+            { id: 'cavalo', name: 'Cavaaaalo! (Rodrigo Faro) 🐴', shortName: 'CAVALO', tag: 'Rodrigo Faro', icon: '🐴', file: 'sounds/cavalo.mp3', unpitched: false },
+            { id: 'filho_calma', name: 'Que Isso Meu Filho, Calma! 🤦', shortName: 'MEU FILHO', tag: 'Programa do Ratinho', icon: '🤦‍♂️', file: 'sounds/que-isso-meu-filho.mp3', unpitched: false },
+            { id: 'uepa', name: 'Uêpa! (Ratinho) 🤠', shortName: 'UÊPA!', tag: 'Programa do Ratinho', icon: '🤠', file: 'sounds/uepa.mp3', unpitched: false },
+            { id: 'rapaz', name: 'Rapaaaaz! (Xaropinho) 🐭', shortName: 'RAPAZ', tag: 'Programa do Ratinho', icon: '🐭', file: 'sounds/rapaz.mp3', unpitched: false },
+            { id: 'errou', name: 'Errou! (Faustão) ❌', shortName: 'ERROU!', tag: 'Domingão do Faustão', icon: '❌', file: 'sounds/errou.mp3', unpitched: false },
+            { id: 'demais', name: 'DEMAIS! (Rodrigo Faro) ✨', shortName: 'DEMAIS', tag: 'Vai Dar Namoro', icon: '✨', file: 'sounds/demais.mp3', unpitched: false },
+            { id: 'tome', name: 'TOME! (Rodrigo Faro) 👊', shortName: 'TOME', tag: 'Vai Dar Namoro', icon: '👊', file: 'sounds/tome.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_games',
+          title: 'MARIO & GAMES',
+          category: 'GAMES',
+          author: '@retro_gamer',
+          rating: '5.0',
+          downloads: '3.1k',
+          color: '#00d4ff',
+          icon: '🎮',
+          enabled: true,
+          sounds: [
+            { id: 'its_me_mario', name: "It's-a me, Mario! 🍄", shortName: 'MARIO', tag: 'Super Mario 64', icon: '🍄', file: 'sounds/its-me-mario.mp3', unpitched: false },
+            { id: 'mario_jump', name: 'Yahoo! Mario Jump 🍄', shortName: 'YAHOO!', tag: 'Super Mario 64', icon: '🍄', file: 'sounds/mario-jump.mp3', unpitched: false },
+            { id: 'roblox_oof', name: 'Roblox Oof 💥', shortName: 'ROBLOX OOF', tag: 'Roblox Classic', icon: '💥', file: 'sounds/roblox-oof.mp3', unpitched: false },
+            { id: 'win_error', name: 'Erro do Windows XP 💻', shortName: 'WINDOWS XP', tag: 'Nostalgia Tech', icon: '💻', file: 'sounds/windows-xp-error.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_mj',
+          title: 'MICHAEL JACKSON',
+          category: 'MICHAEL',
+          author: '@king_of_pop',
+          rating: '5.0',
+          downloads: '2.8k',
+          color: '#9b5de5',
+          icon: '🕺',
+          enabled: true,
+          sounds: [
+            { id: 'mj_hee_hee', name: 'Hee-Hee! (Michael Jackson) 🎩', shortName: 'HEE-HEE', tag: 'Rei do Pop', icon: '🎩', file: 'sounds/michael-jackson-hee-hee.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_anime',
+          title: 'ANIME & GRITOS',
+          category: 'ANIME',
+          author: '@otaku_party',
+          rating: '5.0',
+          downloads: '2.5k',
+          color: '#f15bb5',
+          icon: '⚡',
+          enabled: true,
+          sounds: [
+            { id: 'kamehameha', name: 'Kamehameha! (Goku) 💥', shortName: 'KAMEHAMEHA', tag: 'Dragon Ball Z', icon: '💥', file: 'sounds/kamehameha.mp3', unpitched: false },
+            { id: 'nani', name: 'NANI?! (Omae Wa Mou) ⚡', shortName: 'NANI?!', tag: 'Hokuto no Ken', icon: '⚡', file: 'sounds/nani.mp3', unpitched: false },
+            { id: 'nico_nico', name: 'Nico Nico Nii! 💖', shortName: 'NICO NICO', tag: 'Love Live!', icon: '💖', file: 'sounds/nico-nico-nii.mp3', unpitched: false },
+            { id: 'yamete', name: 'Yamete Kudasai 😳', shortName: 'YAMETE', tag: 'Anime Clássico', icon: '😳', file: 'sounds/yamete-kudasai.mp3', unpitched: false },
+            { id: 'onii_chan', name: 'Onii-chan! 💕', shortName: 'ONII-CHAN', tag: 'Anime Voice', icon: '💕', file: 'sounds/onii-chan.mp3', unpitched: false },
+            { id: 'luffy_laugh', name: 'Risada do Luffy (Shishishi) 👒', shortName: 'LUFFY', tag: 'One Piece', icon: '👒', file: 'sounds/luffy-laugh.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_risadas',
+          title: 'RISADAS ICÔNICAS',
+          category: 'RISADAS',
+          author: '@gargalhadas',
+          rating: '5.0',
+          downloads: '1.8k',
+          color: '#fee440',
+          icon: '😂',
+          enabled: true,
+          sounds: [
+            { id: 'clash_laugh', name: 'He He He Ha (Clash Royale) 👑', shortName: 'HE HE HE HA', tag: 'Clash Royale', icon: '👑', file: 'sounds/clash-royale-laugh.mp3', unpitched: false },
+            { id: 'coringa_laugh', name: 'Risada Maligna do Coringa 🃏', shortName: 'CORINGA', tag: 'DC Comics', icon: '🃏', file: 'sounds/coringa-laugh.mp3', unpitched: false },
+            { id: 'pica_pau', name: 'Risada do Pica-Pau 🐦', shortName: 'PICA-PAU', tag: 'Desenho Animado', icon: '🐦', file: 'sounds/pica-pau.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_animais_classics',
+          title: 'ANIMAIS & CLÁSSICOS',
+          category: 'ANIMAIS',
+          author: '@sound_party',
+          rating: '4.9',
+          downloads: '1.6k',
+          color: '#00f576',
+          icon: '🐶',
+          enabled: true,
+          sounds: [
+            { id: 'cachorro', name: 'Cachorro Latindo (Au Au!) 🐶', shortName: 'AU AU', tag: 'Sons de Animais', icon: '🐶', file: 'sounds/cachorro.mp3', unpitched: false },
+            { id: 'galo', name: 'Galo Cocoricó 🐓', shortName: 'GALO', tag: 'Sons de Animais', icon: '🐓', file: 'sounds/galo.mp3', unpitched: false },
+            { id: 'miau', name: 'Miau Gato Bravo 🐱', shortName: 'MIAU', tag: 'Gato Ofendido', icon: '😾', file: 'sounds/miau.mp3', unpitched: false },
+            { id: 'bruh', name: 'Efeito Bruh 🗿', shortName: 'BRUH', tag: 'Internet Meme', icon: '🗿', file: 'sounds/bruh.mp3', unpitched: false },
+            { id: 'airhorn', name: 'Buzina Airhorn MLG 🎺', shortName: 'AIRHORN', tag: 'Efeito Sonoro MLG', icon: '🎺', file: 'sounds/airhorn.mp3', unpitched: false },
+            { id: 'vine_boom', name: 'Vine Boom 💥', shortName: 'VINE BOOM', tag: 'Efeito Sonoro', icon: '💥', file: 'sounds/vine-boom.mp3', unpitched: true },
+            { id: 'sad_trombone', name: 'Trombone Triste 😢', shortName: 'TROMBONE', tag: 'Fracasso Total', icon: '😢', file: 'sounds/sad-trombone.mp3', unpitched: false }
+          ]
+        }
+      ],
+
+      // Getter de compatibilidade reversa
+      get library() {
+        const list = [];
+        this.packs.forEach(p => {
+          p.sounds.forEach(s => list.push(s));
+        });
+        return list.concat(this.customSounds);
+      },
+
       initUI() {
-        this.renderSoundsGrid();
+        this.renderPacksGrid();
+        this.updateCounts();
       },
 
       renderSoundsGrid() {
-        const container = document.getElementById('soundsGridList');
+        this.renderPacksGrid();
+      },
+
+      filterCategory(category, chipBtn) {
+        this.currentFilter = category;
+        const chips = document.querySelectorAll('.pack-filter-chip');
+        chips.forEach(c => c.classList.remove('active'));
+        if (chipBtn) chipBtn.classList.add('active');
+        this.renderPacksGrid();
+      },
+
+      togglePack(packId) {
+        const pack = this.packs.find(p => p.id === packId);
+        if (pack) {
+          pack.enabled = !pack.enabled;
+          this.renderPacksGrid();
+          this.updateCounts();
+          AudioModule.playSfx('tick');
+        }
+      },
+
+      toggleAllPacks(status) {
+        this.packs.forEach(p => p.enabled = status);
+        this.renderPacksGrid();
+        this.updateCounts();
+        AudioModule.playSfx('tick');
+      },
+
+      updateCounts() {
+        const enabledPacks = this.packs.filter(p => p.enabled);
+        const enabledSounds = this.getSelectedSounds();
+        const totalPacks = this.packs.length;
+
+        const counterEl = document.getElementById('packsCounterText');
+        if (counterEl) {
+          counterEl.innerText = `${enabledPacks.length} de ${totalPacks} pacotes ativos (${enabledSounds.length} sons selecionados)`;
+        }
+
+        const c1 = document.getElementById('menuSoundsCount');
+        const c2 = document.getElementById('lobbySoundsSelectedCount');
+        if (c1) c1.innerText = `${enabledSounds.length} Sons`;
+        if (c2) c2.innerText = `${enabledSounds.length} Sons`;
+      },
+
+      renderPacksGrid() {
+        const container = document.getElementById('packsGridCards');
         if (!container) return;
         container.innerHTML = '';
 
-        this.library.forEach((item, idx) => {
-          const row = document.createElement('div');
-          row.className = `sound-item-row ${item.selected ? 'selected' : ''}`;
-          row.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px;">
-              <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="PacksModule.toggleItem(${idx}, this.checked)">
-              <strong style="font-size:0.95rem;">${item.name}</strong>
+        const filtered = this.currentFilter === 'TODOS'
+          ? this.packs
+          : this.packs.filter(p => p.category === this.currentFilter);
+
+        filtered.forEach(pack => {
+          const card = document.createElement('div');
+          card.className = `pack-card ${pack.enabled ? 'installed' : ''}`;
+          card.innerHTML = `
+            <div class="pack-badge-num">⭐ ${pack.rating}</div>
+            <div class="pack-cover-circle" style="background: radial-gradient(circle, ${pack.color}, #120d2d);">
+              <span>${pack.icon}</span>
             </div>
-            <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${item.file}')" title="Ouvir prévia">
-              🔊 OUVIR
+            <div class="pack-title-ribbon" style="background:${pack.color};">${pack.title}</div>
+            <div class="pack-author">por ${pack.author}</div>
+            <div class="pack-stats-row">
+              <span>🎵 ${pack.sounds.length} sons</span>
+              <span>📥 ${pack.downloads}</span>
+            </div>
+            <button class="pack-btn-install ${pack.enabled ? 'active' : ''}" onclick="PacksModule.togglePack('${pack.id}')">
+              ${pack.enabled ? 'INSTALADO ✅' : 'DESATIVADO ❌'}
+            </button>
+            <button class="btn btn-neutral btn-sm" style="width:100%; margin-top:5px; font-size:0.75rem; padding:4px;" onclick="PacksModule.openPackDetails('${pack.id}')">
+              VER SONS 🔍
             </button>
           `;
-          container.appendChild(row);
+          container.appendChild(card);
         });
-
-        const selectedCount = this.library.filter(s => s.selected).length;
-        const c1 = document.getElementById('menuSoundsCount');
-        const c2 = document.getElementById('lobbySoundsSelectedCount');
-        if (c1) c1.innerText = selectedCount;
-        if (c2) c2.innerText = selectedCount;
       },
 
-      toggleItem(idx, isChecked) {
-        this.library[idx].selected = isChecked;
-        this.renderSoundsGrid();
-      },
+      openPackDetails(packId) {
+        const pack = this.packs.find(p => p.id === packId);
+        if (!pack) return;
 
-      selectAll(status) {
-        this.library.forEach(s => s.selected = status);
-        this.renderSoundsGrid();
+        const modal = document.getElementById('modalPackDetail');
+        const title = document.getElementById('packDetailTitle');
+        const subtitle = document.getElementById('packDetailSubtitle');
+        const list = document.getElementById('packDetailSoundsList');
+
+        if (title) title.innerText = `${pack.icon} ${pack.title}`;
+        if (subtitle) subtitle.innerText = `${pack.sounds.length} sons gravados (${pack.author}) - Ouça as prévias:`;
+        if (list) {
+          list.innerHTML = '';
+          pack.sounds.forEach(snd => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.06); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.12);';
+            row.innerHTML = `
+              <div style="text-align:left;">
+                <strong style="color:#00f0ff; font-size:0.95rem;">${snd.name}</strong>
+                <div style="font-size:0.75rem; opacity:0.7;">Tag: ${snd.tag || pack.category}</div>
+              </div>
+              <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')">
+                🔊 OUVIR
+              </button>
+            `;
+            list.appendChild(row);
+          });
+        }
+
+        if (modal) modal.style.display = 'flex';
       },
 
       playPreview(fileUrl) {
@@ -2156,7 +2726,6 @@
           return await AudioModule.ctx.decodeAudioData(arrayBuf);
         } catch (e) {
           console.warn("Erro ao carregar MP3, gerando fallback:", e);
-          // Fallback sintetizado caso a URL falhe
           const b = AudioModule.ctx.createBuffer(1, AudioModule.ctx.sampleRate * 1.5, AudioModule.ctx.sampleRate);
           const p = b.getChannelData(0);
           for (let i = 0; i < p.length; i++) {
@@ -2169,24 +2738,34 @@
 
       addFromUrlInput() {
         const input = document.getElementById('inputCustomUrl');
-        const url = input.value.trim();
+        const url = input ? input.value.trim() : '';
         if (!url) return;
-        const name = 'Meme Web #' + (this.library.length + 1);
-        this.library.push({
+        const name = 'Meme Web #' + (this.customSounds.length + 1);
+        const newSound = {
           id: 'custom_' + Date.now(),
           name: name,
+          shortName: 'WEB MEME',
+          tag: 'Link Personalizado',
+          icon: '🌐',
           file: url,
-          unpitched: false,
-          selected: true
-        });
-        input.value = '';
-        this.renderSoundsGrid();
+          unpitched: false
+        };
+        this.customSounds.push(newSound);
+        if (input) input.value = '';
+        this.updateCounts();
         alert('Áudio adicionado com sucesso!');
       },
 
       getSelectedSounds() {
-        const selected = this.library.filter(s => s.selected);
-        return selected.length > 0 ? selected : this.library.slice(0, 5);
+        const sounds = [];
+        this.packs.forEach(p => {
+          if (p.enabled) {
+            p.sounds.forEach(s => sounds.push(s));
+          }
+        });
+        this.customSounds.forEach(s => sounds.push(s));
+        if (sounds.length > 0) return sounds;
+        return this.packs[0].sounds;
       }
     };
 
@@ -2518,6 +3097,245 @@
         this.needleAnimFrame = requestAnimationFrame(frame);
       },
 
+      pitchTrailAnimFrame: null,
+
+      startLivePitchTrail(durationSeconds) {
+        const canvas = document.getElementById('pitchTrailCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        if (this.pitchTrailAnimFrame) cancelAnimationFrame(this.pitchTrailAnimFrame);
+
+        const startTime = performance.now();
+        const durMs = Math.max(500, durationSeconds * 1000);
+        const trailPoints = [];
+        const timeData = (AudioModule.analyser) ? new Float32Array(AudioModule.analyser.fftSize) : null;
+        const sampleRate = (AudioModule.ctx) ? AudioModule.ctx.sampleRate : 44100;
+        const refPitch = (this.refAnalysis && this.refAnalysis.relativePitch) ? this.refAnalysis.relativePitch : [];
+
+        const renderFrame = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / durMs);
+          const currentX = progress * W;
+
+          if (AudioModule.analyser && timeData) {
+            AudioModule.analyser.getFloatTimeDomainData(timeData);
+            const pitch = ScoringModule.detectCurrentPitch(timeData, sampleRate);
+            let sumSq = 0;
+            for (let i = 0; i < timeData.length; i++) sumSq += timeData[i] * timeData[i];
+            const rms = Math.sqrt(sumSq / timeData.length);
+
+            if (pitch && rms > 0.015) {
+              const clamped = Math.max(75, Math.min(750, pitch));
+              const norm = (Math.log2(clamped) - Math.log2(75)) / (Math.log2(750) - Math.log2(75));
+              const y = (H - 22) - (norm * (H - 42));
+              trailPoints.push({ x: currentX, y, pitch });
+            } else {
+              trailPoints.push({ x: currentX, y: null, pitch: null });
+            }
+          }
+
+          ctx.clearRect(0, 0, W, H);
+
+          // 1. Linha pontilhada ciano guia do som de referência
+          if (refPitch.length > 1) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([6, 5]);
+            let refStarted = false;
+            for (let i = 0; i < refPitch.length; i++) {
+              const semitone = refPitch[i];
+              const rx = (i / (refPitch.length - 1)) * W;
+              if (semitone !== null && semitone !== undefined) {
+                const clampedSemi = Math.max(-14, Math.min(14, semitone));
+                const ry = (H / 2) - (clampedSemi / 14) * (H * 0.38);
+                if (!refStarted) { ctx.moveTo(rx, ry); refStarted = true; }
+                else { ctx.lineTo(rx, ry); }
+              } else {
+                refStarted = false;
+              }
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // 2. Rastro de tom neon rosa/magenta em tempo real
+          if (trailPoints.length > 1) {
+            ctx.save();
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#ff0077';
+            ctx.strokeStyle = '#ff0077';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            let drw = false;
+            for (let i = 0; i < trailPoints.length; i++) {
+              const pt = trailPoints[i];
+              if (pt.y !== null) {
+                if (!drw) { ctx.moveTo(pt.x, pt.y); drw = true; }
+                else { ctx.lineTo(pt.x, pt.y); }
+              } else {
+                drw = false;
+              }
+            }
+            ctx.stroke();
+
+            // Centro branco brilhante da linha
+            ctx.beginPath();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            drw = false;
+            for (let i = 0; i < trailPoints.length; i++) {
+              const pt = trailPoints[i];
+              if (pt.y !== null) {
+                if (!drw) { ctx.moveTo(pt.x, pt.y); drw = true; }
+                else { ctx.lineTo(pt.x, pt.y); }
+              } else {
+                drw = false;
+              }
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // 3. Cursor luminoso de faísca amarela na ponta
+          const lastVoiced = [...trailPoints].reverse().find(p => p.y !== null);
+          const cursorY = lastVoiced ? lastVoiced.y : (H / 2);
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(currentX, cursorY, 6, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffdd00';
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#ffdd00';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(currentX, cursorY, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.restore();
+
+          if (progress < 1) {
+            this.pitchTrailAnimFrame = requestAnimationFrame(renderFrame);
+          } else {
+            this.pitchTrailAnimFrame = null;
+          }
+        };
+
+        this.pitchTrailAnimFrame = requestAnimationFrame(renderFrame);
+      },
+
+      simulateBotPitchTrail(durationSeconds) {
+        const canvas = document.getElementById('pitchTrailCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        if (this.pitchTrailAnimFrame) cancelAnimationFrame(this.pitchTrailAnimFrame);
+
+        const startTime = performance.now();
+        const durMs = Math.max(500, durationSeconds * 1000);
+        const botPoints = [];
+        const refPitch = (this.refAnalysis && this.refAnalysis.relativePitch) ? this.refAnalysis.relativePitch : [];
+
+        const frame = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / durMs);
+          const cx = progress * W;
+
+          let cy = H / 2;
+          if (refPitch.length > 0) {
+            const idx = Math.floor(progress * (refPitch.length - 1));
+            const semi = refPitch[idx];
+            if (semi !== null && semi !== undefined) {
+              const jitter = (Math.random() - 0.5) * 2;
+              cy = (H / 2) - ((semi + jitter) / 14) * (H * 0.36);
+              cy = Math.max(16, Math.min(H - 16, cy));
+              botPoints.push({ x: cx, y: cy });
+            } else {
+              botPoints.push({ x: cx, y: null });
+            }
+          } else {
+            const wobble = Math.sin(progress * Math.PI * 4) * (H * 0.25);
+            cy = (H / 2) + wobble;
+            botPoints.push({ x: cx, y: cy });
+          }
+
+          ctx.clearRect(0, 0, W, H);
+
+          if (refPitch.length > 1) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 4]);
+            let refStarted = false;
+            for (let i = 0; i < refPitch.length; i++) {
+              const s = refPitch[i];
+              const rx = (i / (refPitch.length - 1)) * W;
+              if (s !== null && s !== undefined) {
+                const ry = (H / 2) - (s / 14) * (H * 0.38);
+                if (!refStarted) { ctx.moveTo(rx, ry); refStarted = true; }
+                else { ctx.lineTo(rx, ry); }
+              } else {
+                refStarted = false;
+              }
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          if (botPoints.length > 1) {
+            ctx.save();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00f0ff';
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            let drw = false;
+            for (let i = 0; i < botPoints.length; i++) {
+              const pt = botPoints[i];
+              if (pt.y !== null) {
+                if (!drw) { ctx.moveTo(pt.x, pt.y); drw = true; }
+                else { ctx.lineTo(pt.x, pt.y); }
+              } else {
+                drw = false;
+              }
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffdd00';
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = '#ffdd00';
+          ctx.fill();
+          ctx.restore();
+
+          if (progress < 1) {
+            this.pitchTrailAnimFrame = requestAnimationFrame(frame);
+          } else {
+            this.pitchTrailAnimFrame = null;
+          }
+        };
+        this.pitchTrailAnimFrame = requestAnimationFrame(frame);
+      },
+
       async startNextRound() {
         document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
         document.getElementById('roundSubtitleText').innerText = 'OUÇA O SOM';
@@ -2556,6 +3374,12 @@
         titleEl.innerText = this.currentSound.name;
         tagEl.innerText = this.currentSound.tag || 'Meme BR';
         subtitleEl.innerText = 'Ouça bem o som a imitar';
+
+        const ptCanvas = document.getElementById('pitchTrailCanvas');
+        if (ptCanvas) {
+          const ptCtx = ptCanvas.getContext('2d');
+          ptCtx.clearRect(0, 0, ptCanvas.width, ptCanvas.height);
+        }
 
         // Desenha a waveform idêntica ao screenshot do Mimic Party
         ScoringModule.drawWaveform(waveCanvas, this.refAudioBuffer);
@@ -2601,6 +3425,12 @@
         subtitleEl.innerText = 'Ouça bem o som a imitar';
         ScoringModule.drawWaveform(waveCanvas, this.refAudioBuffer);
 
+        const ptCanvas = document.getElementById('pitchTrailCanvas');
+        if (ptCanvas) {
+          const ptCtx = ptCanvas.getContext('2d');
+          ptCtx.clearRect(0, 0, ptCanvas.width, ptCanvas.height);
+        }
+
         const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
         this.animateNeedle(dur);
         AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {});
@@ -2634,6 +3464,9 @@
           countBadge.style.display = 'none';
           p.char3D.isSinging = true;
           p.char3D.audioAmplitude = 0.6;
+          const dur = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.2) : 1.5;
+          this.animateNeedle(dur);
+          this.simulateBotPitchTrail(dur);
 
           setTimeout(() => {
             p.char3D.isSinging = false;
@@ -2653,7 +3486,7 @@
             p.char3D.walkTo(p.char3D.lineupPosition.x, -2.5);
             this.currentTurnIndex++;
             setTimeout(() => this.runTurnRecording(), 400);
-          }, 700);
+          }, Math.max(900, Math.floor(dur * 1000)));
           return;
         }
 
@@ -2680,6 +3513,7 @@
             const duration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
             p.char3D.isSinging = true;
             this.animateNeedle(duration);
+            this.startLivePitchTrail(duration);
 
             AudioModule.recordTakePCM(duration,
               (prog) => {
