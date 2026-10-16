@@ -433,6 +433,113 @@
       max-width: 100%;
     }
 
+    /* ESTÚDIO DO CRIADOR DE PERSONAGEM EM TEMPO REAL */
+    .customizer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      z-index: 100;
+      pointer-events: none;
+      padding: 16px 28px;
+      background: radial-gradient(circle at 35% 50%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.45) 100%);
+    }
+
+    .character-preview-dock {
+      position: absolute;
+      left: 32%;
+      bottom: 25px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+      z-index: 102;
+      animation: popIn 0.3s ease;
+    }
+
+    .preview-badge {
+      background: rgba(0, 0, 0, 0.88);
+      border: 2px solid #ffdd00;
+      border-radius: 30px;
+      padding: 5px 14px;
+      font-weight: 900;
+      font-size: 0.82rem;
+      color: #ffdd00;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5), 2px 2px 0 #000;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-btn-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .preview-hint {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 1px 1px 4px #000, 0 0 10px rgba(0,0,0,0.9);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 3px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .customize-drawer {
+      pointer-events: auto;
+      background: rgba(17, 20, 36, 0.95);
+      backdrop-filter: blur(14px);
+      border: 4px solid var(--border-dark);
+      border-radius: 20px;
+      box-shadow: -8px 0 25px rgba(0, 0, 0, 0.7), 6px 6px 0px #000;
+      width: 480px;
+      max-width: 95vw;
+      height: 94vh;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: slideDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDrawer {
+      0% { transform: translateX(80px); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+
+    body.customizing-mode {
+      cursor: grab;
+    }
+    body.customizing-mode:active {
+      cursor: grabbing;
+    }
+
+    @media (max-width: 860px) {
+      .customizer-overlay {
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 8px;
+      }
+      .character-preview-dock {
+        left: 50%;
+        top: 15px;
+        bottom: auto;
+        transform: translateX(-50%);
+      }
+      .customize-drawer {
+        width: 100%;
+        height: 60vh;
+        border-radius: 20px 20px 0 0;
+      }
+    }
+
     /* Menu Principal Overlay (Screenshot 1) */
     .main-menu-overlay {
       position: absolute;
@@ -1505,19 +1612,45 @@
     </div>
   </div>
 
-  <!-- MODAL: CRIADOR DE PERSONAGEM 3D E CONFIGURAÇÕES DE ÁUDIO -->
-  <div id="modalCustomize" class="modal-overlay" style="display:none;">
-    <div class="modal-box" style="max-width:620px; max-height:88vh;">
-      <h2 class="modal-title">CRIADOR DE PERSONAGEM 🎨</h2>
+  <!-- MODAL: CRIADOR DE PERSONAGEM 3D COM VISUALIZAÇÃO EM TEMPO REAL -->
+  <div id="modalCustomize" class="customizer-overlay" style="display:none;">
+    <!-- DOCK DE VISUALIZAÇÃO E CONTROLE 3D EM TEMPO REAL (À ESQUERDA) -->
+    <div id="characterPreviewDock" class="character-preview-dock">
+      <div class="preview-badge">👁️ VISUALIZAÇÃO 3D EM TEMPO REAL</div>
+      <div class="preview-btn-row">
+        <button class="btn btn-neutral btn-sm" onclick="GameModule.rotatePreviewCharacter(-0.4)" title="Girar 45° para a esquerda">
+          🔄 GIRAR ⬅️
+        </button>
+        <button class="btn btn-neutral btn-sm" onclick="GameModule.resetPreviewCharacterRotation()" title="Virar de frente">
+          🧍 FRENTE
+        </button>
+        <button class="btn btn-neutral btn-sm" onclick="GameModule.rotatePreviewCharacter(0.4)" title="Girar 45° para a direita">
+          GIRAR ➡️ 🔄
+        </button>
+      </div>
+      <button id="btnToggleAutoRotate" class="btn btn-neutral btn-sm" onclick="GameModule.toggleAutoRotatePreview()" style="font-size:0.75rem; padding:4px 12px; border-color:#00f576; color:#00f576;">
+        💫 AUTO-GIRAR: LIGADO
+      </button>
+      <div class="preview-hint">🖱️ Clique e arraste na tela para girar 360°</div>
+    </div>
+
+    <!-- PAINEL LATERAL DE CUSTOMIZAÇÃO (À DIREITA) -->
+    <div class="customize-drawer">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #222; padding-bottom:6px;">
+        <h2 class="modal-title" style="font-size:1.6rem; margin:0;">MEU PERSONAGEM 🎨</h2>
+        <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalCustomize')" style="padding:4px 10px; font-size:0.85rem;">
+          ✖️ FECHAR
+        </button>
+      </div>
 
       <div>
-        <label style="font-weight:900; display:block; text-align:left; margin-bottom:4px; font-size:0.9rem;">SEU NICKNAME:</label>
+        <label style="font-weight:900; display:block; text-align:left; margin-bottom:4px; font-size:0.85rem;">SEU NICKNAME:</label>
         <input type="text" id="inputPlayerName" class="input-box" value="Tigrezo" maxlength="14" onchange="GameModule.updateLocalPlayerName(this.value)">
       </div>
 
       <!-- SEÇÃO 1: ROUPAS E SKINS DE PERSONAGENS FAMOSOS (PRESETS 1-CLICK) -->
       <div style="text-align:left;">
-        <label style="font-weight:900; font-size:0.9rem; color:#ffdd00;">✨ SKINS DE PERSONAGENS FAMOSOS (1-CLICK):</label>
+        <label style="font-weight:900; font-size:0.85rem; color:#ffdd00;">✨ SKINS DE PERSONAGENS FAMOSOS (1-CLICK):</label>
         <div class="preset-grid">
           <button class="preset-btn" data-preset="goku" onclick="GameModule.applyCharacterPreset('goku')">
             <span class="preset-icon">🥋</span>
@@ -1560,13 +1693,13 @@
 
       <!-- SEÇÃO 2: CUSTOMIZAÇÃO INDIVIDUAL PEÇA POR PEÇA -->
       <div style="text-align:left; background:rgba(0,0,0,0.4); padding:10px; border-radius:12px; border:2px solid #222;">
-        <label style="font-weight:900; font-size:0.9rem; color:#00f0ff; display:block; margin-bottom:8px;">
+        <label style="font-weight:900; font-size:0.85rem; color:#00f0ff; display:block; margin-bottom:8px;">
           ✂️ CUSTOMIZAÇÃO INDIVIDUAL DE ROUPAS:
         </label>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
           <div>
             <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">💇 Cabelo / Chapéu:</label>
-            <select id="selectHairStyle" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+            <select id="selectHairStyle" class="input-box" style="padding:6px; font-size:0.82rem;" onchange="GameModule.updateLocalSkinFromUI()">
               <option value="brown_parted">Castanho Partido</option>
               <option value="saiyajin_gold">Super Saiyajin (Goku)</option>
               <option value="black_spiky">Espetado Preto (Anime)</option>
@@ -1581,7 +1714,7 @@
 
           <div>
             <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">👕 Camisa / Tronco:</label>
-            <select id="selectShirtColor" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+            <select id="selectShirtColor" class="input-box" style="padding:6px; font-size:0.82rem;" onchange="GameModule.updateLocalSkinFromUI()">
               <option value="#0066ff">Azul Royal</option>
               <option value="#ff0044">Vermelho Vibrante (Mario)</option>
               <option value="#ff6600">Laranja Goku</option>
@@ -1597,7 +1730,7 @@
 
           <div>
             <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">👖 Calça / Pernas:</label>
-            <select id="selectPantsColor" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+            <select id="selectPantsColor" class="input-box" style="padding:6px; font-size:0.82rem;" onchange="GameModule.updateLocalSkinFromUI()">
               <option value="#223366">Jeans Azul Escuro</option>
               <option value="#0044cc">Azul Seleção</option>
               <option value="#ff6600">Laranja Goku</option>
@@ -1611,7 +1744,7 @@
 
           <div>
             <label style="font-weight:800; font-size:0.8rem; display:block; margin-bottom:2px;">👓 Acessório de Rosto:</label>
-            <select id="selectAccessory" class="input-box" style="padding:6px; font-size:0.85rem;" onchange="GameModule.updateLocalSkinFromUI()">
+            <select id="selectAccessory" class="input-box" style="padding:6px; font-size:0.82rem;" onchange="GameModule.updateLocalSkinFromUI()">
               <option value="none">Nenhum</option>
               <option value="sunglasses">Óculos Escuros (MIB / Juliete)</option>
               <option value="mustache">Bigodão (Mario / Madruga)</option>
@@ -1625,7 +1758,7 @@
       <!-- SEÇÃO 3: AJUSTE DE VOLUME / GANHO DO MICROFONE -->
       <div style="background:#111424; border:2px solid #333; border-radius:12px; padding:10px; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="font-weight:900; font-size:0.85rem; color:#00f576;">🎙️ SENSIBILIDADE / VOLUME DO MICROFONE:</label>
+          <label style="font-weight:900; font-size:0.82rem; color:#00f576;">🎙️ SENSIBILIDADE / VOLUME DO MICROFONE:</label>
           <span class="mic-gain-display-val" style="font-weight:900; color:#00f576; font-size:1.05rem;">120%</span>
         </div>
         <input type="range" class="mic-gain-slider" min="0.3" max="3.0" step="0.1" value="1.2"
@@ -2022,6 +2155,10 @@
         } else if (viewMode === 'close_singer') {
           this.cameraTargetPos.set(0, 2.4, 6.8);
           this.cameraTargetLookAt.set(0, 1.3, 0);
+        } else if (viewMode === 'customizer') {
+          // ESTÚDIO DE PERSONAGEM: ENQUADRAMENTO CINEMATOGRÁFICO DE CORPO INTEIRO À ESQUERDA
+          this.cameraTargetPos.set(1.15, 1.45, 4.4);
+          this.cameraTargetLookAt.set(-0.48, 1.15, 0);
         }
       },
 
@@ -2040,6 +2177,11 @@
 
         this.camera.position.lerp(this.cameraTargetPos, 0.07);
         this.camera.lookAt(this.cameraTargetLookAt);
+
+        // Giro suave no estúdio de customização se auto-girar estiver ligado
+        if (GameModule.isCustomizing && GameModule.autoRotatePreview && GameModule.localPlayer.char3D) {
+          GameModule.localPlayer.char3D.group.rotation.y += 0.009;
+        }
 
         this.characters.forEach(char => char.update(time, delta));
         this.renderer.render(this.scene, this.camera);
@@ -2388,6 +2530,18 @@
 
       setSkin(hair, shirtColor, pantsColor, accessory) {
         this.setCustomOutfit({ hair, shirtColor, pantsColor, accessory });
+      }
+
+      triggerCelebrate() {
+        const startY = this.group.position.y;
+        this.group.position.y = startY + 0.35;
+        this.armL.rotation.z = 1.1;
+        this.armR.rotation.z = -1.1;
+        setTimeout(() => {
+          this.group.position.y = startY;
+          this.armL.rotation.z = 0.15;
+          this.armR.rotation.z = -0.15;
+        }, 220);
       }
 
       walkTo(targetX, targetZ) {
@@ -4251,6 +4405,37 @@
       autoAdvanceTimer: null,
       needleAnimFrame: null,
 
+      isCustomizing: false,
+      autoRotatePreview: true,
+
+      rotatePreviewCharacter(delta) {
+        if (!this.localPlayer.char3D) return;
+        this.autoRotatePreview = false;
+        this.updateAutoRotateBtn();
+        this.localPlayer.char3D.group.rotation.y += delta;
+      },
+
+      resetPreviewCharacterRotation() {
+        if (!this.localPlayer.char3D) return;
+        this.autoRotatePreview = false;
+        this.updateAutoRotateBtn();
+        this.localPlayer.char3D.group.rotation.y = 0;
+      },
+
+      toggleAutoRotatePreview() {
+        this.autoRotatePreview = !this.autoRotatePreview;
+        this.updateAutoRotateBtn();
+      },
+
+      updateAutoRotateBtn() {
+        const btn = document.getElementById('btnToggleAutoRotate');
+        if (btn) {
+          btn.innerText = this.autoRotatePreview ? '💫 AUTO-GIRAR: LIGADO' : '⏸️ AUTO-GIRAR: PAUSADO';
+          btn.style.borderColor = this.autoRotatePreview ? '#00f576' : '#ffdd00';
+          btn.style.color = this.autoRotatePreview ? '#00f576' : '#ffdd00';
+        }
+      },
+
       characterPresets: {
         goku: { name: 'Goku', hair: 'saiyajin_gold', shirtColor: '#ff6600', pantsColor: '#ff6600', accessory: 'none' },
         chaves: { name: 'Chaves', hair: 'chaves_hat', shirtColor: '#c4b07b', pantsColor: '#8a7246', accessory: 'none' },
@@ -4300,6 +4485,33 @@
         PacksModule.initUI();
         this.syncCustomizationUI();
         AudioModule.setMicGain(AudioModule.micGain);
+
+        // CONTROLE DE ROTAÇÃO 360° ARRASTANDO COM O MOUSE NA ÁREA DO PERSONAGEM
+        let isDraggingPreview = false;
+        let lastPointerX = 0;
+
+        window.addEventListener('pointerdown', (e) => {
+          if (!this.isCustomizing) return;
+          if (e.target.closest('#modalCustomize .customize-drawer')) return;
+          if (e.target.closest('#characterPreviewDock button')) return;
+          isDraggingPreview = true;
+          lastPointerX = e.clientX;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (!isDraggingPreview || !this.isCustomizing) return;
+          const delta = e.clientX - lastPointerX;
+          lastPointerX = e.clientX;
+          if (this.localPlayer.char3D) {
+            this.autoRotatePreview = false;
+            this.updateAutoRotateBtn();
+            this.localPlayer.char3D.group.rotation.y += delta * 0.015;
+          }
+        });
+
+        window.addEventListener('pointerup', () => {
+          isDraggingPreview = false;
+        });
 
         const urlParams = new URLSearchParams(window.location.search);
         const salaParam = urlParams.get('sala');
@@ -4373,6 +4585,7 @@
             accessory: p.accessory,
             preset: presetKey
           });
+          this.localPlayer.char3D.triggerCelebrate();
         }
 
         this.syncCustomizationUI();
@@ -4423,6 +4636,7 @@
             accessory: accEl.value,
             preset: 'custom'
           });
+          this.localPlayer.char3D.triggerCelebrate();
         }
 
         this.syncCustomizationUI();
@@ -5553,20 +5767,58 @@
       },
 
       openCustomizeModal() {
+        GameModule.isCustomizing = true;
+        GameModule.autoRotatePreview = true;
+        GameModule.updateAutoRotateBtn();
         GameModule.syncCustomizationUI();
+
         const sliders = document.querySelectorAll('.mic-gain-slider');
         sliders.forEach(s => s.value = AudioModule.micGain);
         const displays = document.querySelectorAll('.mic-gain-display-val');
         displays.forEach(d => d.innerText = `${Math.round(AudioModule.micGain * 100)}%`);
+
+        // Posiciona a câmera para visão cinematográfica do estúdio 3D
+        Scene3DModule.setCameraView('customizer');
+
+        // Esconde menu, logo e profile card para dar visão ampla ao estúdio
+        const menu = document.getElementById('mainMenuOverlay');
+        const logo = document.getElementById('mainLogoContainer');
+        const card = document.getElementById('localPlayerProfileCard');
+        if (menu) menu.style.display = 'none';
+        if (logo) logo.style.display = 'none';
+        if (card) card.style.display = 'none';
+
+        document.body.classList.add('customizing-mode');
         document.getElementById('modalCustomize').style.display = 'flex';
       },
 
-      openSoundPacksModal() {
-        PacksModule.renderSoundsGrid();
-        document.getElementById('modalPacks').style.display = 'flex';
+      closeCustomizeModal() {
+        GameModule.isCustomizing = false;
+        if (GameModule.localPlayer.char3D) {
+          GameModule.localPlayer.char3D.group.rotation.y = 0;
+        }
+        document.body.classList.remove('customizing-mode');
+        document.getElementById('modalCustomize').style.display = 'none';
+
+        if (!GameModule.isOnline && GameModule.players.length <= 1) {
+          Scene3DModule.setCameraView('menu');
+          const menu = document.getElementById('mainMenuOverlay');
+          const logo = document.getElementById('mainLogoContainer');
+          const card = document.getElementById('localPlayerProfileCard');
+          if (menu) menu.style.display = 'flex';
+          if (logo) logo.style.display = 'flex';
+          if (card) card.style.display = 'flex';
+        } else {
+          Scene3DModule.setCameraView('stage_lineup');
+        }
+        AudioModule.playSfx('tick');
       },
 
       closeModal(id) {
+        if (id === 'modalCustomize') {
+          this.closeCustomizeModal();
+          return;
+        }
         document.getElementById(id).style.display = 'none';
         AudioModule.playSfx('tick');
       },
