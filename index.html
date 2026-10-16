@@ -1148,7 +1148,7 @@
       </button>
 
       <button class="btn btn-neutral" onclick="UIModule.openSoundPacksModal()">
-        📚 BIBLIOTECA DE PACOTES (<span id="menuSoundsCount">40</span> SONS)
+        📚 BIBLIOTECA DE PACOTES (<span id="menuSoundsCount">90</span> SONS)
       </button>
     </div>
 
@@ -1194,7 +1194,7 @@
 
       <!-- Botão para Selecionar Áudios antes de Começar -->
       <button class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703;">
-        🎵 SELECIONAR MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">16</span> ÁUDIOS)
+        🎵 SELECIONAR MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">90</span> ÁUDIOS)
       </button>
 
       <div style="text-align:left;">
@@ -1240,7 +1240,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <h2 class="modal-title" style="margin-bottom:2px;">BIBLIOTECA DE PACOTES 📚</h2>
-          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">7 de 7 pacotes instalados (40 sons)</span>
+          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">11 de 11 pacotes instalados (90 sons)</span>
         </div>
         <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPacks')">
           ✖ FECHAR
@@ -1249,13 +1249,15 @@
 
       <!-- Barra de Filtros por Categoria -->
       <div class="pack-filter-bar" id="packFilterBar">
-        <button class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS</button>
+        <button class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS (90)</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MEME BR', this)">🔥 MEME BR</button>
-        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('GAMES', this)">🎮 MARIO & GAMES</button>
-        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MICHAEL', this)">🕺 MICHAEL JACKSON</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('TV', this)">📺 TV & RATINHO</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('CHAVES', this)">👦 CHAVES</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('GLOBAL', this)">🌐 GLOBAL TIKTOK</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('GAMES', this)">🎮 GAMES & MARIO</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('ANIME', this)">⚡ ANIME</button>
-        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('RISADAS', this)">😂 RISADAS</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('ANIMAIS', this)">🐶 ANIMAIS</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('RISADAS', this)">😂 RISADAS</button>
       </div>
 
       <!-- Grid de Pacotes Estilo Mimic Party -->
@@ -2780,7 +2782,7 @@
     };
 
     /* ==========================================================================
-       5. PACKSMODULE: BIBLIOTECA DE 7 PACOTES (40 SONS VOCAIS DO MYINSTANTS)
+       5. PACKSMODULE: BIBLIOTECA DE 11 PACOTES (90 SONS VOCAIS DO MYINSTANTS)
        ========================================================================== */
     const PacksModule = {
       currentFilter: 'TODOS',
@@ -2790,11 +2792,11 @@
       packs: [
         {
           id: 'pack_meme_br',
-          title: 'MEME BR',
+          title: 'MEMES DO ZAP & TIKTOK BR',
           category: 'MEME BR',
           author: '@folies_br',
           rating: '5.0',
-          downloads: '2.4k',
+          downloads: '5.4k',
           color: '#ff0077',
           icon: '🔥',
           enabled: true,
@@ -2804,92 +2806,214 @@
             { id: 'bora_bill', name: 'Bora Bill! Bora Fi do Bill! 📢', shortName: 'BORA BILL', tag: 'Meme Nordeste', icon: '📢', file: 'sounds/bora-bill.mp3', unpitched: false },
             { id: 'acertou_mizeravi', name: 'Acertou, Mizerávi! 🤓', shortName: 'MIZERÁVI', tag: 'Meme Brasileiro', icon: '🤓', file: 'sounds/acertou-mizeravi.mp3', unpitched: false },
             { id: 'la_ele', name: 'Lá Ele Mil Vezes! 🙅‍♂️', shortName: 'LÁ ELE', tag: 'Bahia Memes', icon: '🙅‍♂️', file: 'sounds/la-ele.mp3', unpitched: false },
+            { id: 'caneta_azul', name: 'Caneta Azul, Azul Caneta 🖊️', shortName: 'CANETA AZUL', tag: 'Manoel Gomes', icon: '🖊️', file: 'sounds/caneta-azul.mp3', unpitched: false },
+            { id: 'acorda_pedrinho', name: 'Acorda Pedrinho! 🛌', shortName: 'PEDRINHO', tag: 'Jovem Dionisio', icon: '🛌', file: 'sounds/acorda-pedrinho.mp3', unpitched: false },
+            { id: 'fala_zeze', name: 'Fala Zezé, Bom Dia Cara! 📱', shortName: 'FALA ZEZÉ', tag: 'Áudio do Zap', icon: '📱', file: 'sounds/fala-zeze.mp3', unpitched: false },
+            { id: 'bora_tomar_uma', name: 'Bora Tomar Uma?! 🍻', shortName: 'TOMAR UMA', tag: 'Meme do Bar', icon: '🍻', file: 'sounds/bora-tomar-uma.mp3', unpitched: false },
+            { id: 'e_o_braia', name: 'É o Braia! 🏎️', shortName: 'O BRAIA', tag: 'Velozes & Furiosos', icon: '🏎️', file: 'sounds/e-o-braia.mp3', unpitched: false },
             { id: 'olha_a_pedra', name: 'Olha a Pedra! 🪨', shortName: 'A PEDRA', tag: 'Meme Viral', icon: '🪨', file: 'sounds/olha-a-pedra.mp3', unpitched: false },
-            { id: 'ze_manga', name: 'Zé da Manga! 🥭', shortName: 'ZÉ DA MANGA', tag: 'Áudio do Zap', icon: '🥭', file: 'sounds/ze-da-manga.mp3', unpitched: false },
-            { id: 'ai_preto', name: 'Ai Preto! 🎵', shortName: 'AI PRETO', tag: 'Funk Carioca', icon: '🎵', file: 'sounds/ai-preto.mp3', unpitched: false },
-            { id: 'brincadeira_hein', name: 'É Brincadeira, Hein! 😤', shortName: 'BRINCADEIRA', tag: 'Craque Neto', icon: '😤', file: 'sounds/e-brincadeira-hein.mp3', unpitched: false },
-            { id: 'chaves', name: 'Isso Isso Isso (Chaves) 👦', shortName: 'CHAVES', tag: 'Vila do Chaves', icon: '👦', file: 'sounds/chaves.mp3', unpitched: false }
+            { id: 'ze_manga', name: 'Zé da Manga! 🥭', shortName: 'ZÉ DA MANGA', tag: 'Áudio do Zap', icon: '🥭', file: 'sounds/ze-da-manga.mp3', unpitched: false }
           ]
         },
         {
           id: 'pack_tv_faro',
-          title: 'TV & RATINHO',
-          category: 'MEME BR',
-          author: '@tv_nostalgia',
+          title: 'RODRIGO FARO & NAMORO',
+          category: 'TV',
+          author: '@vai_dar_namoro',
           rating: '5.0',
-          downloads: '1.9k',
+          downloads: '4.8k',
           color: '#ffaa00',
-          icon: '📺',
+          icon: '🕺',
           enabled: true,
           sounds: [
+            { id: 'ui', name: 'UIIII! (Rodrigo Faro) 😮', shortName: 'UIIII!', tag: 'Vai Dar Namoro', icon: '😮', file: 'sounds/ui.mp3', unpitched: false },
+            { id: 'ele_gosta', name: 'ELE GOOOOOSTA! (Faro) 💖', shortName: 'ELE GOSTA', tag: 'Vai Dar Namoro', icon: '💖', file: 'sounds/ele-gosta.mp3', unpitched: false },
             { id: 'pare', name: 'PARE! (Rodrigo Faro) ✋', shortName: 'PARE!', tag: 'Vai Dar Namoro', icon: '✋', file: 'sounds/pare-rodrigo-faro.mp3', unpitched: false },
             { id: 'danca_gatinho', name: 'Dança Gatinho, Dança! 🕺', shortName: 'GATINHO', tag: 'Rodrigo Faro', icon: '🕺', file: 'sounds/danca-gatinho.mp3', unpitched: false },
             { id: 'cavalo', name: 'Cavaaaalo! (Rodrigo Faro) 🐴', shortName: 'CAVALO', tag: 'Rodrigo Faro', icon: '🐴', file: 'sounds/cavalo.mp3', unpitched: false },
-            { id: 'filho_calma', name: 'Que Isso Meu Filho, Calma! 🤦', shortName: 'MEU FILHO', tag: 'Programa do Ratinho', icon: '🤦‍♂️', file: 'sounds/que-isso-meu-filho.mp3', unpitched: false },
+            { id: 'demais', name: 'DEMAIS! (Rodrigo Faro) ✨', shortName: 'DEMAIS', tag: 'Vai Dar Namoro', icon: '✨', file: 'sounds/demais.mp3', unpitched: false },
+            { id: 'tome', name: 'TOME! (Rodrigo Faro) 👊', shortName: 'TOME', tag: 'Vai Dar Namoro', icon: '👊', file: 'sounds/tome.mp3', unpitched: false },
+            { id: 'nao_faro', name: 'NÃÃÃO! (Rodrigo Faro) 😱', shortName: 'NÃÃÃO', tag: 'Vai Dar Namoro', icon: '😱', file: 'sounds/nao-rodrigo-faro.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_tv_classics',
+          title: 'BORDÕES DA TV BRASIL',
+          category: 'TV',
+          author: '@tv_nostalgia',
+          rating: '5.0',
+          downloads: '3.9k',
+          color: '#ffd000',
+          icon: '📺',
+          enabled: true,
+          sounds: [
             { id: 'uepa', name: 'Uêpa! (Ratinho) 🤠', shortName: 'UÊPA!', tag: 'Programa do Ratinho', icon: '🤠', file: 'sounds/uepa.mp3', unpitched: false },
             { id: 'rapaz', name: 'Rapaaaaz! (Xaropinho) 🐭', shortName: 'RAPAZ', tag: 'Programa do Ratinho', icon: '🐭', file: 'sounds/rapaz.mp3', unpitched: false },
+            { id: 'filho_calma', name: 'Que Isso Meu Filho, Calma! 🤦‍♂️', shortName: 'MEU FILHO', tag: 'Programa do Ratinho', icon: '🤦‍♂️', file: 'sounds/que-isso-meu-filho.mp3', unpitched: false },
+            { id: 'irra', name: 'Irraaaa! (Ratinho) 🤠', shortName: 'IRRA!', tag: 'Programa do Ratinho', icon: '🤠', file: 'sounds/irra.mp3', unpitched: false },
             { id: 'errou', name: 'Errou! (Faustão) ❌', shortName: 'ERROU!', tag: 'Domingão do Faustão', icon: '❌', file: 'sounds/errou.mp3', unpitched: false },
-            { id: 'demais', name: 'DEMAIS! (Rodrigo Faro) ✨', shortName: 'DEMAIS', tag: 'Vai Dar Namoro', icon: '✨', file: 'sounds/demais.mp3', unpitched: false },
-            { id: 'tome', name: 'TOME! (Rodrigo Faro) 👊', shortName: 'TOME', tag: 'Vai Dar Namoro', icon: '👊', file: 'sounds/tome.mp3', unpitched: false }
+            { id: 'oloco_bicho', name: 'Ô Loco Bicho! (Faustão) 🦖', shortName: 'Ô LOCO', tag: 'Domingão do Faustão', icon: '🦖', file: 'sounds/oloco-bicho.mp3', unpitched: false },
+            { id: 'e_tetra', name: 'É Tetra! É Tetra! (Galvão) 🏆', shortName: 'É TETRA!', tag: 'Copa do Mundo', icon: '🏆', file: 'sounds/e-tetra.mp3', unpitched: false },
+            { id: 'brincadeira_hein', name: 'É Brincadeira, Hein! 😤', shortName: 'BRINCADEIRA', tag: 'Craque Neto', icon: '😤', file: 'sounds/e-brincadeira-hein.mp3', unpitched: false },
+            { id: 'plantao_globo', name: 'Plantão da Globo 🚨', shortName: 'PLANTÃO', tag: 'TV Globo', icon: '🚨', file: 'sounds/plantao-da-globo.mp3', unpitched: false },
+            { id: 'brasil_sil', name: 'Brasil sil sil! 🇧🇷', shortName: 'BRASIL!', tag: 'Vinheta Nacional', icon: '🇧🇷', file: 'sounds/brasil-sil-sil.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_internet_br',
+          title: 'MEMES CLÁSSICOS DA WEB BR',
+          category: 'MEME BR',
+          author: '@internet_raiz',
+          rating: '5.0',
+          downloads: '3.5k',
+          color: '#00f576',
+          icon: '👑',
+          enabled: true,
+          sounds: [
+            { id: 'fake_natty', name: 'Fake Natty! (Rodrigo Góes) 💉', shortName: 'FAKE NATTY', tag: 'Rodrigo Góes', icon: '💉', file: 'sounds/fake-natty.mp3', unpitched: false },
+            { id: 'ja_acabou_jessica', name: 'Já Acabou Jéssica? 🥊', shortName: 'JÉSSICA?', tag: 'Meme Clássico', icon: '🥊', file: 'sounds/ja-acabou-jessica.mp3', unpitched: false },
+            { id: 'nao_consegue', name: 'Não Consegue né Moisés? 🧗‍♂️', shortName: 'MOISÉS', tag: 'Silvio Santos', icon: '🧗‍♂️', file: 'sounds/nao-consegue-moises.mp3', unpitched: false },
+            { id: 'cilada_bino', name: 'É uma Cilada Bino! 🚛', shortName: 'CILADA', tag: 'Carga Pesada', icon: '🚛', file: 'sounds/cilada-bino.mp3', unpitched: false },
+            { id: 'serjao_berranteiro', name: 'Aqui Tem Coragem! 📯', shortName: 'CORAGEM', tag: 'Serjão Berranteiro', icon: '📯', file: 'sounds/serjao-berranteiro.mp3', unpitched: false },
+            { id: 'ai_preto', name: 'Ai Preto! 🎵', shortName: 'AI PRETO', tag: 'Funk Carioca', icon: '🎵', file: 'sounds/ai-preto.mp3', unpitched: false },
+            { id: 'yudi_play', name: 'Playstation, Playstation! 🎮', shortName: 'PLAYSTATION', tag: 'Yudi Tamashiro', icon: '🎮', file: 'sounds/yudi-playstation.mp3', unpitched: false },
+            { id: 'que_ota', name: 'Que Ota?! 🎯', shortName: 'QUE OTA', tag: 'Meme Gamer', icon: '🎯', file: 'sounds/que-ota.mp3', unpitched: false },
+            { id: 'ai_misericordia', name: 'Ai Misericórdia! 😱', shortName: 'MISERICÓRDIA', tag: 'Áudio do Zap', icon: '😱', file: 'sounds/ai-misericordia.mp3', unpitched: false },
+            { id: 'topper', name: 'Topper Demais! 😎', shortName: 'TOPPER', tag: 'Gírias da Net', icon: '😎', file: 'sounds/topper.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_chaves',
+          title: 'TURMA DO CHAVES & VILA',
+          category: 'CHAVES',
+          author: '@vila_do_chaves',
+          rating: '5.0',
+          downloads: '3.7k',
+          color: '#e76f51',
+          icon: '👦',
+          enabled: true,
+          sounds: [
+            { id: 'chaves_isso', name: 'Isso Isso Isso (Chaves) 👦', shortName: 'ISSO ISSO', tag: 'Vila do Chaves', icon: '👦', file: 'sounds/chaves.mp3', unpitched: false },
+            { id: 'chaves_choro', name: 'Pipipipipi! (Chaves Chorando) 😭', shortName: 'PIPIPIPI', tag: 'Chaves Clássico', icon: '😭', file: 'sounds/chaves-choro.mp3', unpitched: false },
+            { id: 'kiko_cale_se', name: 'Cale-se, Você me Deixa Louco! 🗯️', shortName: 'CALE-SE!', tag: 'Kiko Tesouro', icon: '🗯️', file: 'sounds/kiko-cale-se.mp3', unpitched: false },
+            { id: 'madruga_toma', name: 'Toma! (Seu Madruga) 🥊', shortName: 'TOMA!', tag: 'Seu Madruga', icon: '🥊', file: 'sounds/seu-madruga-toma.mp3', unpitched: false },
+            { id: 'zacarias', name: 'Risada do Zacarias 🤣', shortName: 'ZACARIAS', tag: 'Os Trapalhões', icon: '🤣', file: 'sounds/zacarias.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_global',
+          title: 'MEMES MUNDIAIS & TIKTOK',
+          category: 'GLOBAL',
+          author: '@world_memes',
+          rating: '5.0',
+          downloads: '4.6k',
+          color: '#00f0ff',
+          icon: '🌐',
+          enabled: true,
+          sounds: [
+            { id: 'siuuu', name: 'SIUUUU! (Cristiano Ronaldo) ⚽', shortName: 'SIUUUU!', tag: 'CR7 Campeão', icon: '⚽', file: 'sounds/siuuu.mp3', unpitched: false },
+            { id: 'bruh', name: 'Efeito Bruh 🗿', shortName: 'BRUH', tag: 'Internet Meme', icon: '🗿', file: 'sounds/bruh.mp3', unpitched: false },
+            { id: 'emotional_damage', name: 'Emotional Damage! 💔', shortName: 'EMOTIONAL', tag: 'TikTok Viral', icon: '💔', file: 'sounds/emotional-damage.mp3', unpitched: false },
+            { id: 'bazinga', name: 'Bazinga! (Sheldon) ⚛️', shortName: 'BAZINGA', tag: 'The Big Bang Theory', icon: '⚛️', file: 'sounds/bazinga.mp3', unpitched: false },
+            { id: 'coffin_dance', name: 'Coffin Dance (Astronomia) ⚰️', shortName: 'COFFIN DANCE', tag: 'Meme do Caixão', icon: '⚰️', file: 'sounds/coffin-dance.mp3', unpitched: false },
+            { id: 'what_da_dog', name: "What the Dog Doin'? 🐕", shortName: 'WHAT DA DOG', tag: 'Vine Clássico', icon: '🐕', file: 'sounds/what-da-dog-doin.mp3', unpitched: false },
+            { id: 'oh_no_laugh', name: 'Risada Oh No No No 😂', shortName: 'OH NO LAUGH', tag: 'TikTok Memes', icon: '😂', file: 'sounds/oh-no-laugh.mp3', unpitched: false },
+            { id: 'run_meme', name: 'RUN! (Meme Correndo) 🏃‍♂️', shortName: 'RUN!', tag: 'AWOLNATION', icon: '🏃‍♂️', file: 'sounds/run-meme.mp3', unpitched: false },
+            { id: 'vine_boom', name: 'Vine Boom 💥', shortName: 'VINE BOOM', tag: 'Impacto Sonoro', icon: '💥', file: 'sounds/vine-boom.mp3', unpitched: true }
           ]
         },
         {
           id: 'pack_games',
-          title: 'MARIO & GAMES',
+          title: 'SUPER MARIO & RETRO GAMES',
           category: 'GAMES',
           author: '@retro_gamer',
           rating: '5.0',
-          downloads: '3.1k',
-          color: '#00d4ff',
+          downloads: '4.2k',
+          color: '#38bdf8',
           icon: '🎮',
           enabled: true,
           sounds: [
             { id: 'its_me_mario', name: "It's-a me, Mario! 🍄", shortName: 'MARIO', tag: 'Super Mario 64', icon: '🍄', file: 'sounds/its-me-mario.mp3', unpitched: false },
             { id: 'mario_jump', name: 'Yahoo! Mario Jump 🍄', shortName: 'YAHOO!', tag: 'Super Mario 64', icon: '🍄', file: 'sounds/mario-jump.mp3', unpitched: false },
+            { id: 'mario_coin', name: 'Super Mario Moeda 🪙', shortName: 'MOEDA MARIO', tag: 'Super Mario Bros', icon: '🪙', file: 'sounds/mario-coin.mp3', unpitched: false },
             { id: 'roblox_oof', name: 'Roblox Oof 💥', shortName: 'ROBLOX OOF', tag: 'Roblox Classic', icon: '💥', file: 'sounds/roblox-oof.mp3', unpitched: false },
-            { id: 'win_error', name: 'Erro do Windows XP 💻', shortName: 'WINDOWS XP', tag: 'Nostalgia Tech', icon: '💻', file: 'sounds/windows-xp-error.mp3', unpitched: false }
+            { id: 'win_error', name: 'Erro do Windows XP 💻', shortName: 'WINDOWS XP', tag: 'Nostalgia Tech', icon: '💻', file: 'sounds/windows-xp-error.mp3', unpitched: false },
+            { id: 'pacman_waka', name: 'Pac-Man Waka Waka 🟡', shortName: 'PAC-MAN', tag: 'Arcade Clássico', icon: '🟡', file: 'sounds/pacman-waka.mp3', unpitched: false },
+            { id: 'metal_gear', name: 'Metal Gear Alert! ❗', shortName: 'ALERT!', tag: 'Metal Gear Solid', icon: '❗', file: 'sounds/metal-gear-alert.mp3', unpitched: false },
+            { id: 'mission_failed', name: 'Mission Failed 🎖️', shortName: 'FAILED', tag: 'Call of Duty', icon: '🎖️', file: 'sounds/mission-failed.mp3', unpitched: false }
           ]
         },
         {
-          id: 'pack_mj',
-          title: 'MICHAEL JACKSON',
-          category: 'MICHAEL',
-          author: '@king_of_pop',
+          id: 'pack_gaming_extra',
+          title: 'GAMING EXTRA & POP',
+          category: 'GAMES',
+          author: '@pop_arcade',
           rating: '5.0',
-          downloads: '2.8k',
+          downloads: '3.3k',
           color: '#9b5de5',
-          icon: '🕺',
+          icon: '🕹️',
           enabled: true,
           sounds: [
-            { id: 'mj_hee_hee', name: 'Hee-Hee! (Michael Jackson) 🎩', shortName: 'HEE-HEE', tag: 'Rei do Pop', icon: '🎩', file: 'sounds/michael-jackson-hee-hee.mp3', unpitched: false }
+            { id: 'among_us_kill', name: 'Among Us Kill 🔪', shortName: 'AMONG US', tag: 'Impostor Kill', icon: '🔪', file: 'sounds/among-us-kill.mp3', unpitched: false },
+            { id: 'sans_voice', name: 'Sans Undertale Fala 💀', shortName: 'SANS', tag: 'Undertale Boss', icon: '💀', file: 'sounds/sans-voice.mp3', unpitched: false },
+            { id: 'mj_hee_hee', name: 'Hee-Hee! (Michael Jackson) 🎩', shortName: 'HEE-HEE', tag: 'Rei do Pop', icon: '🎩', file: 'sounds/michael-jackson-hee-hee.mp3', unpitched: false },
+            { id: 'ronaldinho', name: 'Ronaldinho Soccer 64 ⚽', shortName: 'RONALDINHO', tag: 'Futebol 64', icon: '⚽', file: 'sounds/ronaldinho.mp3', unpitched: false },
+            { id: 'fart_reverb', name: 'Pum com Reverb Absurdo 💨', shortName: 'PUM REVERB', tag: 'Humor Sonoro', icon: '💨', file: 'sounds/fart-reverb.mp3', unpitched: true },
+            { id: 'airhorn', name: 'Buzina Airhorn MLG 🎺', shortName: 'AIRHORN', tag: 'Efeito Sonoro MLG', icon: '🎺', file: 'sounds/airhorn.mp3', unpitched: false }
           ]
         },
         {
           id: 'pack_anime',
-          title: 'ANIME & GRITOS',
+          title: 'ANIME & GRITOS DE PODER',
           category: 'ANIME',
           author: '@otaku_party',
           rating: '5.0',
-          downloads: '2.5k',
+          downloads: '3.8k',
           color: '#f15bb5',
           icon: '⚡',
           enabled: true,
           sounds: [
             { id: 'kamehameha', name: 'Kamehameha! (Goku) 💥', shortName: 'KAMEHAMEHA', tag: 'Dragon Ball Z', icon: '💥', file: 'sounds/kamehameha.mp3', unpitched: false },
+            { id: 'goku_grito', name: 'Grito Goku Super Saiyajin 🔥', shortName: 'GOKU SSJ', tag: 'Dragon Ball Z', icon: '🔥', file: 'sounds/goku-grito.mp3', unpitched: false },
             { id: 'nani', name: 'NANI?! (Omae Wa Mou) ⚡', shortName: 'NANI?!', tag: 'Hokuto no Ken', icon: '⚡', file: 'sounds/nani.mp3', unpitched: false },
             { id: 'nico_nico', name: 'Nico Nico Nii! 💖', shortName: 'NICO NICO', tag: 'Love Live!', icon: '💖', file: 'sounds/nico-nico-nii.mp3', unpitched: false },
             { id: 'yamete', name: 'Yamete Kudasai 😳', shortName: 'YAMETE', tag: 'Anime Clássico', icon: '😳', file: 'sounds/yamete-kudasai.mp3', unpitched: false },
             { id: 'onii_chan', name: 'Onii-chan! 💕', shortName: 'ONII-CHAN', tag: 'Anime Voice', icon: '💕', file: 'sounds/onii-chan.mp3', unpitched: false },
-            { id: 'luffy_laugh', name: 'Risada do Luffy (Shishishi) 👒', shortName: 'LUFFY', tag: 'One Piece', icon: '👒', file: 'sounds/luffy-laugh.mp3', unpitched: false }
+            { id: 'luffy_laugh', name: 'Risada do Luffy (Shishishi) 👒', shortName: 'LUFFY', tag: 'One Piece', icon: '👒', file: 'sounds/luffy-laugh.mp3', unpitched: false },
+            { id: 'tuturu', name: 'Tu-tu-ruuu! (Mayuri) 🎶', shortName: 'TU-TU-RU', tag: 'Steins;Gate', icon: '🎶', file: 'sounds/tuturu.mp3', unpitched: false },
+            { id: 'ara_ara', name: 'Ara Ara~ 🌸', shortName: 'ARA ARA', tag: 'Anime Cliché', icon: '🌸', file: 'sounds/ara-ara.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_animais',
+          title: 'ANIMAIS & BARULHOS',
+          category: 'ANIMAIS',
+          author: '@sound_party',
+          rating: '4.9',
+          downloads: '2.9k',
+          color: '#2a9d8f',
+          icon: '🐶',
+          enabled: true,
+          sounds: [
+            { id: 'cachorro', name: 'Cachorro Latindo (Au Au!) 🐶', shortName: 'AU AU', tag: 'Sons de Animais', icon: '🐶', file: 'sounds/cachorro.mp3', unpitched: false },
+            { id: 'galo', name: 'Galo Cocoricó 🐓', shortName: 'GALO', tag: 'Sons de Animais', icon: '🐓', file: 'sounds/galo.mp3', unpitched: false },
+            { id: 'miau', name: 'Miau Gato Bravo 🐱', shortName: 'MIAU', tag: 'Gato Ofendido', icon: '😾', file: 'sounds/miau.mp3', unpitched: false },
+            { id: 'vaca_muu', name: 'Vaca Mugindo (Muuuu!) 🐮', shortName: 'MUUUU!', tag: 'Fazenda', icon: '🐮', file: 'sounds/vaca-muu.mp3', unpitched: false },
+            { id: 'lobo_uivando', name: 'Lobo Uivando (Auuuu!) 🐺', shortName: 'AUUUU!', tag: 'Natureza Selvagem', icon: '🐺', file: 'sounds/lobo-uivando.mp3', unpitched: false },
+            { id: 'quack', name: 'Pato (Quack Quack!) 🦆', shortName: 'QUACK', tag: 'Lago do Pato', icon: '🦆', file: 'sounds/quack.mp3', unpitched: false },
+            { id: 'sapo', name: 'Sapo Cururu 🐸', shortName: 'SAPO', tag: 'Lagoa Cururu', icon: '🐸', file: 'sounds/sapo.mp3', unpitched: false },
+            { id: 'buzina_caminhao', name: 'Buzina de Caminhão 🚚', shortName: 'FOM FOM', tag: 'Estrada', icon: '🚚', file: 'sounds/buzina-caminhao.mp3', unpitched: false },
+            { id: 'moto_giro', name: 'Moto Cortando Giro 🏍️', shortName: 'CORTE GIRO', tag: 'Ran-dan-dan', icon: '🏍️', file: 'sounds/moto-giro.mp3', unpitched: false },
+            { id: 'sad_trombone', name: 'Trombone Triste 😢', shortName: 'TROMBONE', tag: 'Fracasso Total', icon: '😢', file: 'sounds/sad-trombone.mp3', unpitched: false }
           ]
         },
         {
           id: 'pack_risadas',
-          title: 'RISADAS ICÔNICAS',
+          title: 'GARGALHADAS ICÔNICAS',
           category: 'RISADAS',
           author: '@gargalhadas',
           rating: '5.0',
-          downloads: '1.8k',
+          downloads: '3.1k',
           color: '#fee440',
           icon: '😂',
           enabled: true,
@@ -2897,26 +3021,6 @@
             { id: 'clash_laugh', name: 'He He He Ha (Clash Royale) 👑', shortName: 'HE HE HE HA', tag: 'Clash Royale', icon: '👑', file: 'sounds/clash-royale-laugh.mp3', unpitched: false },
             { id: 'coringa_laugh', name: 'Risada Maligna do Coringa 🃏', shortName: 'CORINGA', tag: 'DC Comics', icon: '🃏', file: 'sounds/coringa-laugh.mp3', unpitched: false },
             { id: 'pica_pau', name: 'Risada do Pica-Pau 🐦', shortName: 'PICA-PAU', tag: 'Desenho Animado', icon: '🐦', file: 'sounds/pica-pau.mp3', unpitched: false }
-          ]
-        },
-        {
-          id: 'pack_animais_classics',
-          title: 'ANIMAIS & CLÁSSICOS',
-          category: 'ANIMAIS',
-          author: '@sound_party',
-          rating: '4.9',
-          downloads: '1.6k',
-          color: '#00f576',
-          icon: '🐶',
-          enabled: true,
-          sounds: [
-            { id: 'cachorro', name: 'Cachorro Latindo (Au Au!) 🐶', shortName: 'AU AU', tag: 'Sons de Animais', icon: '🐶', file: 'sounds/cachorro.mp3', unpitched: false },
-            { id: 'galo', name: 'Galo Cocoricó 🐓', shortName: 'GALO', tag: 'Sons de Animais', icon: '🐓', file: 'sounds/galo.mp3', unpitched: false },
-            { id: 'miau', name: 'Miau Gato Bravo 🐱', shortName: 'MIAU', tag: 'Gato Ofendido', icon: '😾', file: 'sounds/miau.mp3', unpitched: false },
-            { id: 'bruh', name: 'Efeito Bruh 🗿', shortName: 'BRUH', tag: 'Internet Meme', icon: '🗿', file: 'sounds/bruh.mp3', unpitched: false },
-            { id: 'airhorn', name: 'Buzina Airhorn MLG 🎺', shortName: 'AIRHORN', tag: 'Efeito Sonoro MLG', icon: '🎺', file: 'sounds/airhorn.mp3', unpitched: false },
-            { id: 'vine_boom', name: 'Vine Boom 💥', shortName: 'VINE BOOM', tag: 'Efeito Sonoro', icon: '💥', file: 'sounds/vine-boom.mp3', unpitched: true },
-            { id: 'sad_trombone', name: 'Trombone Triste 😢', shortName: 'TROMBONE', tag: 'Fracasso Total', icon: '😢', file: 'sounds/sad-trombone.mp3', unpitched: false }
           ]
         }
       ],
