@@ -2819,8 +2819,8 @@
   <!-- ROLETA DA DISCÓRDIA ENTRE RODADAS (CANVAS MODAL) -->
   <div id="modalRoulette" class="modal-overlay" style="display:none;">
     <div class="modal-box wheel-modal-content">
-      <h2 class="modal-title">ROLETA DA DISCÓRDIA! 🎡</h2>
-      <p style="font-weight:700;">Bônus milagrosos ou sabotagens hilárias para o próximo take!</p>
+      <h2 class="modal-title">SUA ROLETA DA DISCÓRDIA! 🎡</h2>
+      <p style="font-weight:700;">Cada jogador gira sua própria roleta! Bônus, escudos, multiplicadores ou sabotagem!</p>
 
       <div class="wheel-wrap">
         <div class="wheel-pointer"></div>
@@ -2828,7 +2828,7 @@
       </div>
 
       <button id="btnSpinWheel" class="btn btn-play" onclick="WheelModule.spin()">
-        GIRAR A ROLETA! 🎰
+        GIRAR MINHA ROLETA! 🎰
       </button>
 
       <div id="wheelResultBox" style="display:none; background:#ffdd00; color:#000; border:3px solid #000; border-radius:12px; padding:12px; font-weight:900;">
@@ -5959,7 +5959,6 @@
             { id: 'quack', name: 'Pato (Quack Quack!) 🦆', shortName: 'QUACK', tag: 'Lago do Pato', icon: '🦆', file: 'sounds/quack.mp3', unpitched: false },
             { id: 'sapo', name: 'Sapo Cururu 🐸', shortName: 'SAPO', tag: 'Lagoa Cururu', icon: '🐸', file: 'sounds/sapo.mp3', unpitched: false },
             { id: 'buzina_caminhao', name: 'Buzina de Caminhão 🚚', shortName: 'FOM FOM', tag: 'Estrada', icon: '🚚', file: 'sounds/buzina-caminhao.mp3', unpitched: false },
-            { id: 'moto_giro', name: 'Moto Cortando Giro 🏍️', shortName: 'CORTE GIRO', tag: 'Ran-dan-dan', icon: '🏍️', file: 'sounds/moto-giro.mp3', unpitched: false },
             { id: 'sad_trombone', name: 'Trombone Triste 😢', shortName: 'TROMBONE', tag: 'Fracasso Total', icon: '😢', file: 'sounds/sad-trombone.mp3', unpitched: false }
           ]
         },
@@ -6085,7 +6084,6 @@
             { id: 'rickroll', name: 'Never Gonna Give You Up (Rickroll) 🕺', shortName: 'RICKROLL', tag: 'Rick Astley', icon: '🕺', file: 'sounds/rickroll.mp3', unpitched: false },
             { id: 'megalovania', name: 'Megalovania (Sans Intro) 💀', shortName: 'MEGALOVANIA', tag: 'Toby Fox', icon: '💀', file: 'sounds/megalovania.mp3', unpitched: false },
             { id: 'careless_whisper', name: 'Careless Whisper (Sax Romântico) 🎷', shortName: 'CARELESS', tag: 'George Michael', icon: '🎷', file: 'sounds/careless-whisper.mp3', unpitched: false },
-            { id: 'sweet_dreams', name: 'Sweet Dreams (Are Made of This) 🌙', shortName: 'SWEET DREAMS', tag: 'Eurythmics', icon: '🌙', file: 'sounds/sweet-dreams.mp3', unpitched: false },
             { id: 'gangnam_style', name: 'Oppa Gangnam Style! 🕶️', shortName: 'GANGNAM', tag: 'PSY K-Pop', icon: '🕶️', file: 'sounds/gangnam-style.mp3', unpitched: false },
             { id: 'epic_sax_guy', name: 'Epic Sax Guy 🎷', shortName: 'EPIC SAX', tag: 'Eurovision Meme', icon: '🎷', file: 'sounds/epic-sax-guy.mp3', unpitched: false },
             { id: 'numa_numa', name: 'Numa Numa Yei (Dragostea) ✈️', shortName: 'NUMA NUMA', tag: 'O-Zone', icon: '✈️', file: 'sounds/numa-numa.mp3', unpitched: false },
@@ -6497,7 +6495,20 @@
         try {
           const resp = await fetch(soundItem.file);
           const arrayBuf = await resp.arrayBuffer();
-          const decoded = await AudioModule.ctx.decodeAudioData(arrayBuf);
+          let decoded = await AudioModule.ctx.decodeAudioData(arrayBuf);
+          if (decoded.duration > 20) {
+            console.warn(`[PacksModule] Som "${soundItem.name}" possui ${decoded.duration.toFixed(1)}s (> 20s). Limitando para 10s.`);
+            const maxSamples = Math.floor(AudioModule.ctx.sampleRate * 10.0);
+            const clamped = AudioModule.ctx.createBuffer(
+              decoded.numberOfChannels,
+              Math.min(decoded.length, maxSamples),
+              AudioModule.ctx.sampleRate
+            );
+            for (let c = 0; c < decoded.numberOfChannels; c++) {
+              clamped.copyToChannel(decoded.getChannelData(c).subarray(0, maxSamples), c);
+            }
+            decoded = clamped;
+          }
           const normalized = AudioModule.normalizeBuffer(decoded, 0.94);
           if (soundItem.boostGain && soundItem.boostGain > 1.0) {
             for (let c = 0; c < normalized.numberOfChannels; c++) {
@@ -6551,15 +6562,15 @@
         this.packs.forEach(p => {
           if (p.enabled) {
             p.sounds.forEach(s => {
-              if (s.enabled !== false) sounds.push(s);
+              if (s.enabled !== false && (!s.duration || s.duration <= 20)) sounds.push(s);
             });
           }
         });
         this.customSounds.forEach(s => {
-          if (s.enabled !== false) sounds.push(s);
+          if (s.enabled !== false && (!s.duration || s.duration <= 20)) sounds.push(s);
         });
         if (sounds.length > 0) return sounds;
-        return this.packs[0].sounds.filter(s => s.enabled !== false);
+        return this.packs[0].sounds.filter(s => s.enabled !== false && (!s.duration || s.duration <= 20));
       }
     };
 
@@ -7135,10 +7146,20 @@
           AudioModule.stopCurrentAudio();
           AudioModule.setVoiceChatActive(true);
           document.getElementById('modalRoulette').style.display = 'flex';
-          WheelModule.initOnlineClient();
+          WheelModule.init();
+        } else if (msg.type === 'PLAYER_SPIN_RESULT') {
+          GameModule.onOnlinePlayerSpinResult(msg);
+          if (this.isHost) {
+            this.connections.forEach(c => {
+              if (c && c.open && c !== senderConn) {
+                try { c.send(msg); } catch (e) {}
+              }
+            });
+          }
         } else if (msg.type === 'ROULETTE_RESULT') {
-          WheelModule.onReceiveOnlineResult(msg.segment);
+          GameModule.onOnlinePlayerSpinResult({ playerId: 'host', name: 'Host', segment: msg.segment });
         } else if (msg.type === 'START_INTERMISSION') {
+          UIModule.closeModal('modalRoulette');
           GameModule.startIntermissionChat(msg.seconds || 5);
         } else if (msg.type === 'SHOW_PODIUM') {
           GameModule.showFinalPodium();
@@ -8394,6 +8415,10 @@
                   // Avaliação real do take do microfone (silêncio total dá 0/100)
                   const userAnalysis = ScoringModule.analyzeBuffer(userBuf);
                   const scoreRes = ScoringModule.evaluate(this.refAnalysis, userAnalysis, this.currentSound ? this.currentSound.unpitched : false);
+                  if (this.scoreMultiplier && this.scoreMultiplier > 1 && scoreRes.totalScore > 0) {
+                    scoreRes.totalScore = Math.min(100, Math.round(scoreRes.totalScore * this.scoreMultiplier));
+                    this.scoreMultiplier = 1;
+                  }
 
                   const audioDataUrl = await blobToDataURL(audioBlob);
 
@@ -8853,32 +8878,128 @@
         // Ativa o chat de voz quando a roleta abre para que todos conversem!
         AudioModule.setVoiceChatActive(true);
 
+        if (this.rouletteTransitionTimeout) {
+          clearTimeout(this.rouletteTransitionTimeout);
+          this.rouletteTransitionTimeout = null;
+        }
+
         if (this.isOnline) {
           if (NetworkModule.isHost) {
             NetworkModule.broadcast({ type: 'OPEN_ROULETTE' });
             document.getElementById('modalRoulette').style.display = 'flex';
             WheelModule.init();
+
+            // Host coordena a transição para a próxima rodada após 6.5s
+            this.rouletteTransitionTimeout = setTimeout(() => {
+              UIModule.closeModal('modalRoulette');
+              NetworkModule.broadcast({
+                type: 'START_INTERMISSION',
+                seconds: 5
+              });
+              this.startIntermissionChat(5);
+            }, 6500);
           }
         } else {
           document.getElementById('modalRoulette').style.display = 'flex';
           WheelModule.init();
+
+          // Simula giros individuais para os bots
+          this.simulateBotRouletteSpins();
+
+          this.rouletteTransitionTimeout = setTimeout(() => {
+            UIModule.closeModal('modalRoulette');
+            this.startIntermissionChat(5);
+          }, 6000);
         }
       },
 
-      applyRouletteSegment(seg) {
+      applyLocalRouletteSegment(seg) {
         if (!seg) return;
         if (seg.type === 'bonus') {
           if (this.localPlayer) this.localPlayer.score += seg.val;
           this.updateTopBarCards();
         } else if (seg.type === 'mult') {
           this.scoreMultiplier = seg.val;
+        } else if (seg.type === 'shield') {
+          this.localPlayer.hasShield = true;
         } else if (seg.type === 'sabotage') {
-          const sorted = [...this.players].sort((a, b) => b.score - a.score);
-          const target = sorted[0];
-          if (target) {
-            target.pendingSabotage = seg.sub;
+          const rivals = this.players.filter(p => p.id !== this.localPlayer.id && (this.localPlayer.peerId ? p.peerId !== this.localPlayer.peerId : true));
+          if (rivals.length > 0) {
+            rivals.sort((a, b) => b.score - a.score);
+            const target = rivals[0];
+            seg.targetPlayerId = target.id;
+            seg.targetPeerId = target.peerId || target.id;
+            if (target.isBot) {
+              if (target.hasShield) {
+                target.hasShield = false;
+              } else {
+                target.pendingSabotage = seg.sub;
+              }
+            }
           }
         }
+      },
+
+      applyRouletteSegment(seg) {
+        this.applyLocalRouletteSegment(seg);
+      },
+
+      onOnlinePlayerSpinResult(msg) {
+        if (!msg || !msg.playerId || msg.playerId === this.localPlayer.id) return;
+        const player = this.players.find(p => p.id === msg.playerId || (p.peerId && p.peerId === msg.playerId));
+        const seg = msg.segment;
+        if (!seg) return;
+
+        if (player) {
+          if (seg.type === 'bonus') {
+            player.score += seg.val;
+            this.updateTopBarCards();
+          } else if (seg.type === 'shield') {
+            player.hasShield = true;
+          }
+        }
+
+        if (seg.type === 'sabotage') {
+          const isTargetLocal = (seg.targetPlayerId === this.localPlayer.id) ||
+            (this.localPlayer.peerId && seg.targetPeerId === this.localPlayer.peerId) ||
+            (!seg.targetPlayerId && this.players.filter(p => p.id !== msg.playerId).sort((a, b) => b.score - a.score)[0]?.id === this.localPlayer.id);
+
+          if (isTargetLocal) {
+            if (this.localPlayer.hasShield) {
+              this.localPlayer.hasShield = false;
+              console.log(`[Escudo] Seu escudo bloqueou a sabotagem de ${msg.name || 'um rival'}!`);
+            } else {
+              this.localPlayer.pendingSabotage = seg.sub || 'pum';
+              console.log(`[Sabotagem] Você foi sabotado por ${msg.name || 'um rival'} com ${seg.sub}!`);
+            }
+          }
+        }
+      },
+
+      simulateBotRouletteSpins() {
+        if (!this.players) return;
+        this.players.filter(p => p.isBot).forEach(bot => {
+          const roll = Math.random();
+          if (roll < 0.10) { // Apenas 10% de chance de sabotagem!
+            const subs = ['pum', 'saturacao', 'eco', 'pitch'];
+            const sub = subs[Math.floor(Math.random() * subs.length)];
+            if (this.localPlayer.hasShield) {
+              this.localPlayer.hasShield = false;
+              console.log(`[Escudo] Bloqueou sabotagem do bot ${bot.name}!`);
+            } else {
+              this.localPlayer.pendingSabotage = sub;
+            }
+          } else if (roll < 0.30) {
+            bot.hasShield = true;
+          } else if (roll < 0.55) {
+            bot.score += 25;
+          } else if (roll < 0.80) {
+            bot.score += 35;
+          } else {
+            bot.score += 50;
+          }
+        });
+        this.updateTopBarCards();
       },
 
       startIntermissionChat(seconds = 5) {
@@ -8970,6 +9091,14 @@
         if (banner) banner.style.display = 'none';
         UIModule.closeModal('modalRoulette');
         UIModule.hideTomato();
+        if (this.rouletteTransitionTimeout) {
+          clearTimeout(this.rouletteTransitionTimeout);
+          this.rouletteTransitionTimeout = null;
+        }
+        if (typeof WheelModule !== 'undefined' && WheelModule.autoSpinTimer) {
+          clearTimeout(WheelModule.autoSpinTimer);
+          WheelModule.autoSpinTimer = null;
+        }
 
         const modal = document.getElementById('modalFinalPodium');
         if (modal) modal.style.display = 'flex';
@@ -9094,6 +9223,14 @@
           cancelAnimationFrame(this.needleAnimFrame);
           this.needleAnimFrame = null;
         }
+        if (this.rouletteTransitionTimeout) {
+          clearTimeout(this.rouletteTransitionTimeout);
+          this.rouletteTransitionTimeout = null;
+        }
+        if (typeof WheelModule !== 'undefined' && WheelModule.autoSpinTimer) {
+          clearTimeout(WheelModule.autoSpinTimer);
+          WheelModule.autoSpinTimer = null;
+        }
 
         const wasOnline = this.isOnline || (NetworkModule && (NetworkModule.isHost || NetworkModule.hostConnection));
         this.isOnline = false;
@@ -9119,18 +9256,21 @@
       angularVel: 0,
 
       segments: [
-        { label: '+20 PONTOS', color: '#00f576', type: 'bonus', val: 20 },
-        { label: 'SABOTAGEM: PUM', color: '#8d6e63', type: 'sabotage', sub: 'pum' },
-        { label: 'MULTIPLICADOR x2', color: '#ffdd00', type: 'mult', val: 2 },
-        { label: 'SABOTAGEM: DISTORÇÃO', color: '#ff0077', type: 'sabotage', sub: 'saturacao' },
+        { label: '+25 PONTOS', color: '#00f576', type: 'bonus', val: 25 },
+        { label: 'MULTIPLICADOR x1.5', color: '#ffdd00', type: 'mult', val: 1.5 },
         { label: 'CAIU O PIX: +50', color: '#00f0ff', type: 'bonus', val: 50 },
-        { label: 'SABOTAGEM: ECO', color: '#ff6d00', type: 'sabotage', sub: 'eco' },
         { label: 'ESCUDO PROTETOR', color: '#7209b7', type: 'shield' },
-        { label: 'SABOTAGEM: ESQUILO', color: '#d90429', type: 'sabotage', sub: 'pitch' }
+        { label: '+15 PONTOS', color: '#06d6a0', type: 'bonus', val: 15 },
+        { label: 'SABOTAGEM HILÁRIA 😈', color: '#d90429', type: 'sabotage', sub: 'random' },
+        { label: 'MULTIPLICADOR x2', color: '#ffb703', type: 'mult', val: 2 },
+        { label: 'JACKPOT: +80', color: '#ff0077', type: 'bonus', val: 80 },
+        { label: 'ESCUDO MÁGICO', color: '#9d4edd', type: 'shield' },
+        { label: '+30 PONTOS', color: '#4cc9f0', type: 'bonus', val: 30 }
       ],
 
       init() {
         this.canvas = document.getElementById('wheelCanvas');
+        if (!this.canvas) return;
         this.ctx = this.canvas.getContext('2d');
         const box = document.getElementById('wheelResultBox');
         const btnNext = document.getElementById('btnProceedAfterWheel');
@@ -9139,18 +9279,21 @@
         if (btnNext) btnNext.style.display = 'none';
         if (btnSpin) {
           btnSpin.style.display = 'inline-flex';
-          btnSpin.innerText = '🎰 GIRANDO ROLETA...';
-          btnSpin.disabled = true;
+          btnSpin.innerText = 'GIRAR MINHA ROLETA! 🎰';
+          btnSpin.disabled = false;
         }
+        this.isSpinning = false;
+        this.hasSpunThisRound = false;
         this.draw();
 
-        // Ativa o chat de voz quando a roleta roda para que todos se ouçam e conversem!
         AudioModule.setVoiceChatActive(true);
 
-        // GIRA AUTOMATICAMENTE!
-        setTimeout(() => {
-          this.spin();
-        }, 380);
+        if (this.autoSpinTimer) clearTimeout(this.autoSpinTimer);
+        this.autoSpinTimer = setTimeout(() => {
+          if (!this.isSpinning && !this.hasSpunThisRound) {
+            this.spin();
+          }
+        }, 1800);
       },
 
       draw() {
@@ -9188,7 +9331,16 @@
       spin() {
         if (this.isSpinning) return;
         this.isSpinning = true;
-        document.getElementById('btnSpinWheel').style.display = 'none';
+        this.hasSpunThisRound = true;
+        if (this.autoSpinTimer) {
+          clearTimeout(this.autoSpinTimer);
+          this.autoSpinTimer = null;
+        }
+        const btnSpin = document.getElementById('btnSpinWheel');
+        if (btnSpin) {
+          btnSpin.disabled = true;
+          btnSpin.innerText = '🎰 GIRANDO SUA ROLETA...';
+        }
         this.angularVel = 0.35 + Math.random() * 0.25;
 
         const anim = () => {
@@ -9212,102 +9364,52 @@
         const box = document.getElementById('wheelResultBox');
         const title = document.getElementById('wheelResultTitle');
         const desc = document.getElementById('wheelResultDesc');
-        const btnNext = document.getElementById('btnProceedAfterWheel');
+        const btnSpin = document.getElementById('btnSpinWheel');
+        if (btnSpin) btnSpin.style.display = 'none';
 
         if (box) box.style.display = 'block';
-        if (btnNext) btnNext.style.display = 'none';
         if (title) title.innerText = seg.label;
         if (desc) {
-          if (seg.type === 'bonus') desc.innerText = `Bônus concedido! Ganhou +${seg.val} pontos!`;
-          else if (seg.type === 'sabotage') desc.innerText = `Sabotagem (${seg.sub}) aplicada ao líder da partida!`;
-          else if (seg.type === 'mult') desc.innerText = `Multiplicador x${seg.val} ativado!`;
-          else desc.innerText = 'Escudo protetor ativado contra sabotagens!';
+          if (seg.type === 'bonus') desc.innerText = `Você ganhou +${seg.val} pontos direto na sua conta! 💰`;
+          else if (seg.type === 'sabotage') desc.innerText = `Sabotagem ativada contra o rival! 😈`;
+          else if (seg.type === 'mult') desc.innerText = `Multiplicador x${seg.val} ativado para sua próxima imitação! 🔥`;
+          else desc.innerText = 'Escudo protetor ativado! Bloqueará a próxima sabotagem inimiga! 🛡️';
         }
         AudioModule.playSfx('beep_go');
 
-        // Aplica o efeito no GameModule
-        GameModule.applyRouletteSegment(seg);
-
-        if (GameModule.isOnline && NetworkModule.isHost) {
-          NetworkModule.broadcast({
-            type: 'ROULETTE_RESULT',
-            segment: seg
-          });
+        // Resolve sabotagem caso seja 'random'
+        let finalSeg = { ...seg };
+        if (finalSeg.type === 'sabotage') {
+          const subs = ['pum', 'saturacao', 'eco', 'pitch'];
+          finalSeg.sub = subs[Math.floor(Math.random() * subs.length)];
         }
 
-        // Exibe o resultado por 2.4s, fecha a roleta e inicia o intervalo de conversa de 5 segundos!
-        setTimeout(() => {
-          UIModule.closeModal('modalRoulette');
-          if (GameModule.isOnline && NetworkModule.isHost) {
-            NetworkModule.broadcast({
-              type: 'START_INTERMISSION',
-              seconds: 5
-            });
+        // Aplica para o jogador local
+        GameModule.applyLocalRouletteSegment(finalSeg);
+
+        // Se estiver online, transmite o resultado do próprio giro
+        if (GameModule.isOnline) {
+          const spinMsg = {
+            type: 'PLAYER_SPIN_RESULT',
+            playerId: GameModule.localPlayer.id,
+            peerId: NetworkModule.myPeerId || GameModule.localPlayer.id,
+            name: GameModule.localPlayer.name,
+            segment: finalSeg
+          };
+          if (NetworkModule.isHost) {
+            NetworkModule.broadcast(spinMsg);
+          } else {
+            NetworkModule.sendToHost(spinMsg);
           }
-          GameModule.startIntermissionChat(5);
-        }, 2400);
+        }
       },
 
       initOnlineClient() {
-        this.canvas = document.getElementById('wheelCanvas');
-        if (!this.canvas) return;
-        this.ctx = this.canvas.getContext('2d');
-        const box = document.getElementById('wheelResultBox');
-        const btnNext = document.getElementById('btnProceedAfterWheel');
-        const btnSpin = document.getElementById('btnSpinWheel');
-        if (box) box.style.display = 'none';
-        if (btnNext) btnNext.style.display = 'none';
-        if (btnSpin) {
-          btnSpin.style.display = 'inline-flex';
-          btnSpin.innerText = '🎰 O HOST ESTÁ GIRANDO A ROLETA...';
-          btnSpin.disabled = true;
-        }
-        this.draw();
-
-        this.isSpinning = true;
-        this.angularVel = 0.22;
-        const anim = () => {
-          if (!this.isSpinning) return;
-          this.angle += this.angularVel;
-          this.draw();
-          requestAnimationFrame(anim);
-        };
-        requestAnimationFrame(anim);
+        this.init();
       },
 
       onReceiveOnlineResult(seg) {
-        this.isSpinning = false;
-        if (this.canvas) {
-          const arc = TWO_PI / this.segments.length;
-          const segIdx = this.segments.findIndex(s => s.label === seg.label || (s.type === seg.type && s.val === seg.val));
-          if (segIdx !== -1) {
-            this.angle = (TWO_PI - (segIdx * arc + arc / 2) + Math.PI / 2) % TWO_PI;
-            this.draw();
-          }
-        }
-        const box = document.getElementById('wheelResultBox');
-        const title = document.getElementById('wheelResultTitle');
-        const desc = document.getElementById('wheelResultDesc');
-        const btnNext = document.getElementById('btnProceedAfterWheel');
-        const btnSpin = document.getElementById('btnSpinWheel');
-
-        if (btnSpin) btnSpin.style.display = 'none';
-        if (box) box.style.display = 'block';
-        if (btnNext) btnNext.style.display = 'none';
-        if (title) title.innerText = seg.label;
-        if (desc) {
-          if (seg.type === 'bonus') desc.innerText = `Bônus concedido! Ganhou +${seg.val} pontos!`;
-          else if (seg.type === 'sabotage') desc.innerText = `Sabotagem (${seg.sub}) aplicada ao líder da partida!`;
-          else if (seg.type === 'mult') desc.innerText = `Multiplicador x${seg.val} ativado!`;
-          else desc.innerText = 'Escudo protetor ativado contra sabotagens!';
-        }
-        AudioModule.playSfx('beep_go');
-
-        GameModule.applyRouletteSegment(seg);
-
-        setTimeout(() => {
-          UIModule.closeModal('modalRoulette');
-        }, 2400);
+        GameModule.onOnlinePlayerSpinResult({ segment: seg });
       }
     };
 
