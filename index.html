@@ -3246,6 +3246,7 @@
         <span>Ritmo / Ataques: <b id="statRhythm" style="color:#ffdd00;">0%</b></span>
         <span>Volume / Envelope: <b id="statEnvelope" style="color:#00f576;">0%</b></span>
       </div>
+    </div>
   </div>
 
   <!-- OVERLAY DO TOMATE NA CARA (QUANDO A NOTA É RUIM) -->
@@ -3327,6 +3328,10 @@
       </div>
 
       <div id="podiumHostNotice" style="display:none; text-align:center; font-weight:700; color:#ffdd00; font-size:0.95rem; margin-bottom:8px; padding:6px 12px; background:rgba(255,221,0,0.15); border:2px solid #ffdd00; border-radius:10px;"></div>
+
+      <!-- Placar completo com todos os jogadores / bots -->
+      <div id="podiumRankingList" style="margin:6px 0 10px 0; max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; padding:2px;">
+      </div>
 
       <!-- Ações Imediatas: Recomeçar ou Voltar ao Menu -->
       <div style="display:flex; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
@@ -9644,9 +9649,7 @@
               if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
               if (!this.isOnline || NetworkModule.isHost) {
                 this.autoAdvanceTimer = setTimeout(() => {
-                  if (scoreOverlay && scoreOverlay.style.display !== 'none') {
-                    this.advanceTakePlayback();
-                  }
+                  this.advanceTakePlayback();
                 }, 4200);
               }
             }
@@ -9709,7 +9712,9 @@
       },
 
       openRoundRoulette() {
-        if (this.currentRound >= this.totalRounds) {
+        const curR = Number(this.currentRound) || 1;
+        const totR = Number(this.totalRounds) || 5;
+        if (curR >= totR) {
           if (this.isOnline && NetworkModule.isHost) {
             NetworkModule.broadcast({ type: 'SHOW_PODIUM' });
           }
@@ -9943,9 +9948,18 @@
           WheelModule.autoSpinTimer = null;
         }
 
+        // Esconde barra e controles do jogo para o pódio brilhar com foco total
+        const roundBadge = document.getElementById('roundBadgeBox');
+        if (roundBadge) roundBadge.style.display = 'none';
+        const topRow = document.getElementById('playersTopRow');
+        if (topRow) topRow.style.display = 'none';
+        const btnLeave = document.getElementById('btnLeaveGame');
+        if (btnLeave) btnLeave.style.display = 'none';
+
         const modal = document.getElementById('modalFinalPodium');
         if (modal) {
           modal.style.display = 'flex';
+          modal.style.zIndex = '99999';
           const box = modal.querySelector('.modal-box');
           if (box) box.scrollTop = 0;
         }
@@ -9967,30 +9981,61 @@
         }
 
         const sorted = [...this.players].sort((a, b) => b.score - a.score);
+        if (sorted[0] && sorted[0].char3D) {
+          sorted[0].char3D.triggerCelebrate();
+        }
+
         const podBox = document.getElementById('podiumVisualContainer');
         if (podBox) {
           podBox.innerHTML = '';
           const p1 = sorted[0] || { name: 'Campeão', score: 0 };
-          const p2 = sorted[1] || { name: '-', score: 0 };
-          const p3 = sorted[2] || { name: '-', score: 0 };
+          const p2 = sorted[1] || null;
+          const p3 = sorted[2] || null;
 
-          podBox.innerHTML = `
+          let html = '';
+          if (p2) {
+            html += `
+              <div style="display:flex; flex-direction:column; align-items:center;">
+                <strong style="font-size:0.95rem; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p2.name}</strong>
+                <span style="color:#ffb703; font-weight:900; font-size:0.85rem;">${p2.score} pts</span>
+                <div style="width:80px; height:68px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.5rem; color:#000;">2º</div>
+              </div>`;
+          }
+          html += `
             <div style="display:flex; flex-direction:column; align-items:center;">
-              <strong style="font-size:0.95rem;">${p2.name}</strong>
-              <span style="color:#ffb703; font-weight:900; font-size:0.85rem;">${p2.score} pts</span>
-              <div style="width:80px; height:68px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.5rem; color:#000;">2º</div>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <strong style="color:#ffdd00; font-size:1.1rem;">👑 ${p1.name}</strong>
+              <strong style="color:#ffdd00; font-size:1.1rem; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">👑 ${p1.name}</strong>
               <span style="color:#00f576; font-weight:900; font-size:0.95rem;">${p1.score} pts</span>
               <div style="width:95px; height:95px; background:#ffd700; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2rem; color:#000;">1º 🏆</div>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <strong style="font-size:0.95rem;">${p3.name}</strong>
-              <span style="color:#ffb703; font-weight:900; font-size:0.85rem;">${p3.score} pts</span>
-              <div style="width:80px; height:48px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.3rem; color:#000;">3º</div>
-            </div>
-          `;
+            </div>`;
+          if (p3) {
+            html += `
+              <div style="display:flex; flex-direction:column; align-items:center;">
+                <strong style="font-size:0.95rem; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p3.name}</strong>
+                <span style="color:#ffb703; font-weight:900; font-size:0.85rem;">${p3.score} pts</span>
+                <div style="width:80px; height:48px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.3rem; color:#000;">3º</div>
+              </div>`;
+          }
+          podBox.innerHTML = html;
+        }
+
+        const rankList = document.getElementById('podiumRankingList');
+        if (rankList) {
+          rankList.innerHTML = '';
+          if (sorted.length > 0) {
+            sorted.forEach((p, idx) => {
+              const row = document.createElement('div');
+              row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.4); padding:6px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); font-size:0.88rem; margin-bottom:3px;';
+              const medal = idx === 0 ? '🥇 1º' : (idx === 1 ? '🥈 2º' : (idx === 2 ? '🥉 3º' : `${idx + 1}º`));
+              row.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-weight:900; width:38px; color:#ffdd00;">${medal}</span>
+                  <span style="font-weight:800; color:#fff;">${p.name} ${p.isBot ? '🤖' : ''}</span>
+                </div>
+                <strong style="color:#00f576; font-size:0.92rem;">${p.score} pts</strong>
+              `;
+              rankList.appendChild(row);
+            });
+          }
         }
 
         UIModule.startConfetti();
