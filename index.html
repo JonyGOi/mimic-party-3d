@@ -7374,8 +7374,8 @@
             console.warn("[Heartbeat] Host parou de responder há mais de 40s.");
             clearInterval(this.heartbeatTimer);
             this.heartbeatTimer = null;
-            this.leaveOrCancelRoom();
             alert("A partida foi encerrada porque o Dono da Sala fechou o navegador ou desconectou.");
+            this.leaveOrCancelRoom();
           }
         }, 3000);
       },
@@ -7558,8 +7558,8 @@
           }
           return;
         } else if (msg.type === 'HOST_DISCONNECTED') {
-          this.leaveOrCancelRoom();
           alert("O Dono da Sala fechou o jogo ou encerrou a partida.");
+          this.leaveOrCancelRoom();
           return;
         } else if (msg.type === 'ROOM_FULL') {
           alert(msg.message || "A sala atingiu o limite máximo de 8 jogadores!");
@@ -7829,8 +7829,29 @@
         this.isHost = false;
         this.myPeerId = null;
 
-        // SEMPRE REDIRECIONA PARA A URL OFICIAL AO SAIR DE UMA SALA COMO SOLICITADO
-        window.location.href = 'https://jonygoi.github.io/mimic-party-3d/';
+        // Limpa modelos 3D do palco imediatamente
+        if (typeof GameModule !== 'undefined' && GameModule.cleanupBotsAndReset) {
+          try { GameModule.cleanupBotsAndReset(); } catch (e) {}
+        }
+
+        const targetUrl = window.location.origin.includes('github.io')
+          ? 'https://jonygoi.github.io/mimic-party-3d/'
+          : `${window.location.origin}${window.location.pathname}`;
+
+        // Limpa parâmetros de sala (?sala=...)
+        try {
+          window.history.replaceState({}, document.title, targetUrl);
+        } catch (e) {}
+
+        // Força recarregamento total da página para resetar todos os bonecos e cena 3D
+        if (window.location.href === targetUrl) {
+          window.location.reload();
+        } else {
+          window.location.replace(targetUrl);
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
+        }
       },
 
       handleWindowUnload() {
@@ -8327,18 +8348,43 @@
 
       // LIMPEZA TOTAL DE BOTS E PLAYERS REMOTOS AO SAIR/RESETAR
       cleanupBotsAndReset() {
-        this.players.filter(p => p.id !== this.localPlayer.id).forEach(other => {
-          if (other.char3D && other.char3D.group) {
-            Scene3DModule.scene.remove(other.char3D.group);
+        if (typeof Scene3DModule !== 'undefined' && Scene3DModule.scene) {
+          if (Scene3DModule.characters) {
+            Scene3DModule.characters.forEach(c => {
+              if (this.localPlayer && c === this.localPlayer.char3D) return;
+              if (c.group) {
+                try { Scene3DModule.scene.remove(c.group); } catch (e) {}
+              }
+            });
           }
-        });
-        Scene3DModule.characters = Scene3DModule.characters.filter(c => c.id === this.localPlayer.id);
-        this.players = [this.localPlayer];
-        this.localPlayer.score = 0;
-        this.localPlayer.char3D.isSinging = false;
-        this.localPlayer.char3D.walkTo(0, 0);
+          this.players.filter(p => !this.localPlayer || p.id !== this.localPlayer.id).forEach(other => {
+            if (other.char3D && other.char3D.group) {
+              try { Scene3DModule.scene.remove(other.char3D.group); } catch (e) {}
+            }
+          });
+          if (this.localPlayer && this.localPlayer.char3D) {
+            Scene3DModule.characters = [this.localPlayer.char3D];
+            this.localPlayer.char3D.lineupPosition.set(0, 0, 0);
+            this.localPlayer.char3D.targetPosition.set(0, 0, 0);
+            if (this.localPlayer.char3D.group) {
+              this.localPlayer.char3D.group.position.set(0, 0, 0);
+            }
+            this.localPlayer.char3D.walkTo(0, 0);
+            this.localPlayer.char3D.isSinging = false;
+          } else {
+            Scene3DModule.characters = [];
+          }
+          if (Scene3DModule.setCameraView) {
+            Scene3DModule.setCameraView('menu');
+          }
+        }
+        if (this.localPlayer) {
+          this.players = [this.localPlayer];
+          this.localPlayer.score = 0;
+        }
         this.isSoloBots = false;
         this.isOnline = false;
+        this.isMatchActive = false;
       },
 
       applyCharacterPreset(presetKey) {
@@ -10037,13 +10083,8 @@
         this.isOnline = false;
         this.isSoloBots = false;
 
-        if (wasOnline) {
-          NetworkModule.leaveOrCancelRoom();
-          return;
-        }
-
-        this.cleanupBotsAndReset();
-        Scene3DModule.setCameraView('menu');
+        // Sempre que sair de uma partida ou sala, executa a saída e recarrega a página para limpar o palco 3D
+        NetworkModule.leaveOrCancelRoom();
       }
     };
 
