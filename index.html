@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MIMIC PARTY 3D ONLINE 🎤🔥 - O Jogo da Imitação da Voz</title>
   
-  <!-- CDNs Oficiais: Three.js para o 3D e PeerJS para Multiplayer Online P2P -->
+  <!-- CDNs Oficiais: Three.js para o 3D e PeerJS para Multiplayer Online P2P + MQTT para Salas Públicas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
 
   <style>
     /* ==========================================================================
@@ -218,8 +219,54 @@
     .btn-join { background: #7209b7; color: #fff; }
     .btn-pink { background: #ff0077; color: #fff; }
     .btn-green { background: #00f576; color: #000; }
+    .btn-cyan { background: #00f0ff; color: #000; }
+    .btn-cyan:hover { background: #70f7ff; }
     .btn-neutral { background: #2b2038; color: #fff; }
     .btn-sm { padding: 6px 14px; font-size: 0.85rem; border-radius: 10px; }
+
+    /* Cards da Aba de Salas Públicas */
+    .public-room-card {
+      background: rgba(18, 14, 34, 0.95);
+      border: 2.5px solid #28214f;
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 2px 2px 0 #000;
+    }
+    .public-room-card:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4), 3px 3px 0 #000;
+    }
+
+    /* Botões de Seleção da Quantidade de Bots */
+    .bot-count-btn {
+      background: rgba(22, 17, 42, 0.95);
+      border: 2.5px solid #332766;
+      border-radius: 14px;
+      padding: 12px 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: #fff;
+      transition: all 0.2s ease;
+      box-shadow: 2px 2px 0 #000;
+      user-select: none;
+    }
+    .bot-count-btn:hover {
+      border-color: #ff0077;
+      transform: translateY(-2px);
+    }
+    .bot-count-btn.active {
+      border-color: #00f576;
+      background: rgba(0, 245, 118, 0.18);
+      box-shadow: 0 0 14px rgba(0, 245, 118, 0.5), 3px 3px 0 #000;
+      transform: scale(1.02);
+    }
 
     /* Medidor de VU Segmentado & Estúdio de Microfone */
     .vu-segmented-wrap {
@@ -1724,99 +1771,167 @@
        RESPONSIVIDADE E OTIMIZAÇÃO COMPLETA PARA CELULAR / MOBILE (<= 768px)
        ========================================================================== */
     @media (max-width: 768px) {
-      /* Top Bar */
+      /* Top Bar em Grid Responsivo: Rodada e Controles na Linha 1, Jogadores na Linha 2 */
       .top-bar {
-        padding: 6px 10px !important;
+        padding: 4px 8px !important;
         gap: 4px !important;
+        display: grid !important;
+        grid-template-columns: auto 1fr auto !important;
+        grid-template-areas: 
+          "round empty controls"
+          "players players players" !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+      #roundBadgeBox {
+        grid-area: round !important;
+        padding: 3px 8px !important;
+        border-radius: 8px !important;
+      }
+      .round-title {
+        font-size: 0.92rem !important;
+      }
+      .round-subtitle {
+        font-size: 0.65rem !important;
+      }
+      .top-bar-controls {
+        grid-area: controls !important;
       }
       .top-bar .btn-sm {
         padding: 4px 7px !important;
-        font-size: 0.76rem !important;
+        font-size: 0.74rem !important;
       }
       #voiceChatStatusBadge {
-        padding: 4px 6px !important;
-        font-size: 0.68rem !important;
+        padding: 3px 6px !important;
+        font-size: 0.66rem !important;
       }
       #voiceBadgeText {
         display: none !important;
       }
 
-      /* Logo Mimic Party no Topo */
-      .logo-container {
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        top: 46px !important;
-        align-items: center !important;
+      /* Linha de Jogadores: 100% da largura, horizontal scroll para até 8 pessoas */
+      .players-top-row {
+        grid-area: players !important;
+        width: 100% !important;
+        max-width: 96vw !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        gap: 4px !important;
+        padding: 3px 2px !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
       }
-      .logo-box {
-        padding: 4px 14px !important;
-        border-width: 3px !important;
-        border-radius: 12px !important;
+      .players-top-row::-webkit-scrollbar {
+        display: none !important;
       }
-      .logo-text {
-        font-size: 1.65rem !important;
-        letter-spacing: 1px !important;
+      .player-card-top {
+        flex: 0 0 auto !important;
+        min-width: 50px !important;
+        max-width: 62px !important;
+        padding: 2px 4px !important;
       }
-      .logo-sub {
-        font-size: 0.7rem !important;
+      .player-card-top .p-avatar {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 1rem !important;
+      }
+      .player-card-top .p-name {
+        font-size: 0.62rem !important;
+        max-width: 48px !important;
+      }
+      .player-card-top .p-score {
+        font-size: 0.68rem !important;
+        padding: 1px 4px !important;
       }
 
-      /* Card de Perfil do Jogador como Pill no Topo (não colide com o menu) */
+      /* Logo Mimic Party no Topo: Compacto para não sobrepor nada */
+      .logo-container {
+        position: absolute !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        top: 8px !important;
+        align-items: center !important;
+        z-index: 15 !important;
+      }
+      .logo-box {
+        padding: 2px 12px !important;
+        border-width: 2.5px !important;
+        border-radius: 10px !important;
+      }
+      .logo-text {
+        font-size: 1.3rem !important;
+        letter-spacing: 0.5px !important;
+      }
+      .logo-sub {
+        font-size: 0.62rem !important;
+        margin-top: 1px !important;
+      }
+
+      /* Card de Perfil do Jogador como Pill no Topo (Abaixo do logo, sem colisões) */
       #localPlayerProfileCard {
         position: absolute !important;
         left: 50% !important;
         right: auto !important;
-        top: 102px !important;
+        top: 56px !important;
         bottom: auto !important;
         transform: translateX(-50%) !important;
-        padding: 4px 12px !important;
-        max-width: 92vw !important;
-        background: rgba(15, 12, 34, 0.92) !important;
+        padding: 2px 10px !important;
+        max-width: 90vw !important;
+        background: rgba(15, 12, 34, 0.94) !important;
         border: 2px solid #332766 !important;
-        border-radius: 30px !important;
-        gap: 8px !important;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.6) !important;
+        border-radius: 20px !important;
+        gap: 6px !important;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.6) !important;
+        z-index: 15 !important;
+        height: 32px !important;
       }
       #localAvatarFaceIcon {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 1.3rem !important;
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 0.95rem !important;
       }
       #localPlayerNameDisplay {
-        font-size: 0.85rem !important;
+        font-size: 0.78rem !important;
+        white-space: nowrap !important;
       }
       #localPlayerProfileCard .btn-sm {
-        font-size: 0.68rem !important;
-        padding: 3px 7px !important;
+        display: none !important;
       }
 
-      /* Menu Principal Ancorado no Rodapé (Thumb-Friendly, 2 colunas, não tampa o personagem 3D) */
+      /* Menu Principal Ancorado no Rodapé (Thumb-Friendly, 2 colunas simétricas) */
       .main-menu-overlay {
         position: absolute !important;
         left: 50% !important;
         right: auto !important;
         top: auto !important;
-        bottom: 12px !important;
+        bottom: 8px !important;
         transform: translateX(-50%) !important;
-        width: 94% !important;
-        max-width: 400px !important;
+        width: 95% !important;
+        max-width: 390px !important;
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
+        gap: 6px !important;
         margin: 0 !important;
-      }
-      .main-menu-overlay .btn-play {
-        grid-column: 1 / -1 !important;
-        padding: 12px !important;
-        font-size: 1.15rem !important;
+        max-height: 48vh !important;
+        overflow-y: auto !important;
+        z-index: 15 !important;
       }
       .main-menu-overlay .btn {
-        padding: 10px 6px !important;
-        font-size: 0.82rem !important;
+        padding: 8px 6px !important;
+        font-size: 0.8rem !important;
         letter-spacing: 0px !important;
         white-space: nowrap !important;
         text-align: center !important;
         justify-content: center !important;
+        border-radius: 10px !important;
+        border-width: 2px !important;
+      }
+      .main-menu-overlay > div:last-child {
+        grid-column: 1 / -1 !important;
+        padding: 6px 8px !important;
       }
 
       /* Modais Gerais */
@@ -1983,85 +2098,100 @@
         max-width: 350px !important;
       }
       .showcase-title {
-        font-size: 1.3rem !important;
+        font-size: 1.25rem !important;
         line-height: 1.1 !important;
+      }
+      .meme-circle-cover {
+        width: 85px !important;
+        height: 85px !important;
+        margin-bottom: 4px !important;
+      }
+      .meme-circle-icon {
+        font-size: 2.3rem !important;
+      }
+      .meme-circle-title-inner {
+        font-size: 0.68rem !important;
+        bottom: 5px !important;
       }
       .waveform-box {
         width: 94vw !important;
-        max-width: 340px !important;
-        height: 80px !important;
+        max-width: 320px !important;
+        height: 65px !important;
       }
       #waveformCanvas, #pitchTrailCanvas {
         width: 100% !important;
         height: 100% !important;
       }
       .showcase-countdown-badge {
-        font-size: 3.5rem !important;
+        font-size: 2.8rem !important;
+      }
+      .match-intro-banner {
+        top: 70px !important;
+        padding: 8px 16px !important;
+        border-radius: 14px !important;
+        max-width: 90vw !important;
+        background: rgba(14, 11, 30, 0.88) !important;
+        border-width: 2.5px !important;
+      }
+      .intro-badge {
+        font-size: 0.72rem !important;
+      }
+      .intro-title {
+        font-size: 1.2rem !important;
+      }
+      .intro-subtitle {
+        font-size: 0.72rem !important;
+      }
+      .wheel-wrap {
+        width: 240px !important;
+        height: 240px !important;
+      }
+      #wheelCanvas {
+        width: 240px !important;
+        height: 240px !important;
       }
       .take-score-hud {
-        bottom: 12px !important;
+        bottom: 10px !important;
         width: 95vw !important;
       }
       .take-score-number {
-        font-size: 3.6rem !important;
+        font-size: 3rem !important;
       }
       .take-narrator-meme {
-        font-size: 0.95rem !important;
+        font-size: 0.88rem !important;
         padding: 4px 10px !important;
       }
       .wave-comparison-card {
         width: 100% !important;
-        max-width: 350px !important;
-        padding: 8px !important;
+        max-width: 340px !important;
+        padding: 6px !important;
       }
       .wave-canvas-wrap {
         width: 100% !important;
       }
       #canvasWaveComparison {
         width: 100% !important;
-        height: 60px !important;
+        height: 52px !important;
       }
       .wave-comp-header {
-        font-size: 0.68rem !important;
+        font-size: 0.66rem !important;
         gap: 4px !important;
       }
       .wave-comp-stats {
-        font-size: 0.7rem !important;
+        font-size: 0.68rem !important;
         gap: 6px !important;
       }
       .intermission-hud {
         width: 92% !important;
-        max-width: 350px !important;
-        padding: 12px !important;
-        bottom: 15px !important;
+        max-width: 340px !important;
+        padding: 10px 14px !important;
+        bottom: 12px !important;
       }
       .intermission-title {
-        font-size: 1.2rem !important;
+        font-size: 1.15rem !important;
       }
       .intermission-subtitle {
-        font-size: 0.8rem !important;
-      }
-      .players-top-row {
-        overflow-x: auto !important;
-        justify-content: flex-start !important;
-        gap: 4px !important;
-        padding: 4px !important;
-      }
-      .player-card-top {
-        min-width: 50px !important;
-        padding: 3px 5px !important;
-      }
-      .player-card-top .p-avatar {
-        width: 28px !important;
-        height: 28px !important;
-        font-size: 1rem !important;
-      }
-      .player-card-top .p-name {
-        font-size: 0.65rem !important;
-        max-width: 48px !important;
-      }
-      .player-card-top .p-score {
-        font-size: 0.72rem !important;
+        font-size: 0.78rem !important;
       }
     }
   </style>
@@ -2094,7 +2224,7 @@
       </div>
 
       <!-- Controles Gerais (Áudio, Mudo, Sair, Voz) -->
-      <div class="interactive" style="display:flex; align-items:center; gap:6px;">
+      <div class="interactive top-bar-controls" style="display:flex; align-items:center; gap:6px;">
         <div id="voiceChatStatusBadge" class="voice-status-badge active" title="Status da Voz em Tempo Real" style="padding:4px 8px; font-size:0.75rem;">
           <span class="voice-badge-pulse"></span>
           <span id="voiceBadgeIcon" class="voice-badge-icon">🎙️</span>
@@ -2133,7 +2263,11 @@
         🚪 ENTRAR EM SALA
       </button>
 
-      <button class="btn btn-pink" onclick="GameModule.startSoloBotsMode()">
+      <button class="btn btn-cyan" onclick="PublicRoomsModule.openModal()">
+        🌐 SALAS PÚBLICAS
+      </button>
+
+      <button class="btn btn-pink" onclick="UIModule.openSoloBotsModal()">
         🤖 JOGAR SOLO (BOTS)
       </button>
 
@@ -2142,7 +2276,7 @@
       </button>
 
       <button class="btn btn-neutral btn-menu-sounds" onclick="UIModule.openSoundPacksModal()">
-        📚 PACOTES DE SONS (<span id="menuSoundsCount">146</span>)
+        📚 PACOTES DE SONS (<span id="menuSoundsCount">183</span>)
       </button>
 
       <!-- SELETOR DE RODADAS DA PARTIDA -->
@@ -2217,7 +2351,7 @@
         <!-- Coluna da Esquerda: Jogadores Conectados -->
         <div class="lobby-players-column">
           <span style="font-weight:900; font-size:0.85rem; margin-bottom:6px; color:#ffdd00;">
-            AMIGOS NA SALA (<span id="waitingPlayerCount">1</span>/5):
+            AMIGOS NA SALA (<span id="waitingPlayerCount">1</span>/8):
           </span>
           <div id="waitingPlayersList">
             <!-- Lista de jogadores conectados -->
@@ -2281,6 +2415,90 @@
         <button class="btn btn-join" onclick="NetworkModule.joinRoomFromInput()">
           ENTRAR NA SALA ➡️
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ESCOLHER QUANTIDADE DE BOTS NO MODO SOLO -->
+  <div id="modalSoloBots" class="modal-overlay" style="display:none; z-index:2200;">
+    <div class="modal-box" style="max-width:480px; text-align:center;">
+      <div style="font-size:3rem; margin-bottom:4px; filter:drop-shadow(0 4px 0 #000);">🤖</div>
+      <h2 class="modal-title" style="margin-top:2px; font-size:1.7rem;">JOGAR COM BOTS</h2>
+      <p style="font-weight:700; opacity:0.85; font-size:0.92rem; margin-bottom:14px;">
+        Quantos bots você deseja enfrentar no palco?
+      </p>
+
+      <div class="bot-count-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <button class="bot-count-btn" data-bots="1" onclick="UIModule.selectBotCount(1)">
+          <div style="font-size:1.6rem;">⚔️</div>
+          <div style="font-weight:900; font-size:1rem;">1 BOT</div>
+          <div style="font-size:0.75rem; color:#cbd5e1;">X1 Rápido (2 jogadores)</div>
+        </button>
+        <button class="bot-count-btn" data-bots="2" onclick="UIModule.selectBotCount(2)">
+          <div style="font-size:1.6rem;">👥</div>
+          <div style="font-weight:900; font-size:1rem;">2 BOTS</div>
+          <div style="font-size:0.75rem; color:#cbd5e1;">Trio (3 jogadores)</div>
+        </button>
+        <button class="bot-count-btn active" data-bots="3" onclick="UIModule.selectBotCount(3)">
+          <div style="font-size:1.6rem;">⭐</div>
+          <div style="font-weight:900; font-size:1rem;">3 BOTS</div>
+          <div style="font-size:0.75rem; color:#ffdd00;">Padrão (4 jogadores)</div>
+        </button>
+        <button class="bot-count-btn" data-bots="5" onclick="UIModule.selectBotCount(5)">
+          <div style="font-size:1.6rem;">🔥</div>
+          <div style="font-weight:900; font-size:1rem;">5 BOTS</div>
+          <div style="font-size:0.75rem; color:#cbd5e1;">Cheio (6 jogadores)</div>
+        </button>
+        <button class="bot-count-btn" data-bots="7" onclick="UIModule.selectBotCount(7)" style="grid-column:1 / -1;">
+          <div style="font-size:1.6rem;">🎉</div>
+          <div style="font-weight:900; font-size:1rem;">7 BOTS (FESTA LOTADA!)</div>
+          <div style="font-size:0.75rem; color:#00f576;">Máximo de 8 jogadores no palco!</div>
+        </button>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalSoloBots')" style="flex:1;">
+          VOLTAR
+        </button>
+        <button class="btn btn-green" onclick="UIModule.confirmStartSoloBots()" style="flex:1.5;">
+          COMEÇAR JOGO 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LISTA DE SALAS PÚBLICAS DISPONÍVEIS -->
+  <div id="modalPublicRooms" class="modal-overlay" style="display:none; z-index:2200;">
+    <div class="modal-box" style="max-width:620px; width:95%; max-height:88vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.8rem;">🌐</span>
+          <h2 class="modal-title" style="margin:0; font-size:1.6rem;">SALAS PÚBLICAS</h2>
+        </div>
+        <button class="btn btn-neutral btn-sm" onclick="PublicRoomsModule.closeModal()" style="padding:4px 10px; font-size:0.9rem;">
+          ✖ FECHAR
+        </button>
+      </div>
+      <p style="font-weight:700; opacity:0.85; font-size:0.88rem; margin-top:-2px; margin-bottom:12px;">
+        Entre em uma sala aberta de outros jogadores ou crie a sua para aparecer aqui!
+      </p>
+
+      <!-- Barra de Ações: Atualizar, Entrada Rápida e Criar -->
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <button class="btn btn-neutral btn-sm" onclick="PublicRoomsModule.refreshList()" style="flex:1; font-size:0.82rem; padding:8px 10px;">
+          🔄 ATUALIZAR
+        </button>
+        <button class="btn btn-green btn-sm" onclick="PublicRoomsModule.quickMatch()" style="flex:1.2; font-size:0.82rem; padding:8px 10px;">
+          ⚡ ENTRADA RÁPIDA
+        </button>
+        <button class="btn btn-pink btn-sm" onclick="PublicRoomsModule.createPublicRoom()" style="flex:1; font-size:0.82rem; padding:8px 10px;">
+          🔨 CRIAR SALA
+        </button>
+      </div>
+
+      <!-- Container da Lista de Salas (com scroll) -->
+      <div id="publicRoomsListContainer" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px; min-height:200px;">
+        <!-- Injetado dinamicamente via JavaScript -->
       </div>
     </div>
   </div>
@@ -3221,7 +3439,11 @@
           this.cameraTargetPos.set(0, 2.6, 7.8);
           this.cameraTargetLookAt.set(0, 1.3, 0);
         } else if (viewMode === 'stage_lineup') {
-          this.cameraTargetPos.set(0, 3.8, 13.5);
+          const pCount = (window.GameModule && GameModule.players) ? GameModule.players.length : 4;
+          const isNarrow = window.innerWidth < 768;
+          const distOffset = (pCount > 4 ? (pCount - 4) * 0.85 : 0) + (isNarrow ? 4.8 : 0);
+          const heightOffset = (pCount > 4 ? 0.35 : 0) + (isNarrow ? 0.9 : 0);
+          this.cameraTargetPos.set(0, 3.8 + heightOffset, 13.5 + distOffset);
           this.cameraTargetLookAt.set(0, 1.2, -1.5);
         } else if (viewMode === 'close_singer') {
           this.cameraTargetPos.set(0, 2.4, 6.8);
@@ -3949,18 +4171,52 @@
 
       walkTo(targetX, targetZ) {
         this.targetPosition.set(targetX, 0, targetZ);
+        this.isWalking = true;
       }
 
       update(time, delta) {
-        const dist = this.group.position.distanceTo(this.targetPosition);
-        if (dist > 0.04) {
-          this.group.position.lerp(this.targetPosition, 0.08);
+        const dx = this.targetPosition.x - this.group.position.x;
+        const dz = this.targetPosition.z - this.group.position.z;
+        const dist = Math.hypot(dx, dz);
+
+        if (dist > 0.05) {
+          this.isWalking = true;
+          const moveSpeed = Math.min(0.12, Math.max(0.045, dist * 0.085));
+          this.group.position.x += (dx / dist) * moveSpeed;
+          this.group.position.z += (dz / dist) * moveSpeed;
+
+          // Rotação suave do corpo para a direção de movimento
+          const targetAngle = Math.atan2(dx, dz);
+          let diffAngle = targetAngle - this.group.rotation.y;
+          while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+          while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+          this.group.rotation.y += diffAngle * 0.18;
+
+          // Elevação e balanço dos passos
           const walkSpeed = 12;
+          this.group.position.y = Math.abs(Math.sin(time * walkSpeed)) * 0.09;
           this.legL.rotation.x = Math.sin(time * walkSpeed) * 0.45;
           this.legR.rotation.x = -Math.sin(time * walkSpeed) * 0.45;
           this.armL.rotation.x = -Math.sin(time * walkSpeed) * 0.4;
           this.armR.rotation.x = Math.sin(time * walkSpeed) * 0.4;
         } else {
+          if (this.isWalking) {
+            this.isWalking = false;
+            this.group.position.y = 0;
+            if (this.onReachDestination) {
+              const cb = this.onReachDestination;
+              this.onReachDestination = null;
+              cb();
+            }
+          }
+
+          // Quando parado, vira suavemente de volta para a plateia / câmera
+          let faceCamDiff = 0 - this.group.rotation.y;
+          while (faceCamDiff < -Math.PI) faceCamDiff += Math.PI * 2;
+          while (faceCamDiff > Math.PI) faceCamDiff -= Math.PI * 2;
+          this.group.rotation.y += faceCamDiff * 0.12;
+
+          this.group.position.y = 0;
           this.legL.rotation.x = 0;
           this.legR.rotation.x = 0;
 
@@ -6722,6 +6978,9 @@
             document.getElementById('displayRoomCode').innerText = this.roomCode;
             this.updateWaitingRoomUI();
             this.startHostHeartbeat();
+            if (typeof PublicRoomsModule !== 'undefined') {
+              PublicRoomsModule.startHostAnnouncing(this.roomCode);
+            }
           });
 
           this.peer.on('call', (call) => {
@@ -7140,14 +7399,30 @@
           this.leaveOrCancelRoom();
           alert("O Dono da Sala fechou o jogo ou encerrou a partida.");
           return;
+        } else if (msg.type === 'ROOM_FULL') {
+          alert(msg.message || "A sala atingiu o limite máximo de 8 jogadores!");
+          this.leaveOrCancelRoom();
+          return;
         } else if (msg.type === 'PLAYER_JOIN' && this.isHost) {
+          const realPlayers = GameModule.players.filter(p => !p.isBot);
+          if (realPlayers.length >= 8) {
+            if (senderConn && senderConn.open) {
+              try {
+                senderConn.send({ type: 'ROOM_FULL', message: 'A sala atingiu o limite máximo de 8 jogadores!' });
+              } catch (e) {}
+            }
+            return;
+          }
           GameModule.addOnlinePlayer(msg.name, msg.hair, msg.shirtColor, msg.pantsColor, msg.accessory, senderConn.peer, msg.preset);
           this.broadcastRoomState();
+          if (typeof PublicRoomsModule !== 'undefined') {
+            PublicRoomsModule.triggerAnnounce(this.roomCode);
+          }
 
           const sysMsg = {
             type: 'LOBBY_CHAT',
             sender: 'SISTEMA',
-            text: `🎉 ${msg.name} entrou na sala!`,
+            text: `🎉 ${msg.name} entrou na sala! (${realPlayers.length + 1}/8)`,
             isSystem: true
           };
           this.appendLobbyChatMessage(sysMsg);
@@ -7340,6 +7615,11 @@
 
       leaveOrCancelRoom() {
         UIModule.closeModal('modalCreateRoom');
+        UIModule.closeModal('modalJoinRoom');
+        UIModule.closeModal('modalPublicRooms');
+        if (typeof PublicRoomsModule !== 'undefined') {
+          PublicRoomsModule.stopHostAnnouncing(this.roomCode);
+        }
         GameModule.isOnline = false;
         GameModule.isSoloBots = false;
         if (this.heartbeatTimer) {
@@ -7372,25 +7652,19 @@
         this.hostConnection = null;
         this.isHost = false;
         this.myPeerId = null;
-        if (GameModule.localPlayer) {
-          GameModule.localPlayer.id = 'host_p1';
-          GameModule.localPlayer.peerId = null;
-          if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = 'host_p1';
-        }
-        GameModule.isMatchActive = false;
-        document.body.classList.remove('in-match');
-        GameModule.cleanupBotsAndReset();
-        Scene3DModule.setCameraView('menu');
-        document.getElementById('mainMenuOverlay').style.display = 'flex';
-        document.getElementById('mainLogoContainer').style.display = 'flex';
-        const profileCard = document.getElementById('localPlayerProfileCard');
-        if (profileCard) profileCard.style.display = 'flex';
+
+        // SEMPRE REDIRECIONA PARA A URL OFICIAL AO SAIR DE UMA SALA COMO SOLICITADO
+        window.location.href = 'https://jonygoi.github.io/mimic-party-3d/';
       },
 
       handleWindowUnload() {
         if (this.heartbeatTimer) {
           clearInterval(this.heartbeatTimer);
           this.heartbeatTimer = null;
+        }
+
+        if (typeof PublicRoomsModule !== 'undefined') {
+          PublicRoomsModule.stopHostAnnouncing(this.roomCode);
         }
 
         if (this.isHost) {
@@ -7416,6 +7690,221 @@
         if (this.peer) {
           try { this.peer.destroy(); } catch (e) {}
         }
+      }
+    };
+
+    /* ==========================================================================
+       6.1. PUBLICROOMSMODULE: DESCOBERTA E DIVULGAÇÃO DE SALAS PÚBLICAS (MQTT WEBSOCKET)
+       ========================================================================== */
+    const PublicRoomsModule = {
+      client: null,
+      topic: 'mimicparty3d/rooms/v1',
+      publicRooms: new Map(),
+      broadcastTimer: null,
+
+      init() {
+        if (typeof mqtt === 'undefined') return;
+        if (this.client) return;
+
+        try {
+          this.client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+            clientId: 'mimic_' + Math.random().toString(16).substr(2, 8),
+            clean: true,
+            connectTimeout: 5000,
+            reconnectPeriod: 3000
+          });
+
+          this.client.on('connect', () => {
+            this.client.subscribe(this.topic, { qos: 0 });
+          });
+
+          this.client.on('message', (topic, payload) => {
+            try {
+              const data = JSON.parse(payload.toString());
+              this.handleRoomAnnouncement(data);
+            } catch (e) {}
+          });
+        } catch (e) {
+          console.warn("PublicRoomsModule init:", e);
+        }
+      },
+
+      handleRoomAnnouncement(data) {
+        if (!data || !data.roomCode) return;
+        if (data.closed) {
+          this.publicRooms.delete(data.roomCode);
+          this.renderRoomsList();
+          return;
+        }
+        this.publicRooms.set(data.roomCode, {
+          roomCode: data.roomCode,
+          hostName: data.hostName || 'Host',
+          playersCount: data.playersCount || 1,
+          maxPlayers: data.maxPlayers || 8,
+          rounds: data.rounds || 5,
+          inMatch: !!data.inMatch,
+          receivedAt: Date.now()
+        });
+        this.renderRoomsList();
+      },
+
+      startHostAnnouncing(roomCode) {
+        if (!this.client) this.init();
+        if (this.broadcastTimer) clearInterval(this.broadcastTimer);
+
+        const sendAnnounce = () => {
+          if (!NetworkModule.isHost || !this.client || !this.client.connected) return;
+          const realPlayers = GameModule.players.filter(p => !p.isBot);
+          const msg = {
+            roomCode: roomCode,
+            hostName: (GameModule.localPlayer && GameModule.localPlayer.name) ? GameModule.localPlayer.name : 'Host',
+            playersCount: realPlayers.length,
+            maxPlayers: 8,
+            rounds: GameModule.matchRounds || 5,
+            inMatch: GameModule.isMatchActive,
+            ts: Date.now()
+          };
+          this.client.publish(this.topic, JSON.stringify(msg));
+        };
+
+        sendAnnounce();
+        this.broadcastTimer = setInterval(sendAnnounce, 3000);
+      },
+
+      triggerAnnounce(roomCode) {
+        if (!NetworkModule.isHost || !this.client || !this.client.connected) return;
+        const realPlayers = GameModule.players.filter(p => !p.isBot);
+        const msg = {
+          roomCode: roomCode,
+          hostName: (GameModule.localPlayer && GameModule.localPlayer.name) ? GameModule.localPlayer.name : 'Host',
+          playersCount: realPlayers.length,
+          maxPlayers: 8,
+          rounds: GameModule.matchRounds || 5,
+          inMatch: GameModule.isMatchActive,
+          ts: Date.now()
+        };
+        this.client.publish(this.topic, JSON.stringify(msg));
+      },
+
+      stopHostAnnouncing(roomCode) {
+        if (this.broadcastTimer) {
+          clearInterval(this.broadcastTimer);
+          this.broadcastTimer = null;
+        }
+        if (this.client && this.client.connected && roomCode) {
+          try {
+            this.client.publish(this.topic, JSON.stringify({ roomCode, closed: true }));
+          } catch (e) {}
+        }
+      },
+
+      openModal() {
+        UIModule.openModal('modalPublicRooms');
+        if (!this.client) this.init();
+        this.cleanExpiredRooms();
+        this.renderRoomsList();
+      },
+
+      closeModal() {
+        UIModule.closeModal('modalPublicRooms');
+      },
+
+      cleanExpiredRooms() {
+        const now = Date.now();
+        for (const [code, r] of this.publicRooms.entries()) {
+          if (now - r.receivedAt > 8000) {
+            this.publicRooms.delete(code);
+          }
+        }
+      },
+
+      renderRoomsList() {
+        const container = document.getElementById('publicRoomsListContainer');
+        if (!container) return;
+        this.cleanExpiredRooms();
+
+        const rooms = Array.from(this.publicRooms.values())
+          .filter(r => r.roomCode !== NetworkModule.roomCode);
+
+        if (rooms.length === 0) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:28px 14px; color:#aaa; font-size:0.92rem;">
+              <div style="font-size:3rem; margin-bottom:8px;">📡</div>
+              <p style="font-weight:800; color:#fff; font-size:1.1rem; margin-bottom:4px;">Nenhuma sala pública aberta no momento</p>
+              <p style="font-size:0.85rem; margin-bottom:14px;">Seja o primeiro a criar uma sala para seus amigos ou outros jogadores entrarem!</p>
+              <button class="btn btn-play btn-sm" onclick="PublicRoomsModule.createPublicRoom()" style="padding:10px 18px; font-size:0.95rem;">
+                🔨 CRIAR UMA SALA AGORA
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = '';
+        rooms.forEach(r => {
+          const card = document.createElement('div');
+          card.className = 'public-room-card';
+          const isFull = r.playersCount >= (r.maxPlayers || 8);
+          const inMatch = r.inMatch;
+          const statusText = inMatch ? '🎮 EM PARTIDA' : (isFull ? '🔴 SALA LOTADA' : '🟢 AGUARDANDO');
+          const statusColor = inMatch ? '#ffb703' : (isFull ? '#ff0077' : '#00f576');
+
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:#2c1b4d; border:2px solid #ffdd00; display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+                  🎤
+                </div>
+                <div>
+                  <div style="font-weight:900; font-size:1rem; color:#fff;">Sala de ${escapeHtml(r.hostName)}</div>
+                  <div style="font-size:0.75rem; color:#00f0ff; font-weight:800;">CÓDIGO: #${escapeHtml(r.roomCode)} • ${r.rounds || 5} Rodadas</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-weight:900; font-size:0.72rem; color:${statusColor}; background:rgba(0,0,0,0.5); padding:2px 8px; border-radius:10px; border:1px solid ${statusColor};">
+                  ${statusText}
+                </span>
+                <div style="font-weight:900; font-size:0.85rem; color:#fff; margin-top:4px;">
+                  👥 ${r.playersCount}/${r.maxPlayers || 8}
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:8px; display:flex; justify-content:flex-end;">
+              <button class="btn btn-green btn-sm" ${isFull ? 'disabled' : ''} onclick="PublicRoomsModule.joinPublicRoom('${escapeHtml(r.roomCode)}')" style="padding:6px 14px; font-size:0.82rem; ${isFull ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+                ${isFull ? 'LOTADA 🚫' : 'ENTRAR AGORA 🚀'}
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      },
+
+      joinPublicRoom(code) {
+        this.closeModal();
+        NetworkModule.joinRoom(code);
+      },
+
+      createPublicRoom() {
+        this.closeModal();
+        UIModule.openCreateRoomModal();
+      },
+
+      quickMatch() {
+        this.cleanExpiredRooms();
+        const available = Array.from(this.publicRooms.values())
+          .filter(r => !r.inMatch && r.playersCount < (r.maxPlayers || 8) && r.roomCode !== NetworkModule.roomCode);
+        if (available.length > 0) {
+          const chosen = available[Math.floor(Math.random() * available.length)];
+          this.joinPublicRoom(chosen.roomCode);
+        } else {
+          this.createPublicRoom();
+        }
+      },
+
+      refreshList() {
+        this.cleanExpiredRooms();
+        this.renderRoomsList();
+        AudioModule.playSfx('tick');
       }
     };
 
@@ -7804,20 +8293,26 @@
         }
       },
 
-      startSoloBotsMode() {
+      startSoloBotsMode(botCount = 3) {
         this.cleanupBotsAndReset();
         this.isSoloBots = true;
         this.isOnline = false;
 
-        const botConfigs = [
-          { name: 'Cap', hair: 'bald', shirt: '#ff0044', pants: '#223366', accessory: 'none', skill: 0.78 },
+        const allBotConfigs = [
+          { name: 'Cap', hair: 'bald', shirt: '#ff0044', pants: '#223366', accessory: 'none', skill: 0.76 },
           { name: 'Sangras', hair: 'brown_parted', shirt: '#0066ff', pants: '#111111', accessory: 'sunglasses', skill: 0.65 },
-          { name: 'MrFall', hair: 'chaves_hat', shirt: '#c4b07b', pants: '#8a7246', accessory: 'none', skill: 0.52 },
-          { name: 'Gaga', hair: 'saiyajin_gold', shirt: '#ff6600', pants: '#ff6600', accessory: 'gamer_headset', skill: 0.84 }
+          { name: 'MrFall', hair: 'chaves_hat', shirt: '#c4b07b', pants: '#8a7246', accessory: 'none', skill: 0.54 },
+          { name: 'Gaga', hair: 'saiyajin_gold', shirt: '#ff6600', pants: '#ff6600', accessory: 'gamer_headset', skill: 0.83 },
+          { name: 'Zeca', hair: 'black_spiky', shirt: '#7b2cbf', pants: '#1a1028', accessory: 'clown_nose', skill: 0.62 },
+          { name: 'Mel', hair: 'afro_puffs', shirt: '#ffdd00', pants: '#222222', accessory: 'cat_ears', skill: 0.71 },
+          { name: 'Pixel', hair: 'astronaut_helmet', shirt: '#00f0ff', pants: '#0b132b', accessory: 'none', skill: 0.86 }
         ];
 
+        const targetBots = Math.min(allBotConfigs.length, Math.max(1, parseInt(botCount, 10) || 3));
+        const chosenBots = allBotConfigs.slice(0, targetBots);
+
         this.players = [this.localPlayer];
-        botConfigs.forEach((b, idx) => {
+        chosenBots.forEach((b, idx) => {
           const bChar = new Character3D({
             id: 'bot_' + idx,
             name: b.name,
@@ -7995,13 +8490,14 @@
 
       repositionLineup() {
         const count = this.players.length;
-        const spacing = 2.0;
+        const spacing = count > 5 ? Math.max(1.3, 9.8 / (count - 1)) : 1.9;
         const startX = -((count - 1) * spacing) / 2;
 
         this.players.forEach((p, idx) => {
           const x = startX + idx * spacing;
-          p.char3D.lineupPosition.set(x, 0, -2.5);
-          p.char3D.walkTo(x, -2.5);
+          const z = -2.5 - Math.sin((idx / Math.max(1, count - 1)) * Math.PI) * 0.45;
+          p.char3D.lineupPosition.set(x, 0, z);
+          p.char3D.walkTo(x, z);
         });
         this.updateTopBarCards();
       },
@@ -8030,33 +8526,55 @@
 
       playEntranceAnimation(onComplete) {
         const count = this.players.length;
-        const spacing = 2.0;
+        const spacing = count > 5 ? Math.max(1.3, 9.8 / (count - 1)) : 1.9;
         const startX = -((count - 1) * spacing) / 2;
 
-        // Posiciona todos fora do palco (à esquerda e à direita) e faz caminharem para os seus spots
+        // Banner compacto no topo para não encobrir os bonecos
+        const banner = document.getElementById('matchIntroBanner');
+        if (banner) {
+          banner.style.display = 'flex';
+          const title = banner.querySelector('.intro-title');
+          if (title) title.innerText = '🌟 ENTRADA DOS JOGADORES 🌟';
+          const sub = banner.querySelector('.intro-subtitle');
+          if (sub) sub.innerText = `Apresentando os ${count} participantes no palco! 🎤🔥`;
+        }
+
+        // Posiciona todos fora do palco (à esquerda e à direita nos bastidores)
         this.players.forEach((p, idx) => {
           const targetX = startX + idx * spacing;
-          const targetZ = -2.5;
+          const targetZ = -2.5 - Math.sin((idx / Math.max(1, count - 1)) * Math.PI) * 0.45;
           p.char3D.lineupPosition.set(targetX, 0, targetZ);
 
-          // Alterna entrada pelas laterais dos bastidores
-          const spawnX = idx % 2 === 0 ? -9.5 - (idx * 1.5) : 9.5 + (idx * 1.5);
-          const spawnZ = -3.2 - (idx * 0.4);
+          const fromLeft = (idx % 2 === 0);
+          const spawnX = fromLeft ? -11.0 - Math.floor(idx / 2) * 1.3 : 11.0 + Math.floor(idx / 2) * 1.3;
+          const spawnZ = -3.2 - Math.floor(idx / 2) * 0.3;
+
           p.char3D.group.position.set(spawnX, 0, spawnZ);
-          p.char3D.walkTo(targetX, targetZ);
+          p.char3D.targetPosition.set(spawnX, 0, spawnZ);
+          p.char3D.group.rotation.y = fromLeft ? Math.PI / 2 : -Math.PI / 2;
         });
 
         this.updateTopBarCards();
         Scene3DModule.setCameraView('stage_lineup');
         AudioModule.playSfx('airhorn');
 
-        const banner = document.getElementById('matchIntroBanner');
-        if (banner) banner.style.display = 'flex';
+        // Entrada escalonada: cada um vem andando até sua posição!
+        this.players.forEach((p, idx) => {
+          setTimeout(() => {
+            if (p.char3D) {
+              p.char3D.onReachDestination = () => {
+                p.char3D.triggerCelebrate();
+              };
+              p.char3D.walkTo(p.char3D.lineupPosition.x, p.char3D.lineupPosition.z);
+            }
+          }, idx * 280);
+        });
 
+        const totalTime = Math.max(2800, count * 280 + 1800);
         setTimeout(() => {
           if (banner) banner.style.display = 'none';
           if (onComplete) onComplete();
-        }, 2500);
+        }, totalTime);
       },
 
       restartMatchSamePlayers(broadcast = true) {
@@ -9340,6 +9858,7 @@
 
         if (wasOnline) {
           NetworkModule.leaveOrCancelRoom();
+          return;
         }
 
         this.cleanupBotsAndReset();
@@ -9596,6 +10115,32 @@
         document.getElementById('modalJoinRoom').style.display = 'flex';
       },
 
+      openSoloBotsModal() {
+        const saved = parseInt(localStorage.getItem('mimic_bot_count') || '3', 10);
+        this.selectBotCount(saved, false);
+        this.openModal('modalSoloBots');
+      },
+
+      selectBotCount(count, playSfx = true) {
+        GameModule.selectedBotCount = count;
+        localStorage.setItem('mimic_bot_count', count);
+        const btns = document.querySelectorAll('.bot-count-btn');
+        btns.forEach(b => {
+          if (parseInt(b.getAttribute('data-bots'), 10) === count) {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
+        if (playSfx) AudioModule.playSfx('tick');
+      },
+
+      confirmStartSoloBots() {
+        this.closeModal('modalSoloBots');
+        const count = GameModule.selectedBotCount || parseInt(localStorage.getItem('mimic_bot_count') || '3', 10);
+        GameModule.startSoloBotsMode(count);
+      },
+
       openCustomizeModal() {
         GameModule.isCustomizing = true;
         GameModule.autoRotatePreview = true;
@@ -9840,6 +10385,9 @@
     window.addEventListener('DOMContentLoaded', () => {
       Scene3DModule.init();
       GameModule.init();
+      if (typeof PublicRoomsModule !== 'undefined') {
+        PublicRoomsModule.init();
+      }
     });
 
     window.addEventListener('beforeunload', () => {
