@@ -221,6 +221,57 @@
     .btn-neutral { background: #2b2038; color: #fff; }
     .btn-sm { padding: 6px 14px; font-size: 0.85rem; border-radius: 10px; }
 
+    /* Medidor de VU Segmentado & Estúdio de Microfone */
+    .vu-segmented-wrap {
+      display: flex;
+      gap: 3px;
+      height: 14px;
+      width: 100%;
+      background: #000;
+      padding: 2px;
+      border-radius: 4px;
+    }
+    .vu-seg {
+      flex: 1;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      transition: background 0.04s ease;
+    }
+    .vu-seg.active[data-color="green"],
+    .vu-seg.active.green {
+      background: #00f576;
+      box-shadow: 0 0 6px rgba(0, 245, 118, 0.7);
+    }
+    .vu-seg.active[data-color="yellow"],
+    .vu-seg.active.yellow {
+      background: #ffdd00;
+      box-shadow: 0 0 6px rgba(255, 221, 0, 0.7);
+    }
+    .vu-seg.active[data-color="red"],
+    .vu-seg.active.red {
+      background: #ff0055;
+      box-shadow: 0 0 8px rgba(255, 0, 85, 0.9);
+    }
+    .vu-seg.peak.green { background: #55ffa0; opacity: 0.9; }
+    .vu-seg.peak.yellow { background: #fff580; opacity: 0.9; }
+    .vu-seg.peak.red { background: #ff6699; opacity: 0.9; }
+
+    .mic-preset-btn {
+      font-size: 0.75rem !important;
+      padding: 4px 10px !important;
+      border-radius: 8px !important;
+    }
+    .mic-preset-btn:hover {
+      background: #3b304c !important;
+      border-color: #00f576 !important;
+      color: #00f576 !important;
+    }
+    .mic-gain-slider-premium {
+      height: 8px;
+      border-radius: 4px;
+    }
+
     /* Modais / Painéis Centrais */
     .modal-overlay {
       position: fixed;
@@ -1479,6 +1530,9 @@
           <span id="voiceBadgeIcon" class="voice-badge-icon">🎙️</span>
           <span id="voiceBadgeText" class="voice-badge-text">VOZ ATIVA</span>
         </div>
+        <button id="btnOpenMicModal" class="btn btn-neutral btn-sm" onclick="UIModule.openMicAdjusterModal()" title="Calibrar Microfone e Retorno de Voz" style="border-color:#00f576; color:#00f576;">
+          🎙️ MIC
+        </button>
         <button id="btnMuteToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleMasterMute()" title="Mudo">
           🔊
         </button>
@@ -1530,16 +1584,16 @@
       <div>
         <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST) ✏️</div>
         <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
-          <button id="btnTestMicQuick" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px;" onclick="event.stopPropagation(); AudioModule.testMicInteractive()">
-            🎙️ TESTAR
+          <button id="btnOpenMicModalProfile" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; border-color:#00f576; color:#00f576;" onclick="event.stopPropagation(); UIModule.openMicAdjusterModal()">
+            🎙️ AJUSTAR MIC
           </button>
-          <button class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; border-color:#00f576; color:#00f576;" onclick="event.stopPropagation(); UIModule.openCustomizeModal()">
+          <button class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px;" onclick="event.stopPropagation(); UIModule.openCustomizeModal()">
             🎨 ROUPAS
           </button>
         </div>
-        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;" onclick="event.stopPropagation()">
+        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;" onclick="event.stopPropagation(); UIModule.openMicAdjusterModal()">
           <span style="font-size:0.72rem; font-weight:800; color:#aaa;">MIC:</span>
-          <input type="range" class="mic-gain-slider" min="0.3" max="3.0" step="0.1" value="1.2" style="width:75px; accent-color:#00f576; cursor:pointer;" oninput="AudioModule.setMicGain(this.value)">
+          <input type="range" class="mic-gain-slider" min="0.2" max="3.5" step="0.05" value="1.2" style="width:75px; accent-color:#00f576; cursor:pointer;" oninput="AudioModule.setMicGain(this.value)">
           <span class="mic-gain-display-val" style="font-size:0.75rem; font-weight:900; color:#00f576;">120%</span>
         </div>
         <div id="vuMeterWrap" style="width:140px; margin-top:4px; display:none;">
@@ -1577,6 +1631,9 @@
           <!-- Botão para Selecionar Áudios antes de Começar (apenas host) -->
           <button id="btnLobbySoundPacks" class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703; padding:8px 10px;">
             🎵 MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">157</span>)
+          </button>
+          <button id="btnLobbyMicAdjust" class="btn btn-neutral btn-sm" onclick="UIModule.openMicAdjusterModal()" style="border-color:#00f576; color:#00f576; padding:8px 10px;">
+            🎙️ AJUSTAR MICROFONE & RETORNO
           </button>
         </div>
       </div>
@@ -1718,6 +1775,148 @@
       <div style="margin-top:12px;">
         <button class="btn btn-neutral" onclick="UIModule.closeModal('modalPackDetail')">
           VOLTAR À BIBLIOTECA ⬅️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AJUSTE E CALIBRAÇÃO DE MICROFONE (COM RETORNO EM TEMPO REAL) -->
+  <div id="modalMicAdjuster" class="modal-overlay" style="display:none; z-index:2700;">
+    <div class="modal-box" style="max-width:620px; width:95%; text-align:left; gap:14px; padding:22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #222a44; padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:2rem; background:#1b2038; border:2px solid #00f576; border-radius:12px; width:48px; height:48px; display:flex; align-items:center; justify-content:center;">🎙️</span>
+          <div>
+            <h2 class="modal-title" style="font-size:1.5rem; margin:0; line-height:1.1;">AJUSTE DE MICROFONE</h2>
+            <span style="font-size:0.8rem; opacity:0.8; font-weight:700;">Calibre a sensibilidade e ouça sua voz com o retorno ao vivo</span>
+          </div>
+        </div>
+        <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalMicAdjuster')" style="padding:6px 12px;">✖</button>
+      </div>
+
+      <!-- PAINEL 1: MEDIDOR VU EM TEMPO REAL & OSCILOSCÓPIO -->
+      <div style="background:#0c0f1d; border:3px solid #000; border-radius:14px; padding:12px 14px; box-shadow:4px 4px 0 #000;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.85rem; font-weight:900; color:#ffdd00;">📊 NÍVEL DE CAPTAÇÃO AO VIVO:</span>
+          <span id="micLevelBadge" class="mic-level-badge" style="font-size:0.75rem; font-weight:900; padding:3px 10px; border-radius:20px; border:1px solid #444; color:#888;">
+            🔇 SILÊNCIO (FALE NO MICROFONE)
+          </span>
+        </div>
+
+        <!-- VU Meter em Barra de LEDs Segmentados estilo Estúdio -->
+        <div style="background:#05070f; border:2px solid #1a223f; border-radius:8px; padding:6px; margin-bottom:10px;">
+          <div id="micVuSegments" class="vu-segmented-wrap">
+            <!-- 24 segmentos gerados via JS -->
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:#667; font-weight:800; margin-top:4px;">
+            <span>-30dB</span>
+            <span>-20dB</span>
+            <span>-12dB</span>
+            <span>-6dB (IDEAL)</span>
+            <span>0dB (PEAK)</span>
+            <span>+3dB</span>
+          </div>
+        </div>
+
+        <!-- Canvas do Osciloscópio / Forma de Onda ao Vivo -->
+        <div style="background:#05070f; border:2px solid #1a223f; border-radius:8px; height:60px; overflow:hidden; position:relative;">
+          <canvas id="canvasLiveMicWave" width="560" height="60" style="width:100%; height:100%; display:block;"></canvas>
+          <span style="position:absolute; right:8px; bottom:4px; font-size:0.65rem; color:#445; font-weight:800;">OSCILOSCÓPIO AO VIVO</span>
+        </div>
+      </div>
+
+      <!-- PAINEL 2: CONTROLE DE GANHO / SENSIBILIDADE -->
+      <div style="background:#111424; border:3px solid #000; border-radius:14px; padding:14px; box-shadow:4px 4px 0 #000;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-size:0.9rem; font-weight:900; color:#00f576;">🎚️ GANHO / VOLUME DO MICROFONE:</span>
+            <div style="font-size:0.72rem; opacity:0.75; font-weight:700;">Aumente se sua voz sair baixa nas imitações</div>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <span id="micGainModalPct" class="mic-gain-display-val" style="font-family:var(--font-display); font-size:1.9rem; color:#00f576;">120%</span>
+            <span id="micGainModalDb" class="mic-gain-db-val" style="font-size:0.85rem; font-weight:900; color:#ffdd00;">+1.6 dB</span>
+          </div>
+        </div>
+
+        <input type="range" id="sliderMicGainModal" class="mic-gain-slider mic-gain-slider-premium" min="0.2" max="3.5" step="0.05" value="1.2"
+          style="width:100%; accent-color:#00f576; cursor:pointer; margin-top:8px;"
+          oninput="AudioModule.setMicGain(this.value)">
+
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; opacity:0.7; margin-top:3px; font-weight:800;">
+          <span>20% (Mínimo)</span>
+          <span>100% (Padrão)</span>
+          <span>200% (Dobro)</span>
+          <span>350% (Super Ganho)</span>
+        </div>
+
+        <!-- Presets Rápidos de Ganho -->
+        <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+          <span style="font-size:0.72rem; font-weight:900; color:#aaa; align-self:center; margin-right:4px;">PRESETS:</span>
+          <button class="btn btn-neutral btn-sm mic-preset-btn" onclick="AudioModule.setMicGain(0.6)">60% Baixo</button>
+          <button class="btn btn-neutral btn-sm mic-preset-btn" onclick="AudioModule.setMicGain(1.0)">100% Padrão</button>
+          <button class="btn btn-neutral btn-sm mic-preset-btn" onclick="AudioModule.setMicGain(1.3)">130% Recomendado ⭐</button>
+          <button class="btn btn-neutral btn-sm mic-preset-btn" onclick="AudioModule.setMicGain(1.8)">180% Alto</button>
+          <button class="btn btn-neutral btn-sm mic-preset-btn" onclick="AudioModule.setMicGain(2.5)">250% Super Ganho 🚀</button>
+        </div>
+      </div>
+
+      <!-- PAINEL 3: OUVIR EM TEMPO REAL (RETORNO DE VOZ / SIDETONE) -->
+      <div style="background:#14172e; border:3px solid #ffb703; border-radius:14px; padding:12px 14px; box-shadow:4px 4px 0 #000;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div>
+            <span style="font-size:0.95rem; font-weight:900; color:#ffdd00;">🎧 OUVIR ALTERAÇÃO EM TEMPO REAL:</span>
+            <div style="font-size:0.75rem; opacity:0.85; font-weight:700;">Fale no microfone e escute como o som está mudando imediatamente!</div>
+          </div>
+          <span id="micMonitorStatusBadge" style="display:none; background:#00f576; color:#000; font-size:0.7rem; font-weight:900; padding:2px 8px; border-radius:12px;">RETORNO LIGADO</span>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button id="btnToggleMicMonitor" class="btn btn-play" style="flex:1; padding:10px 14px; font-size:0.92rem; text-align:center; border:2px solid #000;" onclick="AudioModule.toggleMicMonitor()">
+            🎧 ATIVAR RETORNO EM TEMPO REAL (OUVIR MINHA VOZ)
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+          <span style="font-size:0.75rem; font-weight:800; color:#aaa;">VOLUME DO RETORNO:</span>
+          <input type="range" min="0.1" max="1.5" step="0.05" value="1.0" style="flex:1; accent-color:#ffdd00; cursor:pointer;" oninput="AudioModule.setMicMonitorVolume(this.value)">
+          <span class="mic-monitor-vol-val" style="font-size:0.8rem; font-weight:900; color:#ffdd00; width:45px;">100%</span>
+        </div>
+
+        <div style="font-size:0.72rem; color:#ffdd00; opacity:0.85; margin-top:6px; display:flex; align-items:center; gap:5px;">
+          <span>💡 <b>Dica Importante:</b> Use fones de ouvido ao ativar o retorno para evitar microfonia com as caixas de som.</span>
+        </div>
+      </div>
+
+      <!-- PAINEL 4: GRAVAR E REPRODUZIR AMOSTRA DE TESTE (3 SEGUNDOS) -->
+      <div style="background:#111424; border:3px solid #000; border-radius:14px; padding:12px 14px; box-shadow:4px 4px 0 #000;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div>
+            <span style="font-size:0.9rem; font-weight:900; color:#ff0055;">🔴 TESTE REAL DE GRAVAÇÃO (3 SEGUNDOS):</span>
+            <div style="font-size:0.75rem; opacity:0.75; font-weight:700;">Grave um teste para ouvir exatamente o que os outros jogadores ouvirão no jogo</div>
+          </div>
+          <span id="testRecordCountdown" style="display:none; font-family:var(--font-display); font-size:1.1rem; color:#ff0055;">Gravando: 3...</span>
+        </div>
+
+        <div style="background:#060812; border-radius:8px; height:8px; overflow:hidden; margin-bottom:8px;">
+          <div id="testRecordProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #ff0055, #ffdd00); transition:width 0.05s linear;"></div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button id="btnRecordTestSample" class="btn btn-pink btn-sm" onclick="AudioModule.recordQuickTestSample()" style="padding:8px 16px; font-size:0.88rem;">
+            🔴 GRAVAR TESTE (3s) E OUVIR
+          </button>
+          <button id="btnPlayTestSample" class="btn btn-green btn-sm" onclick="AudioModule.playTestSample()" style="display:none; padding:8px 16px; font-size:0.88rem;">
+            ▶️ OUVIR NOVAMENTE
+          </button>
+        </div>
+        <div id="testRecordFeedback" style="display:none; margin-top:8px; font-size:0.8rem; color:#00f576; font-weight:700;"></div>
+      </div>
+
+      <!-- RODAPÉ COM CONFIRMAÇÃO -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+        <span style="font-size:0.8rem; color:#aaa; font-weight:700;">Suas alterações são salvas automaticamente!</span>
+        <button class="btn btn-green" onclick="UIModule.closeModal('modalMicAdjuster')" style="padding:10px 24px; font-size:1rem;">
+          PRONTO & SALVAR ✅
         </button>
       </div>
     </div>
@@ -1933,27 +2132,21 @@
       </div>
 
       <!-- SEÇÃO 3: AJUSTE DE VOLUME / GANHO DO MICROFONE -->
-      <div style="background:#111424; border:2px solid #333; border-radius:12px; padding:10px; text-align:left;">
+      <div style="background:#111424; border:2px solid #333; border-radius:12px; padding:12px; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="font-weight:900; font-size:0.82rem; color:#00f576;">🎙️ SENSIBILIDADE / VOLUME DO MICROFONE:</label>
-          <span class="mic-gain-display-val" style="font-weight:900; color:#00f576; font-size:1.05rem;">120%</span>
+          <div>
+            <label style="font-weight:900; font-size:0.85rem; color:#00f576;">🎙️ SENSIBILIDADE DO MICROFONE:</label>
+            <div style="font-size:0.7rem; opacity:0.75;">Ajuste o ganho e ouça sua voz em tempo real</div>
+          </div>
+          <span class="mic-gain-display-val" style="font-weight:900; color:#00f576; font-size:1.15rem;">120%</span>
         </div>
-        <input type="range" class="mic-gain-slider" min="0.3" max="3.0" step="0.1" value="1.2"
+        <input type="range" class="mic-gain-slider" min="0.2" max="3.5" step="0.05" value="1.2"
           style="width:100%; accent-color:#00f576; cursor:pointer; margin-top:6px;"
           oninput="AudioModule.setMicGain(this.value)">
-        <div style="display:flex; justify-content:space-between; font-size:0.7rem; opacity:0.6; margin-top:2px;">
-          <span>Baixo (30%)</span>
-          <span>Normal (100%)</span>
-          <span>Alto (200%)</span>
-          <span>Super Alto (300%)</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-          <button class="btn btn-neutral btn-sm" onclick="AudioModule.testMicInteractive()" style="font-size:0.75rem; padding:4px 10px;">
-            🎙️ TESTAR MICROFONE
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <button class="btn btn-play btn-sm" onclick="UIModule.openMicAdjusterModal()" style="font-size:0.82rem; padding:6px 12px; width:100%;">
+            ⚙️ CALIBRADOR COMPLETO & RETORNO AO VIVO 🎧
           </button>
-          <div id="modalVuMeterWrap" style="flex:1; display:none;">
-            <div class="vu-meter-bar"><div id="modalVuMeterFill" class="vu-meter-fill"></div></div>
-          </div>
         </div>
       </div>
 
@@ -3123,6 +3316,17 @@
       micGain: parseFloat(localStorage.getItem('mimic_mic_gain') || '1.2'),
       micGainNode: null,
       compressorNode: null,
+      micMonitorGainNode: null,
+      isMicMonitorActive: false,
+      micMonitorVolume: 1.0,
+      micDestNode: null,
+      testRecordingBlob: null,
+      testRecordingBuffer: null,
+      isTestRecording: false,
+      testPlaySource: null,
+      oscilloscopeAnimFrame: null,
+      peakHoldValue: 0,
+      peakHoldDecayTimer: 0,
 
       ensureContext() {
         if (!this.ctx) {
@@ -3156,12 +3360,309 @@
         this.micGain = Math.max(0.2, Math.min(3.5, parseFloat(val)));
         localStorage.setItem('mimic_mic_gain', this.micGain.toString());
         if (this.micGainNode && this.ctx) {
-          this.micGainNode.gain.setValueAtTime(this.micGain, this.ctx.currentTime);
+          try {
+            this.micGainNode.gain.setTargetAtTime(this.micGain, this.ctx.currentTime, 0.02);
+          } catch (e) {
+            this.micGainNode.gain.value = this.micGain;
+          }
         }
-        const displays = document.querySelectorAll('.mic-gain-display-val');
-        displays.forEach(el => el.innerText = `${Math.round(this.micGain * 100)}%`);
-        const sliders = document.querySelectorAll('.mic-gain-slider');
-        sliders.forEach(el => el.value = this.micGain);
+        const pct = Math.round(this.micGain * 100);
+        const db = (20 * Math.log10(this.micGain)).toFixed(1);
+        const dbStr = (db > 0 ? `+${db}` : `${db}`) + ' dB';
+
+        document.querySelectorAll('.mic-gain-display-val').forEach(el => el.innerText = `${pct}%`);
+        document.querySelectorAll('.mic-gain-db-val').forEach(el => el.innerText = dbStr);
+        document.querySelectorAll('.mic-gain-slider').forEach(el => el.value = this.micGain);
+
+        document.querySelectorAll('.mic-preset-btn').forEach(btn => {
+          const btnVal = parseFloat(btn.getAttribute('data-gain') || btn.innerText.replace(/[^0-9.]/g, '') / 100);
+          if (Math.abs(btnVal - this.micGain) < 0.05) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      },
+
+      setMicMonitor(enabled) {
+        this.ensureContext();
+        this.isMicMonitorActive = !!enabled;
+        const toggleBtn = document.getElementById('btnToggleMicMonitor');
+        const badge = document.getElementById('micMonitorStatusBadge');
+        if (this.micMonitorGainNode && this.ctx) {
+          const target = this.isMicMonitorActive ? (this.micMonitorVolume || 1.0) : 0;
+          try {
+            this.micMonitorGainNode.gain.setTargetAtTime(target, this.ctx.currentTime, 0.03);
+          } catch (e) {
+            this.micMonitorGainNode.gain.value = target;
+          }
+        }
+        if (toggleBtn) {
+          if (this.isMicMonitorActive) {
+            toggleBtn.classList.add('active');
+            toggleBtn.innerHTML = '🎧 RETORNO ATIVO (OUVINDO MINHA VOZ)';
+            toggleBtn.style.background = '#00f576';
+            toggleBtn.style.color = '#000';
+          } else {
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '🎧 ATIVAR RETORNO EM TEMPO REAL (OUVIR MINHA VOZ)';
+            toggleBtn.style.background = '';
+            toggleBtn.style.color = '';
+          }
+        }
+        if (badge) {
+          if (this.isMicMonitorActive) {
+            badge.style.display = 'inline-block';
+            badge.innerText = 'RETORNO LIGADO';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      },
+
+      toggleMicMonitor() {
+        if (!this.isMicReady) {
+          this.initMic().then(() => this.setMicMonitor(!this.isMicMonitorActive));
+          return;
+        }
+        this.setMicMonitor(!this.isMicMonitorActive);
+      },
+
+      setMicMonitorVolume(val) {
+        this.micMonitorVolume = Math.max(0, Math.min(1.5, parseFloat(val)));
+        if (this.micMonitorGainNode && this.ctx && this.isMicMonitorActive) {
+          try {
+            this.micMonitorGainNode.gain.setTargetAtTime(this.micMonitorVolume, this.ctx.currentTime, 0.02);
+          } catch (e) {
+            this.micMonitorGainNode.gain.value = this.micMonitorVolume;
+          }
+        }
+        const valEl = document.querySelector('.mic-monitor-vol-val');
+        if (valEl) valEl.innerText = `${Math.round(this.micMonitorVolume * 100)}%`;
+      },
+
+      buildVuSegments() {
+        const wrap = document.getElementById('micVuSegments');
+        if (!wrap || wrap.children.length > 0) return;
+        const total = 24;
+        for (let i = 0; i < total; i++) {
+          const seg = document.createElement('div');
+          seg.className = 'vu-seg';
+          if (i >= 20) seg.classList.add('clip');
+          else if (i >= 15) seg.classList.add('warn');
+          wrap.appendChild(seg);
+        }
+      },
+
+      startMicVisualizer() {
+        this.buildVuSegments();
+        if (this.oscilloscopeAnimFrame) {
+          cancelAnimationFrame(this.oscilloscopeAnimFrame);
+          this.oscilloscopeAnimFrame = null;
+        }
+        const canvas = document.getElementById('canvasLiveMicWave');
+        const badge = document.getElementById('micLevelBadge');
+        const segWrap = document.getElementById('micVuSegments');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        const midY = H / 2;
+
+        const timeData = this.analyser ? new Float32Array(this.analyser.fftSize) : null;
+        const freqData = this.analyser ? new Uint8Array(this.analyser.frequencyBinCount) : null;
+
+        const render = () => {
+          if (!this.analyser || !timeData || !freqData) {
+            this.oscilloscopeAnimFrame = requestAnimationFrame(render);
+            return;
+          }
+
+          this.analyser.getFloatTimeDomainData(timeData);
+          this.analyser.getByteFrequencyData(freqData);
+
+          let sumSq = 0;
+          for (let i = 0; i < timeData.length; i++) {
+            sumSq += timeData[i] * timeData[i];
+          }
+          const rms = Math.sqrt(sumSq / timeData.length);
+
+          const totalSegs = segWrap ? segWrap.children.length : 24;
+          const normLevel = Math.min(1.0, rms * 3.5);
+          const activeCount = Math.round(normLevel * totalSegs);
+
+          if (normLevel > this.peakHoldValue) {
+            this.peakHoldValue = normLevel;
+            this.peakHoldDecayTimer = 18;
+          } else {
+            if (this.peakHoldDecayTimer > 0) {
+              this.peakHoldDecayTimer--;
+            } else {
+              this.peakHoldValue = Math.max(0, this.peakHoldValue - 0.025);
+            }
+          }
+          const peakIndex = Math.min(totalSegs - 1, Math.round(this.peakHoldValue * (totalSegs - 1)));
+
+          if (segWrap && segWrap.children.length > 0) {
+            for (let i = 0; i < segWrap.children.length; i++) {
+              const seg = segWrap.children[i];
+              if (i < activeCount) {
+                seg.classList.add('active');
+              } else {
+                seg.classList.remove('active');
+              }
+              if (i === peakIndex && peakIndex > 0) {
+                seg.classList.add('peak');
+              } else {
+                seg.classList.remove('peak');
+              }
+            }
+          }
+
+          if (badge) {
+            if (activeCount === 0) {
+              badge.innerText = '🔇 SILÊNCIO (FALE NO MICROFONE)';
+              badge.style.color = '#888';
+              badge.style.borderColor = '#444';
+              badge.style.background = 'transparent';
+            } else if (activeCount >= 20) {
+              badge.innerText = '⚠️ MUITO ALTO (SATURANDO / CLIPPING)';
+              badge.style.color = '#ff0055';
+              badge.style.borderColor = '#ff0055';
+              badge.style.background = 'rgba(255,0,85,0.15)';
+            } else if (activeCount >= 14) {
+              badge.innerText = '⭐ NÍVEL IDEAL PARA O JOGO';
+              badge.style.color = '#00f576';
+              badge.style.borderColor = '#00f576';
+              badge.style.background = 'rgba(0,245,118,0.15)';
+            } else {
+              badge.innerText = '🔉 CAPTAÇÃO BAIXA (FALE MAIS PERTO OU AUMENTE O GANHO)';
+              badge.style.color = '#ffdd00';
+              badge.style.borderColor = '#ffdd00';
+              badge.style.background = 'rgba(255,221,0,0.15)';
+            }
+          }
+
+          // Desenho do osciloscópio
+          ctx.clearRect(0, 0, W, H);
+
+          ctx.strokeStyle = '#1a223f';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, midY);
+          ctx.lineTo(W, midY);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#00f576';
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = '#00f576';
+          ctx.beginPath();
+
+          const sliceWidth = W / timeData.length;
+          let x = 0;
+          for (let i = 0; i < timeData.length; i++) {
+            const v = timeData[i];
+            const y = midY + (v * (H * 0.45));
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+            x += sliceWidth;
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          this.oscilloscopeAnimFrame = requestAnimationFrame(render);
+        };
+
+        this.oscilloscopeAnimFrame = requestAnimationFrame(render);
+      },
+
+      stopMicVisualizer() {
+        if (this.oscilloscopeAnimFrame) {
+          cancelAnimationFrame(this.oscilloscopeAnimFrame);
+          this.oscilloscopeAnimFrame = null;
+        }
+      },
+
+      async recordQuickTestSample() {
+        await this.initMic();
+        if (this.isTestRecording) return;
+        this.isTestRecording = true;
+
+        const btnRec = document.getElementById('btnRecordTestSample');
+        const btnPlay = document.getElementById('btnPlayTestSample');
+        const countdown = document.getElementById('testRecordCountdown');
+        const progressBar = document.getElementById('testRecordProgressBar');
+        const feedback = document.getElementById('testRecordFeedback');
+
+        if (btnRec) { btnRec.disabled = true; btnRec.innerText = '🔴 GRAVANDO... FALE AGORA!'; }
+        if (btnPlay) btnPlay.style.display = 'none';
+        if (countdown) countdown.style.display = 'inline-block';
+        if (feedback) { feedback.style.display = 'none'; feedback.innerText = ''; }
+
+        let timeLeft = 3;
+        if (countdown) countdown.innerText = `Gravando: ${timeLeft}s...`;
+        const countInt = setInterval(() => {
+          timeLeft--;
+          if (timeLeft > 0 && countdown) countdown.innerText = `Gravando: ${timeLeft}s...`;
+        }, 1000);
+
+        this.recordTakePCM(3.0,
+          (prog) => {
+            if (progressBar) progressBar.style.width = `${Math.min(100, Math.round(prog * 100))}%`;
+          },
+          (userBuf, blob) => {
+            clearInterval(countInt);
+            this.isTestRecording = false;
+            this.testRecordingBuffer = userBuf;
+            this.testRecordingBlob = blob;
+
+            if (countdown) countdown.style.display = 'none';
+            if (progressBar) progressBar.style.width = '100%';
+            if (btnRec) {
+              btnRec.disabled = false;
+              btnRec.innerText = '🔴 GRAVAR NOVO TESTE (3s)';
+            }
+            if (btnPlay) {
+              btnPlay.style.display = 'inline-flex';
+            }
+            if (feedback) {
+              feedback.style.display = 'block';
+              feedback.innerHTML = '✅ <b>Gravação concluída!</b> Tocando sua voz com a modificação feita...';
+            }
+
+            this.playTestSample();
+          }
+        );
+      },
+
+      playTestSample() {
+        if (!this.testRecordingBuffer || !this.ctx) return;
+        this.ensureContext();
+        if (this.testPlaySource) {
+          try { this.testPlaySource.stop(); } catch (e) {}
+          this.testPlaySource = null;
+        }
+
+        const btnPlay = document.getElementById('btnPlayTestSample');
+        const feedback = document.getElementById('testRecordFeedback');
+        if (btnPlay) btnPlay.innerText = '🔊 OUVINDO...';
+        if (feedback) {
+          feedback.style.display = 'block';
+          feedback.innerHTML = '🔊 <b>Reproduzindo:</b> Este é exatamente o volume e tom que os outros jogadores e o juiz escutarão!';
+        }
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = this.testRecordingBuffer;
+        source.connect(this.outNode());
+        this.testPlaySource = source;
+
+        source.onended = () => {
+          if (btnPlay) btnPlay.innerText = '▶️ OUVIR NOVAMENTE';
+          this.testPlaySource = null;
+        };
+
+        source.start(0);
       },
 
       normalizeBuffer(buffer, targetPeak = 0.92) {
@@ -3174,10 +3675,11 @@
             if (v > maxPeak) maxPeak = v;
           }
         }
-        // Se o áudio tiver sinal de voz audível (maxPeak > 0.048), equaliza para targetPeak.
-        // Se for silêncio ou ruído de fundo (<= 0.048), NÃO amplifica o ruído elétrico/chiado!
+        // Se o áudio tiver sinal de voz audível (maxPeak > 0.048), equaliza
         if (maxPeak > 0.048) {
-          const gain = Math.min(5.0, targetPeak / maxPeak);
+          const gainScale = Math.max(0.4, Math.min(1.8, (this.micGain || 1.2) / 1.2));
+          const effectiveTarget = Math.min(0.98, targetPeak * gainScale);
+          const gain = Math.min(5.0, effectiveTarget / maxPeak);
           const normBuf = this.ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
           for (let c = 0; c < buffer.numberOfChannels; c++) {
             const src = buffer.getChannelData(c);
@@ -3229,16 +3731,30 @@
         try {
           this.analyser = this.ctx.createAnalyser();
           this.analyser.fftSize = 1024;
-          this.analyser.smoothingTimeConstant = 0.25;
+          this.analyser.smoothingTimeConstant = 0.2;
 
           this.micGainNode = this.ctx.createGain();
           this.micGainNode.gain.setValueAtTime(this.micGain, this.ctx.currentTime);
 
+          // Monitor / Sidetone node: permite ouvir a voz em tempo real com ganho aplicado
+          this.micMonitorGainNode = this.ctx.createGain();
+          this.micMonitorGainNode.gain.setValueAtTime(this.isMicMonitorActive ? (this.micMonitorVolume || 1.0) : 0, this.ctx.currentTime);
+
+          // Nó de saída para MediaRecorder capturar a voz com ganho aplicado
+          if (this.ctx.createMediaStreamDestination) {
+            this.micDestNode = this.ctx.createMediaStreamDestination();
+          }
+
           const source = this.ctx.createMediaStreamSource(stream);
           source.connect(this.micGainNode);
           this.micGainNode.connect(this.analyser);
+          this.micGainNode.connect(this.micMonitorGainNode);
+          this.micMonitorGainNode.connect(this.ctx.destination);
+          if (this.micDestNode) {
+            this.micGainNode.connect(this.micDestNode);
+          }
         } catch (e) {
-          console.warn("Erro ao ligar analyser ao mic:", e);
+          console.warn("Erro ao configurar nós de áudio do mic:", e);
         }
 
         this.isMicReady = true;
@@ -3397,14 +3913,19 @@
           return;
         }
 
-        // Usa MediaRecorder para captura nativa com 100% de clareza vocal
+        let streamToRecord = this.micStream;
+        if (this.micDestNode && this.micDestNode.stream && this.micDestNode.stream.active) {
+          streamToRecord = this.micDestNode.stream;
+        }
+
+        // Usa MediaRecorder para captura nativa com 100% de clareza vocal e ganho processado
         if (window.MediaRecorder) {
           try {
             const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
               ? 'audio/webm;codecs=opus'
               : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
 
-            mediaRecorder = mimeType ? new MediaRecorder(this.micStream, { mimeType }) : new MediaRecorder(this.micStream);
+            mediaRecorder = mimeType ? new MediaRecorder(streamToRecord, { mimeType }) : new MediaRecorder(streamToRecord);
             audioChunks = [];
 
             mediaRecorder.ondataavailable = (e) => {
@@ -6218,6 +6739,7 @@
       async startNextRound() {
         // Silencia chat de voz durante a escuta do meme e gravação
         AudioModule.setVoiceChatActive(false);
+        AudioModule.setMicMonitor(false);
 
         document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
         document.getElementById('roundSubtitleText').innerText = 'OUÇA O SOM';
@@ -6283,6 +6805,7 @@
 
       async onOnlineRoundStart(soundId, roundNum) {
         AudioModule.setVoiceChatActive(false);
+        AudioModule.setMicMonitor(false);
         this.currentRound = roundNum;
         const s = PacksModule.library.find(x => x.id === soundId) || PacksModule.library[0];
         this.currentSound = s;
@@ -6329,6 +6852,7 @@
 
         // Durante a gravação: ninguém se ouve!
         AudioModule.setVoiceChatActive(false);
+        AudioModule.setMicMonitor(false);
 
         Scene3DModule.setCameraView('stage_lineup');
 
@@ -7145,12 +7669,36 @@
         AudioModule.playSfx('tick');
       },
 
+      openMicAdjusterModal() {
+        AudioModule.ensureContext();
+        AudioModule.initMic().then(() => {
+          AudioModule.startMicVisualizer();
+        });
+        const modal = document.getElementById('modalMicAdjuster');
+        if (modal) {
+          modal.style.zIndex = '2700';
+          modal.style.display = 'flex';
+        }
+        AudioModule.setMicGain(AudioModule.micGain);
+        AudioModule.setMicMonitor(AudioModule.isMicMonitorActive);
+        AudioModule.playSfx('tick');
+      },
+
       closeModal(id) {
         if (id === 'modalCustomize') {
           this.closeCustomizeModal();
           return;
         }
-        document.getElementById(id).style.display = 'none';
+        if (id === 'modalMicAdjuster') {
+          AudioModule.stopMicVisualizer();
+          AudioModule.setMicMonitor(false);
+          if (AudioModule.testPlaySource) {
+            try { AudioModule.testPlaySource.stop(); } catch (e) {}
+            AudioModule.testPlaySource = null;
+          }
+        }
+        const modal = document.getElementById(id);
+        if (modal) modal.style.display = 'none';
         AudioModule.playSfx('tick');
       },
 
