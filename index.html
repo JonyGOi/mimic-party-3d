@@ -1595,25 +1595,22 @@
       </div>
 
       <!-- Controles Gerais (Áudio, Mudo, Sair, Voz) -->
-      <div class="interactive" style="display:flex; align-items:center; gap:8px;">
-        <div id="voiceChatStatusBadge" class="voice-status-badge active" title="Status do Bate-papo por Voz em Tempo Real">
+      <div class="interactive" style="display:flex; align-items:center; gap:6px;">
+        <div id="voiceChatStatusBadge" class="voice-status-badge active" title="Status da Voz em Tempo Real" style="padding:4px 8px; font-size:0.75rem;">
           <span class="voice-badge-pulse"></span>
           <span id="voiceBadgeIcon" class="voice-badge-icon">🎙️</span>
-          <span id="voiceBadgeText" class="voice-badge-text">VOZ ATIVA</span>
+          <span id="voiceBadgeText" class="voice-badge-text" style="font-size:0.72rem;">VOZ</span>
         </div>
-        <button id="btnOpenMicModal" class="btn btn-neutral btn-sm" onclick="UIModule.openMicAdjusterModal()" title="Calibrar Microfone, Equalizador (Grave/Agudo) e Retorno" style="border-color:#00f576; color:#00f576;">
-          🎙️ MIC & EQ
+        <button id="btnOpenMicModal" class="btn btn-neutral btn-sm" onclick="UIModule.openMicAdjusterModal()" title="Ajustes de Microfone & Equalizador" style="border-color:#00f576; color:#00f576; padding:5px 10px; font-size:0.8rem;">
+          🎙️ MIC
         </button>
-        <button id="btnHudMicReturn" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleMicMonitor()" title="Ligar/Desligar Retorno da Minha Voz ao Vivo" style="border-color:#666; color:#888;">
-          🎧 RETORNO OFF
-        </button>
-        <button id="btnMuteToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleMasterMute()" title="Mudo">
+        <button id="btnMuteToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleMasterMute()" title="Mudo Geral" style="padding:5px 9px; font-size:0.85rem;">
           🔊
         </button>
-        <button id="btnBgmToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleBgm()" title="Trilha Sonora">
-          🎵 BGM
+        <button id="btnBgmToggle" class="btn btn-neutral btn-sm" onclick="AudioModule.toggleBgm()" title="Música de Fundo" style="padding:5px 9px; font-size:0.85rem;">
+          🎵
         </button>
-        <button id="btnLeaveGame" class="btn btn-neutral btn-sm" style="display:none;" onclick="GameModule.returnToMenu()" title="Sair da Partida">
+        <button id="btnLeaveGame" class="btn btn-neutral btn-sm" style="display:none; padding:5px 10px; font-size:0.8rem;" onclick="GameModule.returnToMenu()" title="Sair da Partida">
           🚪 SAIR
         </button>
       </div>
@@ -1657,22 +1654,13 @@
       </div>
       <div>
         <div id="localPlayerNameDisplay" style="font-weight:900; font-size:1.1rem; text-transform:uppercase;">VOCÊ (HOST) ✏️</div>
-        <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
-          <button id="btnOpenMicModalProfile" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px; border-color:#00f576; color:#00f576;" onclick="event.stopPropagation(); UIModule.openMicAdjusterModal()">
-            🎙️ AJUSTAR GRAVE / AGUDO & MIC
-          </button>
-          <button class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:3px 8px;" onclick="event.stopPropagation(); UIModule.openCustomizeModal()">
+        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+          <button class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:4px 10px;" onclick="event.stopPropagation(); UIModule.openCustomizeModal()">
             🎨 ROUPAS
           </button>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;" onclick="event.stopPropagation(); UIModule.openMicAdjusterModal()">
-          <span style="font-size:0.72rem; font-weight:800; color:#aaa;">MIC:</span>
-          <input type="range" class="mic-gain-slider" min="0.2" max="3.5" step="0.05" value="1.2" style="width:75px; accent-color:#00f576; cursor:pointer;" oninput="AudioModule.setMicGain(this.value)">
-          <span class="mic-gain-display-val" style="font-size:0.75rem; font-weight:900; color:#00f576;">120%</span>
-        </div>
-        <div id="vuMeterWrap" style="width:140px; margin-top:4px; display:none;">
-          <div class="vu-meter-bar"><div id="vuMeterFill" class="vu-meter-fill"></div></div>
-          <div id="vuPitchReadout" style="font-size:0.7rem; font-weight:900; color:#00f576; margin-top:2px;">Fale para testar...</div>
+          <button id="btnOpenMicModalProfile" class="btn btn-neutral btn-sm" style="font-size:0.75rem; padding:4px 10px; border-color:#00f576; color:#00f576;" onclick="event.stopPropagation(); UIModule.openMicAdjusterModal()">
+            🎙️ AJUSTAR MIC
+          </button>
         </div>
       </div>
     </div>
@@ -5267,7 +5255,7 @@
           sounds: [
             { id: 'its_me_mario', name: "It's-a me, Mario! 🍄", shortName: 'MARIO', tag: 'Super Mario 64', icon: '🍄', file: 'sounds/its-me-mario.mp3', unpitched: false },
             { id: 'mario_jump', name: 'Yahoo! Mario Jump 🍄', shortName: 'YAHOO!', tag: 'Super Mario 64', icon: '🍄', file: 'sounds/mario-jump.mp3', unpitched: false },
-            { id: 'mario_coin', name: 'Super Mario Moeda 🪙', shortName: 'MOEDA MARIO', tag: 'Super Mario Bros', icon: '🪙', file: 'sounds/mario-coin.mp3', unpitched: false },
+            { id: 'mario_coin', name: 'Super Mario Moeda 🪙', shortName: 'MOEDA MARIO', tag: 'Super Mario Bros', icon: '🪙', file: 'sounds/mario-coin.mp3', unpitched: false, enabled: false },
             { id: 'roblox_oof', name: 'Roblox Oof 💥', shortName: 'ROBLOX OOF', tag: 'Roblox Classic', icon: '💥', file: 'sounds/roblox-oof.mp3', unpitched: false },
             { id: 'win_error', name: 'Erro do Windows XP 💻', shortName: 'WINDOWS XP', tag: 'Nostalgia Tech', icon: '💻', file: 'sounds/windows-xp-error.mp3', unpitched: false },
             { id: 'pacman_waka', name: 'Pac-Man Waka Waka 🟡', shortName: 'PAC-MAN', tag: 'Arcade Clássico', icon: '🟡', file: 'sounds/pacman-waka.mp3', unpitched: false },
@@ -5456,7 +5444,7 @@
           downloads: '5.8k',
           color: '#7209b7',
           icon: '🎤',
-          enabled: true,
+          enabled: false,
           sounds: [
             { id: 'rickroll', name: 'Never Gonna Give You Up (Rickroll) 🕺', shortName: 'RICKROLL', tag: 'Rick Astley', icon: '🕺', file: 'sounds/rickroll.mp3', unpitched: false },
             { id: 'megalovania', name: 'Megalovania (Sans Intro) 💀', shortName: 'MEGALOVANIA', tag: 'Toby Fox', icon: '💀', file: 'sounds/megalovania.mp3', unpitched: false },
@@ -5566,6 +5554,7 @@
           : this.packs.filter(p => p.category === this.currentFilter);
 
         filtered.forEach(pack => {
+          const activeSoundsCount = pack.sounds.filter(s => s.enabled !== false).length;
           const card = document.createElement('div');
           card.className = `pack-card ${pack.enabled ? 'installed' : ''}`;
           card.innerHTML = `
@@ -5576,7 +5565,7 @@
             <div class="pack-title-ribbon" style="background:${pack.color};">${pack.title}</div>
             <div class="pack-author">por ${pack.author}</div>
             <div class="pack-stats-row">
-              <span>🎵 ${pack.sounds.length} sons</span>
+              <span>🎵 ${activeSoundsCount}/${pack.sounds.length} sons</span>
               <span>📥 ${pack.downloads}</span>
             </div>
             <button class="pack-btn-install ${pack.enabled ? 'active' : ''}" onclick="PacksModule.togglePack('${pack.id}')">
@@ -5599,21 +5588,31 @@
         const subtitle = document.getElementById('packDetailSubtitle');
         const list = document.getElementById('packDetailSoundsList');
 
+        const activeCount = pack.sounds.filter(s => s.enabled !== false).length;
         if (title) title.innerText = `${pack.icon} ${pack.title}`;
-        if (subtitle) subtitle.innerText = `${pack.sounds.length} sons gravados (${pack.author}) - Ouça as prévias:`;
+        if (subtitle) subtitle.innerText = `${activeCount} de ${pack.sounds.length} sons ativos (${pack.author}) - Ouça as prévias e ative/desative:`;
         if (list) {
           list.innerHTML = '';
           pack.sounds.forEach(snd => {
+            const isSoundActive = snd.enabled !== false;
             const row = document.createElement('div');
-            row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.06); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.12);';
+            row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:${isSoundActive ? 'rgba(255,255,255,0.06)' : 'rgba(255,50,50,0.08)'}; padding:8px 12px; border-radius:10px; border:1px solid ${isSoundActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,50,50,0.25)'};`;
             row.innerHTML = `
-              <div style="text-align:left;">
-                <strong style="color:#00f0ff; font-size:0.95rem;">${snd.name}</strong>
-                <div style="font-size:0.75rem; opacity:0.7;">Tag: ${snd.tag || pack.category}</div>
+              <div style="text-align:left; flex:1; margin-right:8px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-size:1.1rem;">${snd.icon || '🎵'}</span>
+                  <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.95rem; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
+                </div>
+                <div style="font-size:0.75rem; opacity:0.7; margin-left:24px;">Tag: ${snd.tag || pack.category} ${isSoundActive ? '' : '• <span style="color:#ff6666; font-weight:700;">(DESATIVADO)</span>'}</div>
               </div>
-              <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')">
-                🔊 OUVIR
-              </button>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')" title="Ouvir som">
+                  🔊 OUVIR
+                </button>
+                <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleSound('${pack.id}', '${snd.id}')" style="min-width:92px; font-size:0.75rem; padding:4px 8px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}" title="Ativar ou desativar este som">
+                  ${isSoundActive ? 'ATIVO ✅' : 'DESLIGADO ❌'}
+                </button>
+              </div>
             `;
             list.appendChild(row);
           });
@@ -5623,6 +5622,18 @@
           modal.style.zIndex = '2600';
           modal.style.display = 'flex';
         }
+      },
+
+      toggleSound(packId, soundId) {
+        const pack = this.packs.find(p => p.id === packId);
+        if (!pack) return;
+        const sound = pack.sounds.find(s => s.id === soundId);
+        if (!sound) return;
+        sound.enabled = sound.enabled === false ? true : false;
+        this.openPackDetails(packId);
+        this.renderPacksGrid();
+        this.updateCounts();
+        if (typeof AudioModule !== 'undefined' && AudioModule.playSfx) AudioModule.playSfx('tick');
       },
 
       playPreview(fileUrl) {
@@ -5676,12 +5687,16 @@
         const sounds = [];
         this.packs.forEach(p => {
           if (p.enabled) {
-            p.sounds.forEach(s => sounds.push(s));
+            p.sounds.forEach(s => {
+              if (s.enabled !== false) sounds.push(s);
+            });
           }
         });
-        this.customSounds.forEach(s => sounds.push(s));
+        this.customSounds.forEach(s => {
+          if (s.enabled !== false) sounds.push(s);
+        });
         if (sounds.length > 0) return sounds;
-        return this.packs[0].sounds;
+        return this.packs[0].sounds.filter(s => s.enabled !== false);
       }
     };
 
@@ -6292,6 +6307,8 @@
         Scene3DModule.setCameraView('menu');
         document.getElementById('mainMenuOverlay').style.display = 'flex';
         document.getElementById('mainLogoContainer').style.display = 'flex';
+        const profileCard = document.getElementById('localPlayerProfileCard');
+        if (profileCard) profileCard.style.display = 'flex';
       },
 
       handleWindowUnload() {
@@ -6696,6 +6713,8 @@
         this.isSoloBots = false;
         document.getElementById('mainMenuOverlay').style.display = 'none';
         document.getElementById('mainLogoContainer').style.display = 'none';
+        const profileCard = document.getElementById('localPlayerProfileCard');
+        if (profileCard) profileCard.style.display = 'none';
         Scene3DModule.setCameraView('stage_lineup');
       },
 
@@ -6861,6 +6880,8 @@
 
         document.getElementById('mainMenuOverlay').style.display = 'none';
         document.getElementById('mainLogoContainer').style.display = 'none';
+        const profileCard = document.getElementById('localPlayerProfileCard');
+        if (profileCard) profileCard.style.display = 'none';
         document.getElementById('roundBadgeBox').style.display = 'flex';
         document.getElementById('playersTopRow').style.display = 'flex';
         document.getElementById('btnLeaveGame').style.display = 'inline-flex';
@@ -7882,6 +7903,8 @@
 
         document.getElementById('mainMenuOverlay').style.display = 'flex';
         document.getElementById('mainLogoContainer').style.display = 'flex';
+        const profileCard = document.getElementById('localPlayerProfileCard');
+        if (profileCard) profileCard.style.display = 'flex';
         document.getElementById('roundBadgeBox').style.display = 'none';
         document.getElementById('playersTopRow').style.display = 'none';
         document.getElementById('btnLeaveGame').style.display = 'none';
