@@ -1888,6 +1888,8 @@
       <!-- Barra de Filtros por Categoria -->
       <div class="pack-filter-bar" id="packFilterBar">
         <button id="chipFilterTodos" class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('TIKTOK', this)">📱 TIKTOK</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('WHATSAPP', this)">💬 WHATSAPP</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MEME BR', this)">🔥 MEME BR</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('TV', this)">📺 TV & RATINHO</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('CHAVES', this)">👦 CHAVES</button>
@@ -5212,6 +5214,58 @@
 
       packs: [
         {
+          id: 'pack_tiktok_virais',
+          title: 'TIKTOK VIRAIS & TRENDS',
+          category: 'TIKTOK',
+          author: '@tiktok_trends_br',
+          rating: '5.0',
+          downloads: '8.9k',
+          color: '#fe2c55',
+          icon: '📱',
+          enabled: true,
+          sounds: [
+            { id: 'amostradinho', name: 'Eu Gosto é Assim, Amostradinho! 💀', shortName: 'AMOSTRADINHO', tag: 'TikTok Viral', icon: '💀', file: 'sounds/amostradinho.mp3', unpitched: false },
+            { id: 'que_xou_xuxa', name: 'Que Xou da Xuxa é Esse?! 👧', shortName: 'XOU DA XUXA', tag: 'Trend Viral', icon: '👧', file: 'sounds/que-xou-da-xuxa.mp3', unpitched: false },
+            { id: 'toguro_2022', name: 'Em Pleno 2022... (Toguro) 🏋️', shortName: 'TOGURO 2022', tag: 'Mansão Maromba', icon: '🏋️', file: 'sounds/toguro-2022.wav', unpitched: false },
+            { id: 'calabreso', name: 'Calma Calabreso! 🗣️', shortName: 'CALABRESO', tag: 'Meme Brasileiro', icon: '🗣️', file: 'sounds/calma-calabreso.mp3', unpitched: false },
+            { id: 'bora_bill', name: 'Bora Bill! Bora Fi do Bill! 📢', shortName: 'BORA BILL', tag: 'Meme Nordeste', icon: '📢', file: 'sounds/bora-bill.mp3', unpitched: false },
+            { id: 'bora_filho_bill', name: 'Ali o Fi do Bill! 👦', shortName: 'FI DO BILL', tag: 'Meme Nordeste', icon: '👦', file: 'sounds/bora-filho-bill.mp3', unpitched: false },
+            { id: 'receba', name: 'Receba! Graças a Deus! ⚽', shortName: 'RECEBA', tag: 'Luva de Pedreiro', icon: '⚽', file: 'sounds/receba.mp3', unpitched: false },
+            { id: 'tubarao_te_amo', name: 'Tubarão Te Amo 🦈', shortName: 'TUBARÃO', tag: 'TikTok Funk', icon: '🦈', file: 'sounds/tubarao-te-amo.mp3', unpitched: false },
+            { id: 'trava_beleza', name: 'Trava na Beleza! 💅', shortName: 'TRAVA BELEZA', tag: 'Trend das Poses', icon: '💅', file: 'sounds/trava-beleza.mp3', unpitched: false },
+            { id: 'la_ele_manoel', name: 'Lá Ele! (Manoel Gomes) 🙅‍♂️', shortName: 'LÁ ELE MANOEL', tag: 'Manoel Gomes', icon: '🙅‍♂️', file: 'sounds/la-ele-manoel-gomes.mp3', unpitched: false },
+            { id: 'olha_a_pedra', name: 'Olha a Pedra! É a Pedra! 🪨', shortName: 'A PEDRA', tag: 'Meme Viral', icon: '🪨', file: 'sounds/olha-a-pedra.mp3', unpitched: false },
+            { id: 'danca_pombo', name: 'Dança do Pombo (Richarlison) 🐦', shortName: 'POMBO GOL', tag: 'Copa do Mundo', icon: '🐦', file: 'sounds/danca-pombo.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_whatsapp_audios',
+          title: 'ÁUDIOS CLÁSSICOS DO ZAP',
+          category: 'WHATSAPP',
+          author: '@grupo_da_familia',
+          rating: '5.0',
+          downloads: '9.2k',
+          color: '#25d366',
+          icon: '💬',
+          enabled: true,
+          sounds: [
+            { id: 'fala_zeze', name: 'Fala Zezé, Bom Dia Cara! 📱', shortName: 'FALA ZEZÉ', tag: 'Áudio do Zap', icon: '📱', file: 'sounds/fala-zeze.mp3', unpitched: false },
+            { id: 'bom_dia_grupo', name: 'Bom Dia Grupo do Zap! ☀️', shortName: 'BOM DIA GRUPO', tag: 'Grupo Zap', icon: '☀️', file: 'sounds/bom-dia-grupo.mp3', unpitched: false },
+            { id: 'acorda_corno', name: 'Acorda Bando de Corno! 📢', shortName: 'ACORDA CORNO', tag: 'Despertador Zap', icon: '📢', file: 'sounds/acorda-corno.mp3', unpitched: false },
+            { id: 'sextou_audio', name: 'Sextou Rapaaaiz! 🍻', shortName: 'SEXTOU!', tag: 'Áudio de Sexta', icon: '🍻', file: 'sounds/sextou-audio.mp3', unpitched: false },
+            { id: 'chama_samu', name: 'Chama o SAMU, Porra! 🚑', shortName: 'CHAMA O SAMU', tag: 'Desespero no Zap', icon: '🚑', file: 'sounds/chama-o-samu.mp3', unpitched: false },
+            { id: 'forninho_caiu', name: 'Eita Giovana, o Forninho Caiu! 💥', shortName: 'FORNINHO CAIU', tag: 'Giovana Zap', icon: '💥', file: 'sounds/forninho-caiu.wav', unpitched: false },
+            { id: 'rapaz_ta_certo', name: 'Rapaz, Tá Certo Isso?! 🤔', shortName: 'TÁ CERTO ISSO', tag: 'Dúvida Cruel', icon: '🤔', file: 'sounds/rapaz-ta-certo-isso.mp3', unpitched: false },
+            { id: 'ze_manga', name: 'Zé da Manga! 🥭', shortName: 'ZÉ DA MANGA', tag: 'Gemido do Zap', icon: '🥭', file: 'sounds/ze-da-manga.mp3', unpitched: false },
+            { id: 'olha_se_voce', name: 'Olha Se Você Não Me Ama... 🎤', shortName: 'NÃO ME AMA', tag: 'Manoel Gomes Zap', icon: '🎤', file: 'sounds/olha-se-voce-nao-me-ama.wav', unpitched: false },
+            { id: 'bora_tomar_uma', name: 'Bora Tomar Uma?! 🍺', shortName: 'TOMAR UMA', tag: 'Meme do Bar', icon: '🍺', file: 'sounds/bora-tomar-uma.mp3', unpitched: false },
+            { id: 'cade_o_pix', name: 'Cadê Meu Pix?! 💸', shortName: 'CADÊ O PIX', tag: 'Cobrança Zap', icon: '💸', file: 'sounds/cade-o-pix.wav', unpitched: false },
+            { id: 'casimiro_merda', name: 'Gastar Dinheiro com Merda! 🤬', shortName: 'GASTAR COM MERDA', tag: 'Casimiro Zap', icon: '🤬', file: 'sounds/casimiro-dinheiro-merda.wav', unpitched: false },
+            { id: 'haja_coracao', name: 'Haja Coração, Amigo! 💓', shortName: 'HAJA CORAÇÃO', tag: 'Galvão no Zap', icon: '💓', file: 'sounds/haja-coracao.mp3', unpitched: false },
+            { id: 'ai_misericordia', name: 'Ai Misericórdia! 😱', shortName: 'MISERICÓRDIA', tag: 'Áudio do Zap', icon: '😱', file: 'sounds/ai-misericordia.mp3', unpitched: false }
+          ]
+        },
+        {
           id: 'pack_meme_br',
           title: 'MEMES DO ZAP & TIKTOK BR',
           category: 'MEME BR',
@@ -5466,7 +5520,7 @@
             { id: 'homem_de_ferro', name: 'Eu Sou o Homem de Ferro 🦾', shortName: 'HOMEM DE FERRO', tag: 'Vingadores', icon: '🦾', file: 'sounds/homem-de-ferro.mp3', unpitched: false },
             { id: 'gandalf_pass', name: 'You Shall Not Pass! 🧙‍♂️', shortName: 'GANDALF', tag: 'Senhor dos Anéis', icon: '🧙‍♂️', file: 'sounds/gandalf-pass.mp3', unpitched: false },
             { id: 'sabre_luz', name: 'Sabre de Luz Star Wars ⚔️', shortName: 'SABRE DE LUZ', tag: 'Star Wars FX', icon: '⚔️', file: 'sounds/sabre-luz.mp3', unpitched: false },
-            { id: 'hasta_la_vista', name: 'Hasta La Vista, Baby! 🤖', shortName: 'TERMINATOR', tag: 'Exterminador', icon: '🤖', file: 'sounds/hasta-la-vista.mp3', unpitched: false },
+            { id: 'hasta_la_vista', name: 'Hasta La Vista, Baby! 🤖', shortName: 'TERMINATOR', tag: 'Exterminador', icon: '🤖', file: 'sounds/hasta-la-vista.wav', unpitched: false, boostGain: 1.6 },
             { id: 'piratas_caribe', name: 'Piratas do Caribe 🏴‍☠️', shortName: 'PIRATAS', tag: 'Jack Sparrow', icon: '🏴‍☠️', file: 'sounds/piratas-caribe.mp3', unpitched: false },
             { id: 'velozes_familia', name: 'Aqui é o Brasil! (Velozes) 🏎️', shortName: 'AQUI É O BRASIL', tag: 'Velozes & Furiosos', icon: '🏎️', file: 'sounds/velozes-familia.mp3', unpitched: false },
             { id: 'chefaocool', name: 'O Poderoso Chefão 🎷', shortName: 'CHEFÃO', tag: 'The Godfather', icon: '🎷', file: 'sounds/chefaocool.mp3', unpitched: false }
@@ -5968,7 +6022,16 @@
           const resp = await fetch(soundItem.file);
           const arrayBuf = await resp.arrayBuffer();
           const decoded = await AudioModule.ctx.decodeAudioData(arrayBuf);
-          return AudioModule.normalizeBuffer(decoded, 0.92);
+          const normalized = AudioModule.normalizeBuffer(decoded, 0.94);
+          if (soundItem.boostGain && soundItem.boostGain > 1.0) {
+            for (let c = 0; c < normalized.numberOfChannels; c++) {
+              const ch = normalized.getChannelData(c);
+              for (let i = 0; i < ch.length; i++) {
+                ch[i] = Math.max(-0.98, Math.min(0.98, ch[i] * soundItem.boostGain));
+              }
+            }
+          }
+          return normalized;
         } catch (e) {
           console.warn("Erro ao carregar MP3, gerando fallback:", e);
           const b = AudioModule.ctx.createBuffer(1, AudioModule.ctx.sampleRate * 1.5, AudioModule.ctx.sampleRate);
