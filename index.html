@@ -5280,18 +5280,21 @@
         const den = Math.sqrt(denR * denU);
         const pearsonR = den > 0.0001 ? (num / den) : 0;
 
-        // Mapeamento justo e contínuo da correlação de Pearson:
-        // -0.25 a 0.15: correlação baixa -> 25 a 45%
-        // 0.20 a 0.50: padrão rítmico bom -> 60 a 78%
-        // 0.55 a 0.90: imitação muito bem alinhada -> 80 a 95%
+        // Mapeamento acústico balanceado (Pearson R mede alinhamento temporal):
+        // - r <= 0.05: muito desalinhado / tentativa fraca ou fora de ritmo
+        // Mapeamento acústico balanceado (Pearson R mede alinhamento temporal):
+        // - r <= 0.05: muito desalinhado / tentativa fraca ou fora de ritmo
+        // - r ~ 0.20 a 0.50: padrão rítmico mediano (imitou a estrutura sem precisão cirúrgica)
+        // - r >= 0.70: alinhamento excelente
         const rClamped = Math.max(-0.25, Math.min(1.0, pearsonR));
-        const shapeFactor = Math.min(1.0, Math.max(0, (rClamped + 0.25) / 1.15));
-        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.05) * 100)));
-        const waveShapeScore = Math.max(20, Math.min(100, Math.round(shapeFactor * 65 + maeScore * 35)));
-        const envelopeScore = Math.max(15, Math.min(100, Math.round((1 - mae) * 100)));
+        const shapeFactor = Math.min(1.0, Math.max(0, (rClamped + 0.15) / 0.95));
+        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.35) * 100)));
+        const shapeScore = shapeFactor * 100;
+        const waveShapeScore = Math.max(0, Math.min(100, Math.round(shapeScore * 0.70 + maeScore * 0.30)));
+        const envelopeScore = Math.max(0, Math.min(100, Math.round((1 - mae) * 100)));
 
         // 3. Ritmo e Ataques dos Picos da Onda (Syllables & Attacks)
-        let rhythmScore = 45;
+        let rhythmScore = 35;
         const refOnsets = refData.onsets || [];
         const userOnsets = userData.onsets || [];
         const durRef = refData.duration || 2.0;
@@ -5307,16 +5310,16 @@
               const diff = Math.abs(roNorm - uoNorm);
               if (diff < closest) closest = diff;
             });
-            // Janela humana generosa (~200ms de tolerância por ataque/sílaba)
-            onsetMatches += Math.exp(-Math.pow(closest / 0.14, 2));
+            // Janela de tolerância humana de ~160ms por sílaba
+            onsetMatches += Math.exp(-Math.pow(closest / 0.13, 2));
           });
           const matchRatio = onsetMatches / refOnsets.length;
           const countRatio = Math.min(refOnsets.length, userOnsets.length) / Math.max(refOnsets.length, userOnsets.length);
-          rhythmScore = Math.max(25, Math.min(100, Math.round(matchRatio * 70 + countRatio * 30)));
+          rhythmScore = Math.max(0, Math.min(100, Math.round(matchRatio * 72 + countRatio * 28)));
         } else if (refOnsets.length === 0) {
-          rhythmScore = 70;
+          rhythmScore = 65;
         } else {
-          rhythmScore = 35;
+          rhythmScore = 15;
         }
 
         // 4. Melodia / Pitch (se musical)
@@ -5336,30 +5339,40 @@
           }
           if (voicedCount >= 3) {
             const avgSemiDist = pitchDiffSum / voicedCount;
-            pitchScore = Math.max(20, Math.min(100, Math.round(100 * Math.exp(-avgSemiDist / 4.2))));
+            pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgSemiDist / 3.8))));
           } else {
-            pitchScore = Math.round(waveShapeScore * 0.85);
+            pitchScore = Math.round(waveShapeScore * 0.82);
           }
         }
 
-        // 5. Pontuação Final Composta Condizente com o Desempenho
-        let rawScore = Math.round(waveShapeScore * 0.45 + rhythmScore * 0.35 + pitchScore * 0.20);
+        // 5. Pontuação Final Composta
+        let rawScore = Math.round(waveShapeScore * 0.48 + rhythmScore * 0.34 + pitchScore * 0.18);
 
-        // Pontuação realista e recompensadora:
-        // - Tentativa muito fraca/desconectada: 25 a 45 (não zera à toa!)
-        // - Desempenho regular/médio: 50 a 70
-        // - Bom desempenho (boa imitação): 72 a 86
-        // - Desempenho excelente (muito fiel): 88 a 97
-        let totalScore = rawScore;
-        if (rawScore >= 80) {
-          totalScore = Math.min(98, Math.round(78 + (rawScore - 78) * 0.95));
-        } else if (rawScore >= 50) {
-          totalScore = Math.round(rawScore * 1.02);
+        // SE FOR MUITO MAL -> NOTA 0 (Leva tomatada 🍅 e som de pum de meme)
+        // Critérios para Nota Zero:
+        // - Pontuação crua < 40 (desempenho geral muito fraco ou desconexo)
+        // - OU Forma acústica sem correlação (pearsonR < 0.08 && waveShapeScore < 30)
+        // - OU Ritmo totalmente perdido em som com sílabas (refOnsets >= 2 && rhythmScore < 24)
+        const isRuim = rawScore < 40 ||
+          (pearsonR < 0.08 && waveShapeScore < 30) ||
+          (refOnsets.length >= 2 && rhythmScore < 24);
+
+        let totalScore = 0;
+        if (isRuim) {
+          totalScore = 0;
+        } else if (rawScore >= 82) {
+          // Desempenho excelente (muito fiel): 85 a 97
+          totalScore = Math.min(97, Math.round(82 + (rawScore - 82) * 0.85));
+        } else if (rawScore >= 68) {
+          // Bom desempenho: 70 a 82
+          totalScore = Math.round(rawScore);
+        } else if (rawScore >= 48) {
+          // Desempenho mediano puro (abundância de notas 48 a 67)
+          totalScore = Math.round(rawScore);
         } else {
-          totalScore = Math.max(22, Math.round(rawScore));
+          // Desempenho mediano-baixo / regular: 40 a 47
+          totalScore = Math.round(rawScore);
         }
-
-        const isRuim = totalScore < 25; // Tomatada só se for realmente péssimo (< 25) ou silêncio
 
         return {
           totalScore: Math.min(100, Math.max(0, totalScore)),
@@ -5528,14 +5541,14 @@
           const uStep = Math.ceil(uData.length / W);
 
           // Cores por faixa:
-          // 0 a 24: Vermelho tomate #ff0055 (Tentativa muito fraca)
-          // 25 a 49: Coral #ff6b6b (Nota de esforço inicial)
-          // 50 a 74: Amarelo ouro #ffdd00 (Regular/Boa tentativa)
-          // >= 75: Verde neon #00f576 (Excelente imitação!)
+          // 0: Vermelho tomate #ff0055 (Muito mal / Tomatada!)
+          // 1 a 47: Coral #ff6b6b (Nota baixa / regular-baixa)
+          // 48 a 69: Amarelo ouro #ffdd00 (Nota mediana pura!)
+          // >= 70: Verde neon #00f576 (Boa a excelente imitação!)
           let waveColor = '#ff0055';
-          if (score >= 75) waveColor = '#00f576';
-          else if (score >= 50) waveColor = '#ffdd00';
-          else if (score >= 25) waveColor = '#ff6b6b';
+          if (score >= 70) waveColor = '#00f576';
+          else if (score >= 48) waveColor = '#ffdd00';
+          else if (score > 0) waveColor = '#ff6b6b';
 
           ctx.fillStyle = waveColor;
           for (let i = 0; i < W; i++) {
@@ -5556,7 +5569,7 @@
             ctx.fillStyle = '#ff3366';
             ctx.font = 'bold 10px Inter, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('❌ TENTATIVA MUITO FRACA (0 PONTOS) 🍅', W / 2, botMidY + 14);
+            ctx.fillText('❌ DESASTRE VOCAL / MUITO MAL (0 PONTOS) 🍅', W / 2, botMidY + 14);
             ctx.textAlign = 'left';
           }
         }
@@ -9518,15 +9531,21 @@
         ],
         mid: [
           'É sobre isso e tá tudo completamente errado... 🤡',
-          'Foi na trave... da quadra do vizinho! ⚽'
+          'Foi na trave... da quadra do vizinho! ⚽',
+          'Nota mediana com orgulho! Digno de um imitador de churrasco! 🍖',
+          'Nem fedeu nem cheirou, padrão 50% garantido! ⚖️',
+          'Na média! Não passou vergonha, mas também não impressionou! 🤷'
         ],
         bad: [
           'Isso foi um erro gravíssimo de português sonoro! 🚫',
-          'Nem meu cachorro com dor de dente late tão mal... 🐶'
+          'Nem meu cachorro com dor de dente late tão mal... 🐶',
+          'Quase foi pro vinagre, raspou na trave do zero! ⚠️'
         ],
         fail: [
+          'TOMATE NA CARA! Desastre vocal absoluto! 🍅',
           'APAGA QUE DÁ TEMPO! Pelo amor de Deus! 🚒',
-          'QUE SHOW DA XUXA É ESSE?! 💀'
+          'QUE SHOW DA XUXA É ESSE?! 💀',
+          'ZERO PONTOS! Errou o meme do começo ao fim! ❌'
         ]
       },
 
@@ -9700,13 +9719,13 @@
 
       getNarratorQuote(score) {
         let category = 'mid';
-        if (score >= 88) category = 'epic';
+        if (score >= 85) category = 'epic';
         else if (score >= 70) category = 'good';
-        else if (score >= 40) category = 'mid';
-        else if (score >= 12) category = 'bad';
+        else if (score >= 42) category = 'mid';
+        else if (score > 0) category = 'bad';
         else category = 'fail';
 
-        const list = this.narratorQuotes[category];
+        const list = this.narratorQuotes[category] || this.narratorQuotes.mid;
         return list[Math.floor(Math.random() * list.length)];
       },
 
