@@ -3482,6 +3482,18 @@
       oscilloscopeAnimFrame: null,
       peakHoldValue: 0,
       peakHoldDecayTimer: 0,
+      currentPlayingSource: null,
+
+      stopCurrentAudio() {
+        if (this.currentPlayingSource) {
+          try {
+            this.currentPlayingSource.onended = null;
+            this.currentPlayingSource.stop();
+            this.currentPlayingSource.disconnect();
+          } catch (e) {}
+          this.currentPlayingSource = null;
+        }
+      },
 
       ensureContext() {
         if (!this.ctx) {
@@ -4280,6 +4292,7 @@
 
       playAudioBuffer(buffer, sabotageType, onEnded) {
         this.ensureContext();
+        this.stopCurrentAudio();
         if (!buffer) { if (onEnded) onEnded(); return; }
 
         if (sabotageType === 'pum') {
@@ -4290,6 +4303,7 @@
         const normalizedBuffer = this.normalizeBuffer(buffer, 0.92);
         const source = this.ctx.createBufferSource();
         source.buffer = normalizedBuffer;
+        this.currentPlayingSource = source;
         let lastNode = source;
 
         if (sabotageType === 'saturacao') {
@@ -4320,17 +4334,24 @@
         }
 
         lastNode.connect(this.outNode());
-        source.onended = () => { if (onEnded) onEnded(); };
+        source.onended = () => {
+          if (this.currentPlayingSource === source) {
+            this.currentPlayingSource = null;
+          }
+          if (onEnded) onEnded();
+        };
         source.start();
       },
 
       playFartSynth(onEnded) {
         this.ensureContext();
+        this.stopCurrentAudio();
         const now = this.ctx.currentTime;
         const dur = 1.2;
 
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
+        this.currentPlayingSource = osc;
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(65, now);
         osc.frequency.exponentialRampToValueAtTime(26, now + dur);
@@ -4342,7 +4363,12 @@
         gain.connect(this.outNode());
         osc.start(now);
         osc.stop(now + dur);
-        osc.onended = () => { if (onEnded) onEnded(); };
+        osc.onended = () => {
+          if (this.currentPlayingSource === osc) {
+            this.currentPlayingSource = null;
+          }
+          if (onEnded) onEnded();
+        };
       },
 
       playSfx(type) {
@@ -5728,7 +5754,11 @@
 
         this.peer.on('open', (id) => {
           this.myPeerId = id;
-          if (GameModule.localPlayer) GameModule.localPlayer.peerId = id;
+          if (GameModule.localPlayer) {
+            GameModule.localPlayer.id = id;
+            GameModule.localPlayer.peerId = id;
+            if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
+          }
           document.getElementById('displayRoomCode').innerText = this.roomCode;
           this.updateWaitingRoomUI();
           this.startHostHeartbeat();
@@ -5758,7 +5788,11 @@
             this.peer = new Peer();
             this.peer.on('open', (id) => {
               this.myPeerId = id;
-              if (GameModule.localPlayer) GameModule.localPlayer.peerId = id;
+              if (GameModule.localPlayer) {
+                GameModule.localPlayer.id = id;
+                GameModule.localPlayer.peerId = id;
+                if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
+              }
               this.roomCode = id.substring(0, 5).toUpperCase();
               document.getElementById('displayRoomCode').innerText = this.roomCode;
               this.startHostHeartbeat();
@@ -5779,7 +5813,11 @@
         this.peer = new Peer();
         this.peer.on('open', (id) => {
           this.myPeerId = id;
-          if (GameModule.localPlayer) GameModule.localPlayer.peerId = id;
+          if (GameModule.localPlayer) {
+            GameModule.localPlayer.id = id;
+            GameModule.localPlayer.peerId = id;
+            if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
+          }
           const conn = this.peer.connect(targetPeerId);
           this.hostConnection = conn;
           this.setupConnectionHandlers(conn);
@@ -6108,7 +6146,20 @@
         } else if (msg.type === 'RESTART_GAME') {
           GameModule.restartMatchSamePlayers(false);
         } else if (msg.type === 'START_ROUND') {
-          GameModule.onOnlineRoundStart(msg.soundId, msg.roundNumber);
+          GameModule.onOnlineRoundStart(msg.soundId, msg.roundNumber, msg.sound);
+        } else if (msg.type === 'ADVANCE_TAKE') {
+          GameModule.onOnlineAdvanceTake(msg.takeIndex);
+        } else if (msg.type === 'OPEN_ROULETTE') {
+          AudioModule.stopCurrentAudio();
+          AudioModule.setVoiceChatActive(true);
+          document.getElementById('modalRoulette').style.display = 'flex';
+          WheelModule.initOnlineClient();
+        } else if (msg.type === 'ROULETTE_RESULT') {
+          WheelModule.onReceiveOnlineResult(msg.segment);
+        } else if (msg.type === 'START_INTERMISSION') {
+          GameModule.startIntermissionChat(msg.seconds || 5);
+        } else if (msg.type === 'SHOW_PODIUM') {
+          GameModule.showFinalPodium();
         }
       },
 
@@ -6125,7 +6176,8 @@
             pantsColor: p.char3D.pantsColor,
             accessory: p.char3D.accessoryType,
             preset: p.char3D.preset,
-            score: p.score
+            score: p.score,
+            isBot: !!p.isBot
           }))
         };
         this.broadcast(state);
@@ -6137,11 +6189,12 @@
         const count = document.getElementById('waitingPlayerCount');
         if (!list) return;
         list.innerHTML = '';
-        count.innerText = GameModule.players.length;
-        GameModule.players.forEach(p => {
+        const realPlayers = GameModule.players.filter(p => !p.isBot);
+        count.innerText = realPlayers.length;
+        realPlayers.forEach(p => {
           const item = document.createElement('div');
           item.style.cssText = 'background:#1a2035; padding:6px 10px; border-radius:8px; font-weight:800; display:flex; justify-content:space-between; align-items:center; border-left:3px solid #00f576; font-size:0.85rem;';
-          const isLocal = p.id === GameModule.localPlayer.id;
+          const isLocal = p.id === GameModule.localPlayer.id || (this.myPeerId && p.peerId === this.myPeerId);
           item.innerHTML = `<span>👤 ${escapeHtml(p.name)} ${isLocal ? '<span style="font-size:0.75rem; color:#ffdd00;">(VOCÊ)</span>' : ''}</span> <span style="color:#00f576; font-size:0.75rem;">PRONTO</span>`;
           list.appendChild(item);
         });
@@ -6229,6 +6282,12 @@
         this.connections = [];
         this.hostConnection = null;
         this.isHost = false;
+        this.myPeerId = null;
+        if (GameModule.localPlayer) {
+          GameModule.localPlayer.id = 'host_p1';
+          GameModule.localPlayer.peerId = null;
+          if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = 'host_p1';
+        }
         GameModule.cleanupBotsAndReset();
         Scene3DModule.setCameraView('menu');
         document.getElementById('mainMenuOverlay').style.display = 'flex';
@@ -6725,7 +6784,7 @@
 
         // Atualiza ou instancia personagens de outros jogadores
         playersData.forEach(pData => {
-          if (pData.id === this.localPlayer.id) {
+          if (pData.id === this.localPlayer.id || (NetworkModule.myPeerId && pData.peerId === NetworkModule.myPeerId)) {
             this.localPlayer.score = pData.score || 0;
             return;
           }
@@ -6746,12 +6805,14 @@
               peerId: pData.peerId || pData.id,
               name: pData.name,
               score: pData.score || 0,
+              isBot: !!pData.isBot,
               char3D: char
             };
             this.players.push(existing);
           } else {
             existing.name = pData.name;
             existing.score = pData.score || 0;
+            if (pData.isBot !== undefined) existing.isBot = !!pData.isBot;
             if (pData.peerId) existing.peerId = pData.peerId;
             if (existing.char3D) {
               existing.char3D.setName(pData.name);
@@ -6769,7 +6830,7 @@
         // Remove jogadores que saíram da sala
         const toRemove = [];
         this.players.forEach(p => {
-          if (p.id === this.localPlayer.id || p.isBot) return;
+          if (p.id === this.localPlayer.id || (NetworkModule.myPeerId && p.peerId === NetworkModule.myPeerId) || p.isBot) return;
           const found = playersData.find(pd => pd.id === p.id || (pd.peerId && pd.peerId === p.peerId));
           if (!found) {
             toRemove.push(p.peerId || p.id);
@@ -6806,7 +6867,9 @@
 
         // Animação espetacular de entrada dos jogadores no palco
         this.playEntranceAnimation(() => {
-          this.startNextRound();
+          if (!this.isOnline || NetworkModule.isHost) {
+            this.startNextRound();
+          }
         });
       },
 
@@ -7050,9 +7113,17 @@
       simulateBotPitchTrail(d) { this.simulateBotLiveWave(d); },
 
       async startNextRound() {
+        AudioModule.stopCurrentAudio();
         // Silencia chat de voz durante a escuta do meme e gravação
         AudioModule.setVoiceChatActive(false);
         AudioModule.setMicMonitor(false);
+
+        const hud = document.getElementById('intermissionHUD');
+        if (hud) hud.style.display = 'none';
+        if (this.intermissionInterval) {
+          clearInterval(this.intermissionInterval);
+          this.intermissionInterval = null;
+        }
 
         document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
         document.getElementById('roundSubtitleText').innerText = 'OUÇA O SOM';
@@ -7069,7 +7140,17 @@
           NetworkModule.broadcast({
             type: 'START_ROUND',
             soundId: this.currentSound.id,
-            roundNumber: this.currentRound
+            roundNumber: this.currentRound,
+            sound: {
+              id: this.currentSound.id,
+              name: this.currentSound.name,
+              shortName: this.currentSound.shortName || this.currentSound.name.slice(0, 12),
+              file: this.currentSound.file,
+              tag: this.currentSound.tag || 'Meme BR',
+              icon: this.currentSound.icon || '🎵',
+              duration: this.currentSound.duration || 2.0,
+              unpitched: !!this.currentSound.unpitched
+            }
           });
         }
 
@@ -7116,11 +7197,23 @@
         }, 500);
       },
 
-      async onOnlineRoundStart(soundId, roundNum) {
+      async onOnlineRoundStart(soundId, roundNum, soundData) {
+        AudioModule.stopCurrentAudio();
         AudioModule.setVoiceChatActive(false);
         AudioModule.setMicMonitor(false);
         this.currentRound = roundNum;
-        const s = PacksModule.library.find(x => x.id === soundId) || PacksModule.library[0];
+
+        const hud = document.getElementById('intermissionHUD');
+        if (hud) hud.style.display = 'none';
+        if (this.intermissionInterval) {
+          clearInterval(this.intermissionInterval);
+          this.intermissionInterval = null;
+        }
+
+        document.getElementById('roundTitleText').innerText = `RODADA ${this.currentRound} / ${this.totalRounds}`;
+        document.getElementById('roundSubtitleText').innerText = 'OUÇA O SOM';
+
+        const s = soundData || PacksModule.library.find(x => x.id === soundId) || PacksModule.library[0];
         this.currentSound = s;
         this.refAudioBuffer = await PacksModule.loadSoundBuffer(s);
         this.refAnalysis = ScoringModule.analyzeBuffer(this.refAudioBuffer);
@@ -7337,11 +7430,11 @@
       },
 
       receiveTakeFromOnlinePlayer(msg, peerId) {
-        const pId = msg.playerId || peerId;
+        const pId = peerId || msg.peerId || msg.playerId;
         this.pendingRoundTakes[pId] = {
           ...msg,
           playerId: pId,
-          peerId: peerId
+          peerId: pId
         };
         this.checkAllTakesCollected();
       },
@@ -7353,7 +7446,7 @@
         }
 
         const humanPlayers = this.players.filter(p => !p.isBot);
-        const collectedCount = humanPlayers.filter(p => !!this.pendingRoundTakes[p.id]).length;
+        const collectedCount = humanPlayers.filter(p => !!this.pendingRoundTakes[p.id] || (p.peerId && !!this.pendingRoundTakes[p.peerId])).length;
 
         if (collectedCount >= humanPlayers.length) {
           this.finalizeAndBroadcastTakes();
@@ -7380,6 +7473,7 @@
             const botScore = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
             takesList.push({
               playerId: p.id,
+              peerId: p.peerId || p.id,
               name: p.name,
               scoreResult: botScore,
               audioData: null,
@@ -7389,10 +7483,11 @@
             });
             p.pendingSabotage = null;
           } else {
-            const t = this.pendingRoundTakes[p.id];
+            const t = this.pendingRoundTakes[p.id] || (p.peerId ? this.pendingRoundTakes[p.peerId] : null);
             if (t) {
               takesList.push({
                 playerId: p.id,
+                peerId: p.peerId || p.id,
                 name: p.name,
                 scoreResult: t.scoreResult,
                 audioData: t.audioData,
@@ -7402,6 +7497,7 @@
             } else {
               takesList.push({
                 playerId: p.id,
+                peerId: p.peerId || p.id,
                 name: p.name,
                 scoreResult: { totalScore: 0, waveScore: 0, pitchScore: 0, rhythmScore: 0, energyScore: 0, penalty: 0 },
                 audioData: null,
@@ -7423,18 +7519,20 @@
       },
 
       async onReceiveAllTakes(takesList) {
+        AudioModule.stopCurrentAudio();
         document.getElementById('soundShowcaseOverlay').style.display = 'none';
 
         this.roundTakes = [];
         for (const item of takesList) {
-          let player = this.players.find(p => p.id === item.playerId);
+          let player = this.players.find(p => p.id === item.playerId || (item.peerId && p.peerId === item.peerId));
           if (!player) {
             player = {
               id: item.playerId,
+              peerId: item.peerId || item.playerId,
               name: item.name,
               score: 0,
               isBot: !!item.isBot,
-              char3D: Scene3DModule.characters.find(c => c.id === item.playerId) || this.localPlayer.char3D
+              char3D: Scene3DModule.characters.find(c => c.id === item.playerId || (item.peerId && c.id === item.peerId)) || this.localPlayer.char3D
             };
           }
 
@@ -7469,6 +7567,7 @@
       },
 
       startTakesShowcase() {
+        AudioModule.stopCurrentAudio();
         // Gravação concluída: reativa o bate-papo por voz para todos conversarem e darem risada!
         AudioModule.setVoiceChatActive(true);
 
@@ -7500,6 +7599,11 @@
         if (scoreOverlay) scoreOverlay.style.display = 'none';
         UIModule.hideTomato();
         UIModule.stopConfetti();
+
+        const btnAdv = document.getElementById('btnAdvanceTake');
+        if (btnAdv) {
+          btnAdv.style.display = (!this.isOnline || NetworkModule.isHost) ? 'inline-flex' : 'none';
+        }
 
         this.highlightActiveCard(p.id);
 
@@ -7545,11 +7649,13 @@
               }
 
               if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
-              this.autoAdvanceTimer = setTimeout(() => {
-                if (scoreOverlay && scoreOverlay.style.display !== 'none') {
-                  this.advanceTakePlayback();
-                }
-              }, 4200);
+              if (!this.isOnline || NetworkModule.isHost) {
+                this.autoAdvanceTimer = setTimeout(() => {
+                  if (scoreOverlay && scoreOverlay.style.display !== 'none') {
+                    this.advanceTakePlayback();
+                  }
+                }, 4200);
+              }
             }
             if (scoreEl) scoreEl.innerText = `${cur} / 100`;
           }, 30);
@@ -7557,10 +7663,14 @@
       },
 
       advanceTakePlayback() {
+        if (this.isOnline && !NetworkModule.isHost) {
+          return;
+        }
         if (this.autoAdvanceTimer) {
           clearTimeout(this.autoAdvanceTimer);
           this.autoAdvanceTimer = null;
         }
+        AudioModule.stopCurrentAudio();
         const take = this.roundTakes[this.activePlaybackIndex];
         if (take && take.player && take.player.char3D) {
           take.player.char3D.isSinging = false;
@@ -7573,20 +7683,61 @@
         UIModule.stopConfetti();
 
         this.activePlaybackIndex++;
+
+        if (this.isOnline && NetworkModule.isHost) {
+          NetworkModule.broadcast({
+            type: 'ADVANCE_TAKE',
+            takeIndex: this.activePlaybackIndex
+          });
+        }
+
+        this.playCurrentTakeShowcase();
+      },
+
+      onOnlineAdvanceTake(takeIndex) {
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
+        AudioModule.stopCurrentAudio();
+        const take = this.roundTakes[this.activePlaybackIndex];
+        if (take && take.player && take.player.char3D) {
+          take.player.char3D.isSinging = false;
+          take.player.char3D.audioAmplitude = 0;
+          take.player.char3D.walkTo(take.player.char3D.lineupPosition.x, -2.5);
+        }
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+        UIModule.hideTomato();
+        UIModule.stopConfetti();
+
+        this.activePlaybackIndex = takeIndex;
         this.playCurrentTakeShowcase();
       },
 
       openRoundRoulette() {
         if (this.currentRound >= this.totalRounds) {
+          if (this.isOnline && NetworkModule.isHost) {
+            NetworkModule.broadcast({ type: 'SHOW_PODIUM' });
+          }
           this.showFinalPodium();
           return;
         }
 
+        AudioModule.stopCurrentAudio();
         // Ativa o chat de voz quando a roleta abre para que todos conversem!
         AudioModule.setVoiceChatActive(true);
 
-        document.getElementById('modalRoulette').style.display = 'flex';
-        WheelModule.init();
+        if (this.isOnline) {
+          if (NetworkModule.isHost) {
+            NetworkModule.broadcast({ type: 'OPEN_ROULETTE' });
+            document.getElementById('modalRoulette').style.display = 'flex';
+            WheelModule.init();
+          }
+        } else {
+          document.getElementById('modalRoulette').style.display = 'flex';
+          WheelModule.init();
+        }
       },
 
       applyRouletteSegment(seg) {
@@ -7606,6 +7757,7 @@
       },
 
       startIntermissionChat(seconds = 5) {
+        AudioModule.stopCurrentAudio();
         // Mantém chat de voz ativo durante o intervalo de conversa
         AudioModule.setVoiceChatActive(true);
         Scene3DModule.setCameraView('stage_lineup');
@@ -7630,8 +7782,10 @@
             // Silencia chat de voz antes de começar a rodada de imitação
             AudioModule.setVoiceChatActive(false);
 
-            this.currentRound++;
-            this.startNextRound();
+            if (!this.isOnline || NetworkModule.isHost) {
+              this.currentRound++;
+              this.startNextRound();
+            }
           }
         }, 1000);
       },
@@ -7710,8 +7864,22 @@
       },
 
       returnToMenu() {
+        AudioModule.stopCurrentAudio();
         UIModule.stopConfetti();
         UIModule.closeModal('modalFinalPodium');
+        UIModule.closeModal('modalRoulette');
+        UIModule.hideTomato();
+
+        const hud = document.getElementById('intermissionHUD');
+        if (hud) hud.style.display = 'none';
+        if (this.intermissionInterval) {
+          clearInterval(this.intermissionInterval);
+          this.intermissionInterval = null;
+        }
+
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+
         document.getElementById('mainMenuOverlay').style.display = 'flex';
         document.getElementById('mainLogoContainer').style.display = 'flex';
         document.getElementById('roundBadgeBox').style.display = 'none';
@@ -7863,10 +8031,85 @@
         // Aplica o efeito no GameModule
         GameModule.applyRouletteSegment(seg);
 
+        if (GameModule.isOnline && NetworkModule.isHost) {
+          NetworkModule.broadcast({
+            type: 'ROULETTE_RESULT',
+            segment: seg
+          });
+        }
+
         // Exibe o resultado por 2.4s, fecha a roleta e inicia o intervalo de conversa de 5 segundos!
         setTimeout(() => {
           UIModule.closeModal('modalRoulette');
+          if (GameModule.isOnline && NetworkModule.isHost) {
+            NetworkModule.broadcast({
+              type: 'START_INTERMISSION',
+              seconds: 5
+            });
+          }
           GameModule.startIntermissionChat(5);
+        }, 2400);
+      },
+
+      initOnlineClient() {
+        this.canvas = document.getElementById('wheelCanvas');
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        const box = document.getElementById('wheelResultBox');
+        const btnNext = document.getElementById('btnProceedAfterWheel');
+        const btnSpin = document.getElementById('btnSpinWheel');
+        if (box) box.style.display = 'none';
+        if (btnNext) btnNext.style.display = 'none';
+        if (btnSpin) {
+          btnSpin.style.display = 'inline-flex';
+          btnSpin.innerText = '🎰 O HOST ESTÁ GIRANDO A ROLETA...';
+          btnSpin.disabled = true;
+        }
+        this.draw();
+
+        this.isSpinning = true;
+        this.angularVel = 0.22;
+        const anim = () => {
+          if (!this.isSpinning) return;
+          this.angle += this.angularVel;
+          this.draw();
+          requestAnimationFrame(anim);
+        };
+        requestAnimationFrame(anim);
+      },
+
+      onReceiveOnlineResult(seg) {
+        this.isSpinning = false;
+        if (this.canvas) {
+          const arc = TWO_PI / this.segments.length;
+          const segIdx = this.segments.findIndex(s => s.label === seg.label || (s.type === seg.type && s.val === seg.val));
+          if (segIdx !== -1) {
+            this.angle = (TWO_PI - (segIdx * arc + arc / 2) + Math.PI / 2) % TWO_PI;
+            this.draw();
+          }
+        }
+        const box = document.getElementById('wheelResultBox');
+        const title = document.getElementById('wheelResultTitle');
+        const desc = document.getElementById('wheelResultDesc');
+        const btnNext = document.getElementById('btnProceedAfterWheel');
+        const btnSpin = document.getElementById('btnSpinWheel');
+
+        if (btnSpin) btnSpin.style.display = 'none';
+        if (box) box.style.display = 'block';
+        if (btnNext) btnNext.style.display = 'none';
+        if (title) title.innerText = seg.label;
+        if (desc) {
+          if (seg.type === 'bonus') desc.innerText = `Bônus concedido! Ganhou +${seg.val} pontos!`;
+          else if (seg.type === 'sabotage') desc.innerText = `Sabotagem (${seg.sub}) aplicada ao líder da partida!`;
+          else if (seg.type === 'mult') desc.innerText = `Multiplicador x${seg.val} ativado!`;
+          else desc.innerText = 'Escudo protetor ativado contra sabotagens!';
+        }
+        AudioModule.playSfx('beep_go');
+
+        GameModule.applyRouletteSegment(seg);
+
+        setTimeout(() => {
+          UIModule.closeModal('modalRoulette');
         }, 2400);
       }
     };
