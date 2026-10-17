@@ -1369,66 +1369,126 @@
       margin-top: 6px;
     }
 
-    /* ESTILOS DA BIBLIOTECA DE PACOTES DE SONS (SCREENSHOTS DO USUÁRIO) */
-    .packs-library-container {
+    /* ESTILOS DA BIBLIOTECA DE PACOTES DE SONS (EXPANSIVA & BEM DISTRIBUÍDA) */
+    #modalPacks .modal-box {
+      max-width: 1320px;
+      width: 95vw;
+      height: 90vh;
+      max-height: 92vh;
+      padding: 20px 24px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      max-height: 520px;
+      gap: 12px;
+      overflow: hidden;
+      background: #0f0c22;
+      border: 3px solid #332766;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.85);
+    }
+
+    #modalPackDetail .modal-box {
+      max-width: 860px;
+      width: 92vw;
+      height: 85vh;
+      max-height: 88vh;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+      background: #0f0c22;
+      border: 3px solid #332766;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.85);
+    }
+
+    .packs-library-container {
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
-      padding-right: 6px;
+      padding: 6px 8px 12px 2px;
+    }
+
+    .packs-library-container::-webkit-scrollbar,
+    .pack-filter-bar::-webkit-scrollbar,
+    #packDetailSoundsList::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .packs-library-container::-webkit-scrollbar-thumb,
+    .pack-filter-bar::-webkit-scrollbar-thumb,
+    #packDetailSoundsList::-webkit-scrollbar-thumb {
+      background: #4338ca;
+      border-radius: 4px;
     }
 
     .pack-filter-bar {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       overflow-x: auto;
-      padding-bottom: 6px;
+      padding: 4px 2px 8px;
+      flex-shrink: 0;
     }
 
     .pack-filter-chip {
-      background: #1e1b4b;
-      border: 2px solid #4338ca;
-      color: #e0e7ff;
-      font-size: 0.8rem;
-      font-weight: 900;
-      padding: 6px 12px;
-      border-radius: 14px;
+      background: #181534;
+      border: 1.5px solid #2e265c;
+      color: #cbd5e1;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 12px;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.15s ease;
     }
-    .pack-filter-chip.active, .pack-filter-chip:hover {
+    .pack-filter-chip:hover {
+      background: #272152;
+      color: #fff;
+      border-color: #6366f1;
+    }
+    .pack-filter-chip.active {
       background: #4f46e5;
       border-color: #00f0ff;
       color: #fff;
-      transform: scale(1.04);
+      box-shadow: 0 0 10px rgba(79,70,229,0.5);
     }
 
     .packs-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 14px;
+      align-content: start;
     }
 
     .pack-card {
       background: #14112e;
-      border: 3px solid #000;
-      border-radius: 18px;
-      box-shadow: 4px 4px 0 #000;
+      border: 2px solid #28214f;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px 10px;
+      padding: 12px 10px 10px;
       position: relative;
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      cursor: default;
     }
     .pack-card:hover {
-      transform: translateY(-3px);
-      border-color: #00f0ff;
+      transform: translateY(-2px);
+      border-color: #6366f1;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.7);
     }
     .pack-card.installed {
+      border-color: rgba(0, 245, 118, 0.5);
+      background: #131433;
+    }
+    .pack-card.installed:hover {
       border-color: #00f576;
+    }
+    .pack-card.disabled-pack {
+      opacity: 0.65;
+      border-color: #332c52;
     }
 
     .pack-badge-num {
@@ -1438,84 +1498,113 @@
       background: #ffb703;
       color: #000;
       font-weight: 900;
-      font-size: 0.75rem;
-      padding: 2px 7px;
-      border-radius: 10px;
-      border: 2px solid #000;
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 8px;
+      border: 1px solid #000;
       box-shadow: 1px 1px 0 #000;
     }
 
     .pack-cover-circle {
-      width: 68px;
-      height: 68px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      border: 3px solid #ffffff;
-      box-shadow: 0 0 12px rgba(0,0,0,0.8);
+      border: 2.5px solid rgba(255,255,255,0.85);
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.2rem;
+      font-size: 1.6rem;
       background: radial-gradient(circle, #3b2d71, #130d2d);
-      margin-top: 6px;
+      margin-top: 2px;
     }
 
     .pack-title-ribbon {
-      background: #6366f1;
       color: #fff;
       font-family: var(--font-display);
-      font-size: 1.05rem;
-      padding: 3px 12px;
-      border-radius: 12px;
-      border: 2px solid #000;
-      box-shadow: 2px 2px 0 #000;
-      margin-top: -10px;
-      letter-spacing: 0.5px;
+      font-size: 0.86rem;
+      padding: 3px 8px;
+      border-radius: 8px;
+      border: 1.5px solid #000;
+      box-shadow: 1.5px 1.5px 0 #000;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
       text-align: center;
-      width: 90%;
+      width: 94%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .pack-author {
-      font-size: 0.75rem;
-      font-weight: 800;
-      color: #a5b4fc;
-      margin-top: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-top: 3px;
     }
 
     .pack-stats-row {
       display: flex;
       justify-content: space-between;
-      width: 100%;
-      font-size: 0.75rem;
+      width: 94%;
+      font-size: 0.7rem;
       font-weight: 800;
       color: #cbd5e1;
-      background: rgba(0,0,0,0.4);
-      padding: 4px 8px;
-      border-radius: 8px;
+      background: rgba(0,0,0,0.35);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-top: 6px;
+    }
+
+    .pack-actions-row {
+      display: flex;
+      gap: 6px;
+      width: 94%;
       margin-top: 8px;
     }
 
-    .pack-btn-install {
-      width: 100%;
-      margin-top: 8px;
-      padding: 6px 8px;
+    .pack-btn-toggle {
+      flex: 1;
+      padding: 6px 4px;
       font-weight: 900;
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       border: 2px solid #000;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
       box-shadow: 2px 2px 0 #000;
       transition: all 0.15s ease;
+      text-align: center;
     }
-    .pack-btn-install.active {
+    .pack-btn-toggle.active {
       background: #00f576;
       color: #000;
     }
-    .pack-btn-install.inactive {
-      background: #38bdf8;
-      color: #000;
+    .pack-btn-toggle.inactive {
+      background: #2a2444;
+      color: #aaa;
+      border-color: #443c68;
+    }
+    .pack-btn-toggle:hover {
+      transform: translateY(-1px);
+    }
+
+    .pack-btn-details {
+      padding: 6px 10px;
+      background: #1e1b4b;
+      border: 2px solid #4338ca;
+      color: #00f0ff;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #000;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .pack-btn-details:hover {
+      background: #312e81;
+      border-color: #00f0ff;
+      transform: translateY(-1px);
     }
 
     /* Modal de Sons Individuais do Pacote */
@@ -1524,10 +1613,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      background: rgba(0,0,0,0.45);
-      border: 2px solid #2e2640;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 10px;
       padding: 8px 12px;
+      transition: background 0.15s ease;
+    }
+    .pack-sound-row:hover {
+      background: rgba(255,255,255,0.08);
     }
 
     /* Widget do Testador de Microfone */
@@ -1761,17 +1854,35 @@
     </div>
   </div>
 
-  <!-- MODAL: BIBLIOTECA DE PACOTES DE SONS (SCREENSHOTS DO USUÁRIO) -->
+  <!-- MODAL: BIBLIOTECA DE PACOTES DE SONS (FULLSCREEN EXPANSIVO & BEM DISTRIBUÍDO) -->
   <div id="modalPacks" class="modal-overlay" style="display:none; z-index:2500;">
-    <div class="modal-box" style="max-width:860px; width:95%;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <h2 class="modal-title" style="margin-bottom:2px;">BIBLIOTECA DE PACOTES 📚</h2>
-          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">16 de 17 pacotes ativos (146 sons ativos)</span>
+    <div class="modal-box">
+      <!-- Top Bar com Título, Estatísticas e Botões Rápidos -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; border-bottom:1.5px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:12px; text-align:left;">
+          <span style="font-size:1.8rem; background:#1e1b4b; border:2px solid #4338ca; border-radius:12px; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">📚</span>
+          <div>
+            <h2 class="modal-title" style="font-size:1.4rem; margin:0; line-height:1.1; color:#fff;">BIBLIOTECA DE MEMES & PACOTES</h2>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+              <span id="packsCounterText" style="font-size:0.8rem; font-weight:800; color:#00f576; background:rgba(0,245,118,0.12); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,245,118,0.25);">
+                16 de 17 pacotes ativos (146 sons ativos)
+              </span>
+              <span style="font-size:0.75rem; color:#94a3b8;">(Clique para ativar, desativar ou ver os sons)</span>
+            </div>
+          </div>
         </div>
-        <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPacks')">
-          ✖ FECHAR
-        </button>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn btn-neutral btn-sm" onclick="PacksModule.toggleAllPacks(true)" style="font-size:0.76rem; padding:5px 10px;">
+            ✅ ATIVAR TODOS
+          </button>
+          <button class="btn btn-neutral btn-sm" onclick="PacksModule.toggleAllPacks(false)" style="font-size:0.76rem; padding:5px 10px;">
+            ❌ DESATIVAR TODOS
+          </button>
+          <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPacks')" style="padding:6px 12px; font-size:0.85rem;" title="Fechar">
+            ✖
+          </button>
+        </div>
       </div>
 
       <!-- Barra de Filtros por Categoria -->
@@ -1792,33 +1903,25 @@
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('RISADAS', this)">😂 RISADAS</button>
       </div>
 
-      <!-- Grid de Pacotes Estilo Mimic Party -->
+      <!-- Grid de Pacotes Estilo Mimic Party (Preenchendo todo o espaço vertical) -->
       <div class="packs-library-container">
         <div id="packsGridCards" class="packs-grid">
           <!-- Injetado dinamicamente via PacksModule -->
         </div>
       </div>
 
-      <!-- Adicionar Áudio Personalizado do Myinstants ou Web -->
-      <div style="background:rgba(0,0,0,0.5); border:2px dashed #00f0ff; border-radius:12px; padding:10px; text-align:left;">
-        <strong style="font-size:0.85rem; color:#00f0ff;">➕ Adicionar Novo Som via Link Direto (ex: Myinstants .mp3):</strong>
-        <div style="display:flex; gap:8px; margin-top:4px;">
-          <input type="text" id="inputCustomUrl" class="input-box" style="text-align:left; font-size:0.85rem; padding:8px;" placeholder="https://www.myinstants.com/media/sounds/...">
-          <button class="btn btn-green btn-sm" onclick="PacksModule.addFromUrlInput()">
+      <!-- Rodapé Elegante com Adicionar Link Direto & Botão de Salvar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-shrink:0; border-top:1.5px solid rgba(255,255,255,0.1); padding-top:10px;">
+        <div style="display:flex; align-items:center; gap:8px; flex:1; max-width:620px;">
+          <span style="font-size:0.78rem; font-weight:800; color:#00f0ff; white-space:nowrap;">➕ Som por Link (.mp3):</span>
+          <input type="text" id="inputCustomUrl" class="input-box" style="text-align:left; font-size:0.8rem; padding:6px 10px; flex:1;" placeholder="Cole o link .mp3 do Myinstants...">
+          <button class="btn btn-green btn-sm" onclick="PacksModule.addFromUrlInput()" style="padding:6px 12px; font-size:0.8rem; white-space:nowrap;">
             ADICIONAR
           </button>
         </div>
-      </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <button class="btn btn-neutral btn-sm" onclick="PacksModule.toggleAllPacks(true)">
-          ✅ ATIVAR TODOS
-        </button>
-        <button class="btn btn-green" onclick="UIModule.closeModal('modalPacks')">
-          CONFIRMAR E JOGAR ✅
-        </button>
-        <button class="btn btn-neutral btn-sm" onclick="PacksModule.toggleAllPacks(false)">
-          ❌ DESATIVAR TODOS
+        <button class="btn btn-green" onclick="UIModule.closeModal('modalPacks')" style="padding:10px 24px; font-size:0.92rem; letter-spacing:0.5px;">
+          SALVAR E FECHAR ✅
         </button>
       </div>
     </div>
@@ -1826,16 +1929,24 @@
 
   <!-- MODAL: DETALHES E PREVIEW DOS SONS DE UM PACOTE -->
   <div id="modalPackDetail" class="modal-overlay" style="display:none; z-index:2600;">
-    <div class="modal-box" style="max-width:580px;">
-      <h2 id="packDetailTitle" class="modal-title">PACOTE: MEME BR</h2>
-      <p id="packDetailSubtitle" style="font-weight:700; opacity:0.85;">Ouça a prévia de cada som antes de jogar:</p>
-      
-      <div id="packDetailSoundsList" style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; padding-right:6px;">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; border-bottom:1.5px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+        <div style="text-align:left;">
+          <h2 id="packDetailTitle" class="modal-title" style="font-size:1.35rem; margin:0; line-height:1.1; color:#00f0ff;">PACOTE: MEME BR</h2>
+          <p id="packDetailSubtitle" style="font-weight:700; opacity:0.85; font-size:0.8rem; margin:3px 0 0;">Ouça a prévia e selecione quais áudios tocarão na partida:</p>
+        </div>
+        <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPackDetail')" style="padding:6px 12px;">
+          ✖
+        </button>
+      </div>
+
+      <div id="packDetailSoundsList" style="flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:8px; padding-right:4px;">
         <!-- Injetado via JS -->
       </div>
 
-      <div style="margin-top:12px;">
-        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalPackDetail')">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; border-top:1.5px solid rgba(255,255,255,0.1); padding-top:10px;">
+        <span style="font-size:0.75rem; color:#94a3b8;">As alterações são salvas automaticamente na sala e na tela inicial.</span>
+        <button class="btn btn-neutral" onclick="UIModule.closeModal('modalPackDetail')" style="padding:8px 18px; font-size:0.88rem;">
           VOLTAR À BIBLIOTECA ⬅️
         </button>
       </div>
@@ -5661,7 +5772,7 @@
         filtered.forEach(pack => {
           const activeSoundsCount = pack.sounds.filter(s => s.enabled !== false).length;
           const card = document.createElement('div');
-          card.className = `pack-card ${pack.enabled ? 'installed' : ''}`;
+          card.className = `pack-card ${pack.enabled ? 'installed' : 'disabled-pack'}`;
           card.innerHTML = `
             <div class="pack-badge-num">⭐ ${pack.rating}</div>
             <div class="pack-cover-circle" style="background: radial-gradient(circle, ${pack.color}, #120d2d);">
@@ -5673,12 +5784,14 @@
               <span>🎵 ${activeSoundsCount}/${pack.sounds.length} sons</span>
               <span>📥 ${pack.downloads}</span>
             </div>
-            <button class="pack-btn-install ${pack.enabled ? 'active' : ''}" onclick="PacksModule.togglePack('${pack.id}')">
-              ${pack.enabled ? 'INSTALADO ✅' : 'DESATIVADO ❌'}
-            </button>
-            <button class="btn btn-neutral btn-sm" style="width:100%; margin-top:5px; font-size:0.75rem; padding:4px;" onclick="PacksModule.openPackDetails('${pack.id}')">
-              VER SONS 🔍
-            </button>
+            <div class="pack-actions-row">
+              <button class="pack-btn-toggle ${pack.enabled ? 'active' : 'inactive'}" onclick="event.stopPropagation(); PacksModule.togglePack('${pack.id}')" title="Ativar ou desativar este pacote">
+                ${pack.enabled ? 'ATIVO ✅' : 'DESLIGADO ❌'}
+              </button>
+              <button class="pack-btn-details" onclick="event.stopPropagation(); PacksModule.openPackDetails('${pack.id}')" title="Ver sons deste pacote">
+                🔍 SONS
+              </button>
+            </div>
           `;
           container.appendChild(card);
         });
@@ -5688,7 +5801,7 @@
           const customCard = document.createElement('div');
           customCard.className = 'pack-card installed';
           customCard.innerHTML = `
-            <div class="pack-badge-num">⭐ WEB</div>
+            <div class="pack-badge-num">⭐ SEU</div>
             <div class="pack-cover-circle" style="background: radial-gradient(circle, #00f0ff, #120d2d);">
               <span>🌐</span>
             </div>
@@ -5698,9 +5811,11 @@
               <span>🎵 ${customActiveCount}/${this.customSounds.length} sons</span>
               <span>🌐 Web</span>
             </div>
-            <button class="btn btn-neutral btn-sm" style="width:100%; margin-top:5px; font-size:0.75rem; padding:4px;" onclick="PacksModule.openCustomSoundsDetails()">
-              VER SONS 🔍
-            </button>
+            <div class="pack-actions-row">
+              <button class="pack-btn-details" style="width:100%; text-align:center;" onclick="PacksModule.openCustomSoundsDetails()">
+                🔍 GERENCIAR SONS
+              </button>
+            </div>
           `;
           container.appendChild(customCard);
         }
@@ -5723,20 +5838,21 @@
           pack.sounds.forEach(snd => {
             const isSoundActive = snd.enabled !== false;
             const row = document.createElement('div');
-            row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:${isSoundActive ? 'rgba(255,255,255,0.06)' : 'rgba(255,50,50,0.08)'}; padding:8px 12px; border-radius:10px; border:1px solid ${isSoundActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,50,50,0.25)'};`;
+            row.className = 'pack-sound-row';
+            row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:${isSoundActive ? 'rgba(255,255,255,0.05)' : 'rgba(255,50,50,0.06)'}; padding:8px 12px; border-radius:10px; border:1px solid ${isSoundActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,50,50,0.2)'};`;
             row.innerHTML = `
-              <div style="text-align:left; flex:1; margin-right:8px;">
-                <div style="display:flex; align-items:center; gap:6px;">
-                  <span style="font-size:1.1rem;">${snd.icon || '🎵'}</span>
-                  <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.95rem; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
+              <div style="text-align:left; flex:1; min-width:0; margin-right:8px;">
+                <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                  <span style="font-size:1.05rem; flex-shrink:0;">${snd.icon || '🎵'}</span>
+                  <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.88rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
                 </div>
-                <div style="font-size:0.75rem; opacity:0.7; margin-left:24px;">Tag: ${snd.tag || pack.category} ${isSoundActive ? '' : '• <span style="color:#ff6666; font-weight:700;">(REMOVIDO DA SALA)</span>'}</div>
+                <div style="font-size:0.72rem; opacity:0.65; margin-left:22px;">Tag: ${snd.tag || pack.category} ${isSoundActive ? '' : '• <span style="color:#ff6666; font-weight:700;">(REMOVIDO)</span>'}</div>
               </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')" title="Ouvir som">
+              <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')" style="padding:4px 8px; font-size:0.75rem;" title="Ouvir som">
                   🔊 OUVIR
                 </button>
-                <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleSound('${pack.id}', '${snd.id}')" style="min-width:92px; font-size:0.75rem; padding:4px 8px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}" title="Ativar ou desativar este som">
+                <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleSound('${pack.id}', '${snd.id}')" style="min-width:88px; font-size:0.74rem; padding:4px 6px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}" title="Ativar ou desativar este som">
                   ${isSoundActive ? 'ATIVO ✅' : 'REMOVIDO ❌'}
                 </button>
               </div>
@@ -5767,15 +5883,19 @@
           this.customSounds.forEach(snd => {
             const isSoundActive = snd.enabled !== false;
             const row = document.createElement('div');
-            row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:${isSoundActive ? 'rgba(255,255,255,0.06)' : 'rgba(255,50,50,0.08)'}; padding:8px 12px; border-radius:10px; border:1px solid ${isSoundActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,50,50,0.25)'};`;
+            row.className = 'pack-sound-row';
+            row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:${isSoundActive ? 'rgba(255,255,255,0.05)' : 'rgba(255,50,50,0.06)'}; padding:8px 12px; border-radius:10px; border:1px solid ${isSoundActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,50,50,0.2)'};`;
             row.innerHTML = `
-              <div style="text-align:left; flex:1; margin-right:8px;">
-                <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.95rem; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
-                <div style="font-size:0.72rem; opacity:0.6; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:280px;">${snd.file}</div>
+              <div style="text-align:left; flex:1; min-width:0; margin-right:8px;">
+                <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                  <span style="font-size:1.05rem; flex-shrink:0;">🌐</span>
+                  <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.88rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
+                </div>
+                <div style="font-size:0.72rem; opacity:0.6; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:240px; margin-left:22px;">${snd.file}</div>
               </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')">🔊 OUVIR</button>
-                <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleCustomSound('${snd.id}')" style="min-width:92px; font-size:0.75rem; padding:4px 8px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}">
+              <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')" style="padding:4px 8px; font-size:0.75rem;">🔊 OUVIR</button>
+                <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleCustomSound('${snd.id}')" style="min-width:88px; font-size:0.74rem; padding:4px 6px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}">
                   ${isSoundActive ? 'ATIVO ✅' : 'REMOVIDO ❌'}
                 </button>
                 <button class="btn btn-neutral btn-sm" onclick="PacksModule.removeCustomSound('${snd.id}')" style="color:#ff4444; border-color:#ff4444; font-size:0.75rem; padding:4px 8px;" title="Excluir">
