@@ -7344,20 +7344,18 @@
           // Dispara PING para todos os clientes conectados
           this.broadcast({ type: 'PING', timestamp: now });
 
-          // Durante a partida ativa (gravação e julgamento), não desconecta por atraso de ping
-          if (GameModule.isMatchActive) return;
-
-          // Detecta clientes que realmente fecharam o navegador (tolerância móvel de 35 segundos)
+          // Detecta clientes desconectados a qualquer momento (inclusive durante a partida ativa)
           const conns = [...this.connections];
           conns.forEach(conn => {
             const pId = conn.peer;
             const last = this.lastSeenPeers[pId] || conn._openedTime || now;
-            if (now - last > 35000) {
-              console.warn(`[Heartbeat] Peer ${pId} inativo há mais de 35s. Removendo...`);
+            // Tolerância de 8 segundos (mais de 3 pings sem resposta = desconectado)
+            if (now - last > 8000) {
+              console.warn(`[Heartbeat] Peer ${pId} inativo há mais de 8s. Removendo...`);
               this.handleConnectionLost(conn);
             }
           });
-        }, 3000);
+        }, 2500);
       },
 
       startClientHeartbeatWatcher() {
@@ -7372,17 +7370,15 @@
           }
 
           const now = Date.now();
-          // Durante a partida ativa (gravação e julgamento), não desconecta por atraso de ping
-          if (GameModule.isMatchActive) return;
-
-          if (now - this.lastHostPing > 40000) {
-            console.warn("[Heartbeat] Host parou de responder há mais de 40s.");
+          // Detecta se o Host saiu ou fechou a sala (tolerância de 9 segundos)
+          if (now - this.lastHostPing > 9000) {
+            console.warn("[Heartbeat] Host parou de responder há mais de 9s.");
             clearInterval(this.heartbeatTimer);
             this.heartbeatTimer = null;
-            alert("A partida foi encerrada porque o Dono da Sala fechou o navegador ou desconectou.");
+            alert("A partida foi encerrada porque o Dono da Sala saiu ou a conexão caiu.");
             this.leaveOrCancelRoom();
           }
-        }, 3000);
+        }, 2500);
       },
 
       handleConnectionLost(conn) {
@@ -7396,6 +7392,14 @@
         if (this.isHost) {
           this.broadcast({ type: 'PLAYER_LEFT', peerId: peerId });
           this.broadcastRoomState();
+        } else {
+          // Se o client perdeu a conexão com o Host:
+          if (this.hostConnection && (conn === this.hostConnection || conn.peer === this.hostConnection.peer)) {
+            console.warn("[Client] Conexão com o Host foi perdida!");
+            alert("A partida foi encerrada porque o Dono da Sala saiu ou a conexão caiu.");
+            this.leaveOrCancelRoom();
+            return;
+          }
         }
         this.updateWaitingRoomUI();
       },
@@ -7795,44 +7799,81 @@
       },
 
       leaveOrCancelRoom() {
+        // Encerra imediatamente qualquer loop ou timer de jogo
+        if (typeof GameModule !== 'undefined') {
+          GameModule.isMatchActive = false;
+          GameModule.isOnline = false;
+          GameModule.isSoloBots = false;
+          if (GameModule.recordingCountdownInterval) {
+            clearInterval(GameModule.recordingCountdownInterval);
+            GameModule.recordingCountdownInterval = null;
+          }
+          if (GameModule.clientCountdownFallbackTimer) {
+            clearTimeout(GameModule.clientCountdownFallbackTimer);
+            GameModule.clientCountdownFallbackTimer = null;
+          }
+          if (GameModule.autoAdvanceTimer) {
+            clearTimeout(GameModule.autoAdvanceTimer);
+            GameModule.autoAdvanceTimer = null;
+          }
+          if (GameModule.takesCollectionTimeout) {
+            clearTimeout(GameModule.takesCollectionTimeout);
+            GameModule.takesCollectionTimeout = null;
+          }
+          if (GameModule.intermissionInterval) {
+            clearInterval(GameModule.intermissionInterval);
+            GameModule.intermissionInterval = null;
+          }
+          if (GameModule.rouletteTransitionTimeout) {
+            clearTimeout(GameModule.rouletteTransitionTimeout);
+            GameModule.rouletteTransitionTimeout = null;
+          }
+          if (GameModule.needleAnimFrame) {
+            cancelAnimationFrame(GameModule.needleAnimFrame);
+            GameModule.needleAnimFrame = null;
+          }
+          if (typeof WheelModule !== 'undefined' && WheelModule.autoSpinTimer) {
+            clearTimeout(WheelModule.autoSpinTimer);
+            WheelModule.autoSpinTimer = null;
+          }
+        }
+
+        if (typeof AudioModule !== 'undefined') {
+          AudioModule.stopCurrentAudio();
+          AudioModule.setVoiceChatActive(false);
+          AudioModule.setMicMonitor(false);
+        }
+
         UIModule.closeModal('modalCreateRoom');
         UIModule.closeModal('modalJoinRoom');
         UIModule.closeModal('modalPublicRooms');
+        UIModule.closeModal('modalFinalPodium');
+        UIModule.closeModal('modalRoulette');
+
         if (typeof PublicRoomsModule !== 'undefined') {
           PublicRoomsModule.stopHostAnnouncing(this.roomCode);
         }
-        GameModule.isOnline = false;
-        GameModule.isSoloBots = false;
+
         if (this.heartbeatTimer) {
           clearInterval(this.heartbeatTimer);
           this.heartbeatTimer = null;
         }
         this.lastSeenPeers = {};
 
-        if (!this.isHost && this.hostConnection && this.hostConnection.open) {
-          try {
-            this.hostConnection.send({ type: 'PLAYER_LEFT', peerId: this.myPeerId });
-          } catch (e) {}
-        }
-        if (this.isHost) {
-          try {
-            this.broadcast({ type: 'HOST_DISCONNECTED', roomCode: this.roomCode });
-          } catch (e) {}
-        }
-        if (this.activeVoiceCalls) {
-          Object.values(this.activeVoiceCalls).forEach(call => {
-            try { call.close(); } catch (e) {}
-          });
-          this.activeVoiceCalls = {};
-        }
-        if (this.peer) {
-          try { this.peer.destroy(); } catch (e) {}
-          this.peer = null;
-        }
-        this.connections = [];
-        this.hostConnection = null;
-        this.isHost = false;
-        this.myPeerId = null;
+        // Notifica o Host e todos os peers com repetição de garantia (3 envios rápidos)
+        const notifyExit = () => {
+          if (!this.isHost && this.hostConnection && this.hostConnection.open) {
+            try { this.hostConnection.send({ type: 'PLAYER_LEFT', peerId: this.myPeerId }); } catch (e) {}
+          }
+          if (this.isHost) {
+            try { this.broadcast({ type: 'HOST_DISCONNECTED', roomCode: this.roomCode }); } catch (e) {}
+            try { this.broadcast({ type: 'PLAYER_LEFT', peerId: this.myPeerId }); } catch (e) {}
+          }
+        };
+
+        notifyExit();
+        setTimeout(notifyExit, 40);
+        setTimeout(notifyExit, 90);
 
         // Limpa modelos 3D do palco imediatamente
         if (typeof GameModule !== 'undefined' && GameModule.cleanupBotsAndReset) {
@@ -7843,20 +7884,33 @@
           ? 'https://jonygoi.github.io/mimic-party-3d/'
           : `${window.location.origin}${window.location.pathname}`;
 
-        // Limpa parâmetros de sala (?sala=...)
         try {
           window.history.replaceState({}, document.title, targetUrl);
         } catch (e) {}
 
-        // Força recarregamento total da página para resetar todos os bonecos e cena 3D
-        if (window.location.href === targetUrl) {
-          window.location.reload();
-        } else {
-          window.location.replace(targetUrl);
-          setTimeout(() => {
+        // Aguarda 160ms para os pacotes WebRTC serem transmitidos antes de fechar conexões e recarregar
+        setTimeout(() => {
+          if (this.activeVoiceCalls) {
+            Object.values(this.activeVoiceCalls).forEach(call => {
+              try { call.close(); } catch (e) {}
+            });
+            this.activeVoiceCalls = {};
+          }
+          if (this.peer) {
+            try { this.peer.destroy(); } catch (e) {}
+            this.peer = null;
+          }
+          this.connections = [];
+          this.hostConnection = null;
+          this.isHost = false;
+          this.myPeerId = null;
+
+          if (window.location.href === targetUrl) {
             window.location.reload();
-          }, 100);
-        }
+          } else {
+            window.location.replace(targetUrl);
+          }
+        }, 160);
       },
 
       handleWindowUnload() {
@@ -7887,10 +7941,6 @@
           Object.values(this.activeVoiceCalls).forEach(call => {
             try { call.close(); } catch (e) {}
           });
-        }
-
-        if (this.peer) {
-          try { this.peer.destroy(); } catch (e) {}
         }
       }
     };
@@ -8611,16 +8661,16 @@
       removeOnlinePlayer(peerId) {
         if (!peerId) return;
         const playerIdx = this.players.findIndex(p => p.id === peerId || p.peerId === peerId);
-        if (playerIdx === -1) return;
-        const player = this.players[playerIdx];
+        const player = playerIdx !== -1 ? this.players[playerIdx] : null;
 
-        // 1. Remove modelo 3D do palco e da lista de animação
-        if (player.char3D) {
-          if (player.char3D.group) {
-            Scene3DModule.scene.remove(player.char3D.group);
+        // 1. Remove qualquer modelo 3D do palco e da lista de animação
+        const charsToRemove = Scene3DModule.characters.filter(c => (player && c === player.char3D) || c.id === peerId || (player && player.peerId && c.id === player.peerId));
+        charsToRemove.forEach(c => {
+          if (c.group && Scene3DModule.scene) {
+            try { Scene3DModule.scene.remove(c.group); } catch (e) {}
           }
-          Scene3DModule.characters = Scene3DModule.characters.filter(c => c !== player.char3D && c.id !== peerId);
-        }
+        });
+        Scene3DModule.characters = Scene3DModule.characters.filter(c => !charsToRemove.includes(c));
 
         // 2. Remove player de áudio do chat de voz
         const audioEl = document.getElementById(`voice_${peerId}`);
@@ -8635,7 +8685,14 @@
         }
 
         // 4. Remove da lista de jogadores
-        this.players.splice(playerIdx, 1);
+        if (playerIdx !== -1) {
+          this.players.splice(playerIdx, 1);
+        }
+
+        // Notifica na tela quem saiu
+        if (player && typeof UIModule !== 'undefined' && UIModule.showToast) {
+          UIModule.showToast(`🚪 ${player.name || 'Um jogador'} saiu da partida`);
+        }
 
         // 5. Reposiciona personagens restantes e atualiza placar/lobby
         this.repositionLineup();
@@ -8645,15 +8702,45 @@
         // 6. Se o host estava aguardando takes, remove dos pendentes e reavalia
         if (this.isOnline && NetworkModule.isHost && this.pendingRoundTakes) {
           delete this.pendingRoundTakes[peerId];
+          if (player && player.peerId) delete this.pendingRoundTakes[player.peerId];
           this.checkAllTakesCollected();
         }
 
         // 7. Remove de takes da rodada se estiver no meio do showcase
         if (this.roundTakes && this.roundTakes.length > 0) {
-          this.roundTakes = this.roundTakes.filter(t => t.player && t.player.id !== peerId && t.player.peerId !== peerId);
-          if (this.activePlaybackIndex >= this.roundTakes.length) {
+          const currentTake = this.roundTakes[this.activePlaybackIndex];
+          const isCurrentActive = currentTake && currentTake.player && (currentTake.player.id === peerId || currentTake.player.peerId === peerId || currentTake.playerId === peerId);
+
+          this.roundTakes = this.roundTakes.filter(t => t.player && t.player.id !== peerId && t.player.peerId !== peerId && t.playerId !== peerId);
+
+          if (isCurrentActive) {
+            // Se o jogador que saiu estava cantando agora, corta o áudio e avança imediatamente!
+            AudioModule.stopCurrentAudio();
+            if (this.autoAdvanceTimer) {
+              clearTimeout(this.autoAdvanceTimer);
+              this.autoAdvanceTimer = null;
+            }
+            if (this.activePlaybackIndex >= this.roundTakes.length) {
+              this.openRoundRoulette();
+            } else {
+              this.playCurrentTakeShowcase();
+            }
+          } else if (this.activePlaybackIndex >= this.roundTakes.length) {
             this.openRoundRoulette();
           }
+        }
+
+        // 8. Se todos os adversários humanos saíram da partida online, encerra com vitória
+        const remainingHumans = this.players.filter(p => !p.isBot);
+        if (this.isMatchActive && remainingHumans.length <= 1 && !this.players.some(p => p.isBot)) {
+          if (typeof UIModule !== 'undefined' && UIModule.showToast) {
+            UIModule.showToast(`👑 Todos os adversários saíram! Fim de jogo.`);
+          }
+          setTimeout(() => {
+            if (this.isMatchActive) {
+              this.showFinalPodium();
+            }
+          }, 1200);
         }
       },
 
@@ -9020,6 +9107,7 @@
       simulateBotPitchTrail(d) { this.simulateBotLiveWave(d); },
 
       async startNextRound() {
+        if (!this.isMatchActive) return;
         AudioModule.stopCurrentAudio();
         // Silencia chat de voz durante a escuta do meme e gravação
         AudioModule.setVoiceChatActive(false);
@@ -9092,11 +9180,14 @@
 
         // Toca o áudio de referência com a agulha varrendo a tela
         setTimeout(() => {
+          if (!this.isMatchActive) return;
           const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
           this.animateNeedle(dur);
           AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
+            if (!this.isMatchActive) return;
             // Concluiu a escuta da referência pelo host
             setTimeout(() => {
+              if (!this.isMatchActive) return;
               this.roundTakes = [];
               const recDuration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
               if (this.isOnline && NetworkModule.isHost) {
@@ -9113,6 +9204,7 @@
       },
 
       async onOnlineRoundStart(soundId, roundNum, soundData) {
+        if (!this.isMatchActive) return;
         AudioModule.stopCurrentAudio();
         AudioModule.setVoiceChatActive(false);
         AudioModule.setMicMonitor(false);
@@ -9162,10 +9254,12 @@
         const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
         this.animateNeedle(dur);
         AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
+          if (!this.isMatchActive) return;
           // Quando terminar de ouvir, aguarda a ordem de contagem sincronizada do Host!
           subtitleEl.innerText = 'Aguardando o Host iniciar a contagem... ⏳';
           if (this.clientCountdownFallbackTimer) clearTimeout(this.clientCountdownFallbackTimer);
           this.clientCountdownFallbackTimer = setTimeout(() => {
+            if (!this.isMatchActive) return;
             console.warn("[Client] Fallback de início de gravação disparado.");
             this.startSimultaneousRecording(dur + 0.3);
           }, 8000);
@@ -9173,6 +9267,7 @@
       },
 
       onOnlineStartRecordCountdown(duration) {
+        if (!this.isMatchActive) return;
         if (this.clientCountdownFallbackTimer) {
           clearTimeout(this.clientCountdownFallbackTimer);
           this.clientCountdownFallbackTimer = null;
@@ -9184,6 +9279,7 @@
 
       // Gravação Simultânea: Todos gravam o mesmo áudio ao mesmo tempo, mas ninguém se ouve!
       async startSimultaneousRecording(customDuration = null) {
+        if (!this.isMatchActive) return;
         if (this.clientCountdownFallbackTimer) {
           clearTimeout(this.clientCountdownFallbackTimer);
           this.clientCountdownFallbackTimer = null;
@@ -9216,6 +9312,11 @@
         }
 
         this.recordingCountdownInterval = setInterval(() => {
+          if (!this.isMatchActive) {
+            clearInterval(this.recordingCountdownInterval);
+            this.recordingCountdownInterval = null;
+            return;
+          }
           count--;
           if (count > 0) {
             countBadge.innerText = count;
@@ -9244,11 +9345,13 @@
 
             AudioModule.recordTakePCM(duration,
               (prog) => {
+                if (!this.isMatchActive) return;
                 if (this.localPlayer && this.localPlayer.char3D) {
                   this.localPlayer.char3D.audioAmplitude = 0.5 + Math.random() * 0.4;
                 }
               },
               async (userBuf, audioBlob) => {
+                if (!this.isMatchActive) return;
                 try {
                   countBadge.style.display = 'none';
 
@@ -9564,6 +9667,7 @@
       },
 
       startTakesShowcase() {
+        if (!this.isMatchActive) return;
         AudioModule.stopCurrentAudio();
         // Gravação concluída: reativa o bate-papo por voz para todos conversarem e darem risada!
         AudioModule.setVoiceChatActive(true);
@@ -9577,6 +9681,7 @@
       },
 
       playCurrentTakeShowcase() {
+        if (!this.isMatchActive) return;
         if (this.activePlaybackIndex >= this.roundTakes.length) {
           this.openRoundRoulette();
           return;
@@ -9609,6 +9714,7 @@
         Scene3DModule.setCameraView('close_singer');
 
         AudioModule.playTake(take.audioBuffer, take.audioData, take.sabotage, () => {
+          if (!this.isMatchActive) return;
           if (p.char3D) {
             p.char3D.isSinging = false;
             p.char3D.audioAmplitude = 0;
@@ -9623,6 +9729,10 @@
           let cur = 0;
           const step = Math.max(1, Math.floor(finalScore / 18));
           const t = setInterval(() => {
+            if (!this.isMatchActive) {
+              clearInterval(t);
+              return;
+            }
             cur += step;
             if (cur >= finalScore) {
               cur = finalScore;
@@ -9649,6 +9759,7 @@
               if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
               if (!this.isOnline || NetworkModule.isHost) {
                 this.autoAdvanceTimer = setTimeout(() => {
+                  if (!this.isMatchActive) return;
                   this.advanceTakePlayback();
                 }, 4200);
               }
@@ -9659,6 +9770,7 @@
       },
 
       advanceTakePlayback() {
+        if (!this.isMatchActive) return;
         if (this.isOnline && !NetworkModule.isHost) {
           return;
         }
@@ -9691,6 +9803,7 @@
       },
 
       onOnlineAdvanceTake(takeIndex) {
+        if (!this.isMatchActive) return;
         if (this.autoAdvanceTimer) {
           clearTimeout(this.autoAdvanceTimer);
           this.autoAdvanceTimer = null;
@@ -9712,6 +9825,7 @@
       },
 
       openRoundRoulette() {
+        if (!this.isMatchActive) return;
         const curR = Number(this.currentRound) || 1;
         const totR = Number(this.totalRounds) || 5;
         if (curR >= totR) {
@@ -9851,6 +9965,7 @@
       },
 
       startIntermissionChat(seconds = 5) {
+        if (!this.isMatchActive) return;
         AudioModule.stopCurrentAudio();
         // Mantém chat de voz ativo durante o intervalo de conversa
         AudioModule.setVoiceChatActive(true);
@@ -9864,6 +9979,11 @@
 
         if (this.intermissionInterval) clearInterval(this.intermissionInterval);
         this.intermissionInterval = setInterval(() => {
+          if (!this.isMatchActive) {
+            clearInterval(this.intermissionInterval);
+            this.intermissionInterval = null;
+            return;
+          }
           remaining--;
           if (secSpan) secSpan.innerText = `${remaining}s`;
           AudioModule.playSfx('tick');
@@ -10123,6 +10243,19 @@
           clearTimeout(WheelModule.autoSpinTimer);
           WheelModule.autoSpinTimer = null;
         }
+        if (this.recordingCountdownInterval) {
+          clearInterval(this.recordingCountdownInterval);
+          this.recordingCountdownInterval = null;
+        }
+        if (this.clientCountdownFallbackTimer) {
+          clearTimeout(this.clientCountdownFallbackTimer);
+          this.clientCountdownFallbackTimer = null;
+        }
+        if (typeof AudioModule !== 'undefined') {
+          AudioModule.setVoiceChatActive(false);
+          AudioModule.setMicMonitor(false);
+        }
+        this.cleanupBotsAndReset();
 
         const wasOnline = this.isOnline || (NetworkModule && (NetworkModule.isHost || NetworkModule.hostConnection));
         this.isOnline = false;
@@ -10506,6 +10639,26 @@
           modal.style.display = 'flex';
           AudioModule.playSfx('tick');
         }
+      },
+
+      showToast(text, duration = 3000) {
+        let toast = document.getElementById('gameToastNotice');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.id = 'gameToastNotice';
+          toast.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(18,14,34,0.95); border:2.5px solid #ffdd00; color:#fff; padding:10px 22px; border-radius:14px; font-weight:900; font-size:1.05rem; z-index:100000; box-shadow:0 6px 20px rgba(0,0,0,0.6); pointer-events:none; transition:opacity 0.3s ease, transform 0.3s ease; text-align:center; font-family:var(--font-main);';
+          document.body.appendChild(toast);
+        }
+        toast.innerText = text;
+        toast.style.display = 'block';
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        if (this._toastTimer) clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(-10px)';
+          setTimeout(() => { toast.style.display = 'none'; }, 300);
+        }, duration);
       },
 
       closeModal(id) {
