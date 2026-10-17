@@ -7350,6 +7350,7 @@
       pendingRoundTakes: {},
       takesCollectionTimeout: null,
       isMatchActive: false,
+      hasConfirmedNickInSession: false,
       recordingCountdownInterval: null,
       clientCountdownFallbackTimer: null,
       currentTurnIndex: 0,
@@ -7474,31 +7475,22 @@
           isDraggingPreview = false;
         });
 
-        const existingNick = localStorage.getItem('mimic_nickname');
+        const sessionConfirmed = sessionStorage.getItem('mimic_session_nick_confirmed') === 'true' || this.hasConfirmedNickInSession;
         const urlParams = new URLSearchParams(window.location.search);
         const salaParam = urlParams.get('sala') || urlParams.get('room') || urlParams.get('code');
+
         if (salaParam) {
           const roomToJoin = salaParam.trim().toUpperCase();
           this.pendingJoinSala = roomToJoin;
-          if (existingNick && existingNick.trim()) {
-            // Se já tem apelido salvo, entra DIRETO NA SALA sem enrolação!
-            this.updateLocalPlayerName(existingNick.trim());
-            setTimeout(() => {
-              this.pendingJoinSala = null;
-              NetworkModule.joinRoom(roomToJoin);
-            }, 300);
-            return;
-          } else {
-            // Primeiro acesso: abre modal de boas-vindas focado no convite da sala
-            setTimeout(() => {
-              UIModule.openNicknameModal(roomToJoin);
-            }, 250);
-            return;
-          }
+          // Ao entrar pelo link de convite (?sala=...), sempre abre o modal para confirmar/digitar o nickname!
+          setTimeout(() => {
+            UIModule.openNicknameModal(roomToJoin);
+          }, 300);
+          return;
         }
 
-        // Sem link de sala: se nunca definiu nickname antes, pergunta uma vez
-        if (!existingNick) {
+        // Primeira vez que entra no jogo: sempre abre para digitar ou confirmar o apelido!
+        if (!sessionConfirmed) {
           setTimeout(() => {
             UIModule.openNicknameModal();
           }, 350);
@@ -7508,8 +7500,10 @@
       saveNicknameFromModal() {
         const input = document.getElementById('inputInitialNickname');
         let name = input ? input.value.trim() : '';
-        if (!name) name = 'Tigrezo';
+        if (!name) name = localStorage.getItem('mimic_nickname') || 'Tigrezo';
         localStorage.setItem('mimic_nickname', name);
+        sessionStorage.setItem('mimic_session_nick_confirmed', 'true');
+        this.hasConfirmedNickInSession = true;
         this.updateLocalPlayerName(name);
 
         const customInput = document.getElementById('inputPlayerName');
@@ -9354,10 +9348,11 @@
         }
         if (modal) modal.style.display = 'flex';
         if (input) {
-          input.value = GameModule.localPlayer.name || localStorage.getItem('mimic_nickname') || 'Tigrezo';
+          const savedNick = localStorage.getItem('mimic_nickname');
+          input.value = savedNick || (GameModule.localPlayer ? GameModule.localPlayer.name : '') || '';
           setTimeout(() => {
             input.focus();
-            input.select();
+            if (input.value) input.select();
           }, 150);
         }
       },
