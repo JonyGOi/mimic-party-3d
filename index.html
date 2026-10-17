@@ -1685,6 +1685,15 @@
       border: 2px solid #000;
     }
 
+    /* Ocultação forçada e absoluta de elementos de menu e nickname durante partidas ativas */
+    body.in-match #localPlayerProfileCard,
+    body.in-match #mainMenuOverlay,
+    body.in-match #mainLogoContainer,
+    body.in-match #modalNickname {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
     /* ==========================================================================
        RESPONSIVIDADE E OTIMIZAÇÃO COMPLETA PARA CELULAR / MOBILE (<= 768px)
        ========================================================================== */
@@ -4698,8 +4707,15 @@
         }, 30);
 
         hardTimeout = setTimeout(() => {
-          complete(this.createSilentBuffer(durationSeconds), null);
-        }, durationMs + 400);
+          console.warn("[AudioModule] hardTimeout disparado na gravação.");
+          let fallbackBlob = null;
+          try {
+            if (audioChunks && audioChunks.length > 0) {
+              fallbackBlob = new Blob(audioChunks, { type: (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm' });
+            }
+          } catch (bErr) {}
+          complete(this.createSilentBuffer(durationSeconds), fallbackBlob);
+        }, durationMs + 3500);
 
         if (!this.micStream || !this.micStream.active) {
           console.warn("Nenhum stream de mic ativo, aguardando...");
@@ -4748,7 +4764,13 @@
                 complete(balancedBuf, blob);
               } catch (decErr) {
                 console.warn("Decode fallback:", decErr);
-                complete(this.createSilentBuffer(durationSeconds), null);
+                let fallbackBlob = null;
+                try {
+                  if (audioChunks.length > 0) {
+                    fallbackBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                  }
+                } catch (bErr) {}
+                complete(this.createSilentBuffer(durationSeconds), fallbackBlob);
               }
             };
 
@@ -4770,6 +4792,59 @@
       createSilentBuffer(durationSeconds) {
         const sr = this.ctx ? this.ctx.sampleRate : 44100;
         return this.ctx.createBuffer(1, Math.floor(sr * durationSeconds), sr);
+      },
+
+      playTake(buffer, dataUrl, sabotageType, onEnded) {
+        this.ensureContext();
+        let endedCalled = false;
+        const finish = () => {
+          if (endedCalled) return;
+          endedCalled = true;
+          if (onEnded) onEnded();
+        };
+
+        // Verifica se o buffer decodificado possui som perceptível
+        let hasAudio = false;
+        if (buffer && buffer.length > 100) {
+          try {
+            const chData = buffer.getChannelData(0);
+            const step = Math.max(1, Math.floor(chData.length / 50));
+            for (let i = 0; i < chData.length; i += step) {
+              if (Math.abs(chData[i]) > 0.005) {
+                hasAudio = true;
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (hasAudio || !dataUrl) {
+          this.playAudioBuffer(buffer, sabotageType, finish);
+          return;
+        }
+
+        // Fallback: reproduz diretamente o áudio gravado via elemento HTML5 Audio
+        try {
+          const audioEl = new Audio(dataUrl);
+          audioEl.volume = 1.0;
+          let safeTimeout = setTimeout(finish, 4000);
+          audioEl.onended = () => {
+            clearTimeout(safeTimeout);
+            finish();
+          };
+          audioEl.onerror = () => {
+            clearTimeout(safeTimeout);
+            finish();
+          };
+          audioEl.play().catch(err => {
+            console.warn("HTML5 Audio play falhou, finalizando take:", err);
+            clearTimeout(safeTimeout);
+            finish();
+          });
+        } catch (e) {
+          console.warn("Falha ao instanciar HTML5 Audio fallback:", e);
+          finish();
+        }
       },
 
       playAudioBuffer(buffer, sabotageType, onEnded) {
@@ -4816,13 +4891,28 @@
         }
 
         lastNode.connect(this.outNode());
-        source.onended = () => {
+
+        const durationSec = (normalizedBuffer && normalizedBuffer.duration) ? normalizedBuffer.duration : 2.0;
+        let endedCalled = false;
+        const finish = () => {
+          if (endedCalled) return;
+          endedCalled = true;
           if (this.currentPlayingSource === source) {
             this.currentPlayingSource = null;
           }
           if (onEnded) onEnded();
         };
-        source.start();
+
+        source.onended = finish;
+        // Timeout de segurança absoluto para nunca travar em mobile com AudioContext suspenso
+        setTimeout(finish, Math.max(800, Math.round((durationSec + 0.6) * 1000)));
+
+        try {
+          source.start();
+        } catch (stErr) {
+          console.warn("source.start erro:", stErr);
+          finish();
+        }
       },
 
       playFartSynth(onEnded) {
@@ -6756,17 +6846,20 @@
           // Dispara PING para todos os clientes conectados
           this.broadcast({ type: 'PING', timestamp: now });
 
-          // Detecta clientes que fecharam o navegador ou caíram (sem resposta há mais de 4.5 segundos)
+          // Durante a partida ativa (gravação e julgamento), não desconecta por atraso de ping
+          if (GameModule.isMatchActive) return;
+
+          // Detecta clientes que realmente fecharam o navegador (tolerância móvel de 35 segundos)
           const conns = [...this.connections];
           conns.forEach(conn => {
             const pId = conn.peer;
             const last = this.lastSeenPeers[pId] || conn._openedTime || now;
-            if (now - last > 4500) {
-              console.warn(`[Heartbeat] Peer ${pId} inativo/fechou navegador. Removendo...`);
+            if (now - last > 35000) {
+              console.warn(`[Heartbeat] Peer ${pId} inativo há mais de 35s. Removendo...`);
               this.handleConnectionLost(conn);
             }
           });
-        }, 1800);
+        }, 3000);
       },
 
       startClientHeartbeatWatcher() {
@@ -6781,14 +6874,17 @@
           }
 
           const now = Date.now();
-          if (now - this.lastHostPing > 6500) {
-            console.warn("[Heartbeat] Host parou de responder/fechou o navegador.");
+          // Durante a partida ativa (gravação e julgamento), não desconecta por atraso de ping
+          if (GameModule.isMatchActive) return;
+
+          if (now - this.lastHostPing > 40000) {
+            console.warn("[Heartbeat] Host parou de responder há mais de 40s.");
             clearInterval(this.heartbeatTimer);
             this.heartbeatTimer = null;
             this.leaveOrCancelRoom();
             alert("A partida foi encerrada porque o Dono da Sala fechou o navegador ou desconectou.");
           }
-        }, 2000);
+        }, 3000);
       },
 
       handleConnectionLost(conn) {
@@ -7031,6 +7127,8 @@
           GameModule.restartMatchSamePlayers(false);
         } else if (msg.type === 'START_ROUND') {
           GameModule.onOnlineRoundStart(msg.soundId, msg.roundNumber, msg.sound);
+        } else if (msg.type === 'START_RECORD_COUNTDOWN') {
+          GameModule.onOnlineStartRecordCountdown(msg.duration);
         } else if (msg.type === 'ADVANCE_TAKE') {
           GameModule.onOnlineAdvanceTake(msg.takeIndex);
         } else if (msg.type === 'OPEN_ROULETTE') {
@@ -7184,6 +7282,8 @@
           GameModule.localPlayer.peerId = null;
           if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = 'host_p1';
         }
+        GameModule.isMatchActive = false;
+        document.body.classList.remove('in-match');
         GameModule.cleanupBotsAndReset();
         Scene3DModule.setCameraView('menu');
         document.getElementById('mainMenuOverlay').style.display = 'flex';
@@ -7249,6 +7349,9 @@
       roundTakes: [],
       pendingRoundTakes: {},
       takesCollectionTimeout: null,
+      isMatchActive: false,
+      recordingCountdownInterval: null,
+      clientCountdownFallbackTimer: null,
       currentTurnIndex: 0,
       activePlaybackIndex: 0,
       autoAdvanceTimer: null,
@@ -7775,6 +7878,8 @@
       },
 
       beginMatch(totalRounds = 5) {
+        this.isMatchActive = true;
+        document.body.classList.add('in-match');
         this.totalRounds = totalRounds;
         this.currentRound = 1;
 
@@ -8109,10 +8214,18 @@
           const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
           this.animateNeedle(dur);
           AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
-            // Concluiu a escuta da referência, prepara para gravar TODOS AO MESMO TEMPO!
+            // Concluiu a escuta da referência pelo host
             setTimeout(() => {
               this.roundTakes = [];
-              this.startSimultaneousRecording();
+              const recDuration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
+              if (this.isOnline && NetworkModule.isHost) {
+                // Broadcast sincronizado: Host avisa TODOS os clientes para começarem a contagem e gravação juntos!
+                NetworkModule.broadcast({
+                  type: 'START_RECORD_COUNTDOWN',
+                  duration: recDuration
+                });
+              }
+              this.startSimultaneousRecording(recDuration);
             }, 600);
           });
         }, 500);
@@ -8123,6 +8236,8 @@
         AudioModule.setVoiceChatActive(false);
         AudioModule.setMicMonitor(false);
         this.currentRound = roundNum;
+        this.roundTakes = [];
+        this.pendingRoundTakes = {};
 
         const hud = document.getElementById('intermissionHUD');
         if (hud) hud.style.display = 'none';
@@ -8166,15 +8281,32 @@
         const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
         this.animateNeedle(dur);
         AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
-          setTimeout(() => {
-            this.roundTakes = [];
-            this.startSimultaneousRecording();
-          }, 600);
+          // Quando terminar de ouvir, aguarda a ordem de contagem sincronizada do Host!
+          subtitleEl.innerText = 'Aguardando o Host iniciar a contagem... ⏳';
+          if (this.clientCountdownFallbackTimer) clearTimeout(this.clientCountdownFallbackTimer);
+          this.clientCountdownFallbackTimer = setTimeout(() => {
+            console.warn("[Client] Fallback de início de gravação disparado.");
+            this.startSimultaneousRecording(dur + 0.3);
+          }, 8000);
         });
       },
 
+      onOnlineStartRecordCountdown(duration) {
+        if (this.clientCountdownFallbackTimer) {
+          clearTimeout(this.clientCountdownFallbackTimer);
+          this.clientCountdownFallbackTimer = null;
+        }
+        AudioModule.stopCurrentAudio();
+        const recDuration = duration || (this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0);
+        this.startSimultaneousRecording(recDuration);
+      },
+
       // Gravação Simultânea: Todos gravam o mesmo áudio ao mesmo tempo, mas ninguém se ouve!
-      async startSimultaneousRecording() {
+      async startSimultaneousRecording(customDuration = null) {
+        if (this.clientCountdownFallbackTimer) {
+          clearTimeout(this.clientCountdownFallbackTimer);
+          this.clientCountdownFallbackTimer = null;
+        }
         await AudioModule.initMic();
 
         // Durante a gravação: ninguém se ouve!
@@ -8197,7 +8329,12 @@
         countBadge.innerText = count;
         AudioModule.playSfx('beep');
 
-        const interval = setInterval(() => {
+        if (this.recordingCountdownInterval) {
+          clearInterval(this.recordingCountdownInterval);
+          this.recordingCountdownInterval = null;
+        }
+
+        this.recordingCountdownInterval = setInterval(() => {
           count--;
           if (count > 0) {
             countBadge.innerText = count;
@@ -8205,15 +8342,18 @@
           } else if (count === 0) {
             countBadge.innerText = 'VAI! 🔥';
             AudioModule.playSfx('beep_go');
-            clearInterval(interval);
+            clearInterval(this.recordingCountdownInterval);
+            this.recordingCountdownInterval = null;
 
             subtitleEl.innerText = '🗣️ GRAVANDO TODOS AO MESMO TEMPO! IMITEM O SOM!';
-            const duration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
+            const duration = customDuration || (this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0);
 
             // Todos os bonecos cantam e pulam juntos no palco!
             this.players.forEach(p => {
-              p.char3D.isSinging = true;
-              p.char3D.audioAmplitude = 0.6;
+              if (p.char3D) {
+                p.char3D.isSinging = true;
+                p.char3D.audioAmplitude = 0.6;
+              }
             });
 
             // Agulha corre sobre a onda de referência
@@ -8233,8 +8373,10 @@
 
                   // Todos os bonecos param de cantar
                   this.players.forEach(p => {
-                    p.char3D.isSinging = false;
-                    p.char3D.audioAmplitude = 0;
+                    if (p.char3D) {
+                      p.char3D.isSinging = false;
+                      p.char3D.audioAmplitude = 0;
+                    }
                   });
 
                   // Avaliação real do take do microfone (silêncio total dá 0/100)
@@ -8260,6 +8402,7 @@
                   if (isOnlineMatch) {
                     if (NetworkModule.isHost) {
                       this.pendingRoundTakes[this.localPlayer.id] = localTake;
+                      subtitleEl.innerText = '✅ Sua imitação foi gravada! Aguardando os outros jogadores...';
                       this.checkAllTakesCollected();
                     } else {
                       NetworkModule.sendToHost({
@@ -8271,7 +8414,7 @@
                         audioData: audioDataUrl,
                         sabotage: localTake.sabotage
                       });
-                      subtitleEl.innerText = '✅ Take gravado! Aguardando os outros jogadores...';
+                      subtitleEl.innerText = '✅ Sua imitação foi gravada! Aguardando os outros jogadores...';
                     }
                   } else {
                     // Modo Solo / Bots locais
@@ -8354,30 +8497,40 @@
 
       receiveTakeFromOnlinePlayer(msg, peerId) {
         const pId = peerId || msg.peerId || msg.playerId;
-        this.pendingRoundTakes[pId] = {
+        const takeObj = {
           ...msg,
-          playerId: pId,
+          playerId: msg.playerId || pId,
           peerId: pId
         };
+        this.pendingRoundTakes[pId] = takeObj;
+        if (msg.playerId && msg.playerId !== pId) {
+          this.pendingRoundTakes[msg.playerId] = takeObj;
+        }
+        console.log(`[Host] Take recebido de ${msg.name || pId} (áudio presente: ${!!msg.audioData})`);
         this.checkAllTakesCollected();
       },
 
       checkAllTakesCollected() {
-        if (this.takesCollectionTimeout) {
-          clearTimeout(this.takesCollectionTimeout);
-          this.takesCollectionTimeout = null;
-        }
-
         const humanPlayers = this.players.filter(p => !p.isBot);
-        const collectedCount = humanPlayers.filter(p => !!this.pendingRoundTakes[p.id] || (p.peerId && !!this.pendingRoundTakes[p.peerId])).length;
+        const collectedCount = humanPlayers.filter(p => {
+          return !!(this.pendingRoundTakes[p.id] || (p.peerId && this.pendingRoundTakes[p.peerId]));
+        }).length;
+
+        console.log(`[Host] Takes coletados: ${collectedCount}/${humanPlayers.length}`);
 
         if (collectedCount >= humanPlayers.length) {
+          if (this.takesCollectionTimeout) {
+            clearTimeout(this.takesCollectionTimeout);
+            this.takesCollectionTimeout = null;
+          }
           this.finalizeAndBroadcastTakes();
         } else {
-          this.takesCollectionTimeout = setTimeout(() => {
-            console.warn("Timeout de takes online atingido, finalizando com os recebidos...");
-            this.finalizeAndBroadcastTakes();
-          }, 4500);
+          if (!this.takesCollectionTimeout) {
+            this.takesCollectionTimeout = setTimeout(() => {
+              console.warn("[Host] Timeout de 12s para coleta de takes online expirou. Finalizando com os recebidos...");
+              this.finalizeAndBroadcastTakes();
+            }, 12000);
+          }
         }
       },
 
@@ -8412,8 +8565,8 @@
                 playerId: p.id,
                 peerId: p.peerId || p.id,
                 name: p.name,
-                scoreResult: t.scoreResult,
-                audioData: t.audioData,
+                scoreResult: t.scoreResult || { totalScore: 0 },
+                audioData: t.audioData || null,
                 sabotage: t.sabotage || null,
                 isBot: false
               });
@@ -8461,7 +8614,7 @@
 
         this.roundTakes = [];
         for (const item of takesList) {
-          let player = this.players.find(p => p.id === item.playerId || (item.peerId && p.peerId === item.peerId));
+          let player = this.players.find(p => p.id === item.playerId || (item.peerId && (p.id === item.peerId || p.peerId === item.peerId)));
           if (!player) {
             player = {
               id: item.playerId,
@@ -8476,7 +8629,8 @@
           let decodedBuffer = null;
 
           // Se for o jogador local e já tivermos o buffer gravado em memória, usa diretamente
-          if (item.playerId === this.localPlayer.id && this.lastLocalRecordedBuffer) {
+          const isLocal = (item.playerId === this.localPlayer.id) || (this.localPlayer.peerId && item.playerId === this.localPlayer.peerId);
+          if (isLocal && this.lastLocalRecordedBuffer) {
             decodedBuffer = this.lastLocalRecordedBuffer;
           } else if (item.audioData) {
             try {
@@ -8484,7 +8638,7 @@
               const arrayBuf = await resp.arrayBuffer();
               decodedBuffer = await AudioModule.ctx.decodeAudioData(arrayBuf);
             } catch (err) {
-              console.warn("Falha ao decodificar áudio do take:", err);
+              console.warn("Falha ao decodificar áudio do take via decodeAudioData:", err);
             }
           }
 
@@ -8500,6 +8654,7 @@
             playerId: item.playerId,
             player: player,
             audioBuffer: decodedBuffer,
+            audioData: item.audioData || null,
             scoreResult: item.scoreResult || { totalScore: 0, waveScore: 0, pitchScore: 0, rhythmScore: 0, energyScore: 0, penalty: 0 },
             sabotage: item.sabotage || null
           });
@@ -8511,12 +8666,15 @@
       onReceiveTakeAudio(playerId, audioData) {
         if (!playerId || !audioData) return;
         const take = this.roundTakes.find(t => t.playerId === playerId || (t.player && (t.player.id === playerId || t.player.peerId === playerId)));
-        if (take && (!take.audioBuffer || take.audioBuffer.length <= 100)) {
-          fetch(audioData).then(r => r.arrayBuffer()).then(arr => {
-            return AudioModule.ctx.decodeAudioData(arr);
-          }).then(buf => {
-            take.audioBuffer = buf;
-          }).catch(e => console.warn("Erro ao decodificar áudio do take secundário:", e));
+        if (take) {
+          take.audioData = audioData;
+          if (!take.audioBuffer || take.audioBuffer.length <= 100) {
+            fetch(audioData).then(r => r.arrayBuffer()).then(arr => {
+              return AudioModule.ctx.decodeAudioData(arr);
+            }).then(buf => {
+              take.audioBuffer = buf;
+            }).catch(e => console.warn("Erro ao decodificar áudio do take secundário:", e));
+          }
         }
       },
 
@@ -8524,10 +8682,12 @@
         AudioModule.stopCurrentAudio();
         // Gravação concluída: reativa o bate-papo por voz para todos conversarem e darem risada!
         AudioModule.setVoiceChatActive(true);
+        AudioModule.setMicMonitor(false);
 
         this.activePlaybackIndex = 0;
         document.getElementById('roundSubtitleText').innerText = 'JULGAMENTO DOS TAKES';
-        document.getElementById('soundShowcaseOverlay').style.display = 'none';
+        const soundOverlay = document.getElementById('soundShowcaseOverlay');
+        if (soundOverlay) soundOverlay.style.display = 'none';
         this.playCurrentTakeShowcase();
       },
 
@@ -8556,14 +8716,18 @@
 
         this.highlightActiveCard(p.id);
 
-        p.char3D.walkTo(0, -0.6);
-        p.char3D.isSinging = true;
-        p.char3D.audioAmplitude = 0.8;
+        if (p.char3D) {
+          p.char3D.walkTo(0, -0.6);
+          p.char3D.isSinging = true;
+          p.char3D.audioAmplitude = 0.8;
+        }
         Scene3DModule.setCameraView('close_singer');
 
-        AudioModule.playAudioBuffer(take.audioBuffer, take.sabotage, () => {
-          p.char3D.isSinging = false;
-          p.char3D.audioAmplitude = 0;
+        AudioModule.playTake(take.audioBuffer, take.audioData, take.sabotage, () => {
+          if (p.char3D) {
+            p.char3D.isSinging = false;
+            p.char3D.audioAmplitude = 0;
+          }
           const finalScore = take.scoreResult.totalScore;
           p.score += finalScore;
           this.updateTopBarCards();
@@ -8778,6 +8942,8 @@
       },
 
       showFinalPodium() {
+        this.isMatchActive = false;
+        document.body.classList.remove('in-match');
         AudioModule.setVoiceChatActive(true);
         Scene3DModule.setCameraView('stage_lineup');
 
@@ -8875,6 +9041,8 @@
       },
 
       returnToMenu() {
+        this.isMatchActive = false;
+        document.body.classList.remove('in-match');
         AudioModule.stopCurrentAudio();
         UIModule.stopConfetti();
         UIModule.closeModal('modalFinalPodium');
@@ -9163,6 +9331,10 @@
       },
 
       openNicknameModal(targetRoom = null) {
+        if (GameModule.isMatchActive) {
+          console.warn("Bloqueando abertura de modal de nickname durante a partida ativa.");
+          return;
+        }
         const modal = document.getElementById('modalNickname');
         const input = document.getElementById('inputInitialNickname');
         const icon = document.getElementById('modalNicknameIcon');
