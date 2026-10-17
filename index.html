@@ -592,6 +592,10 @@
       50% { transform: scale(1.35); opacity: 1; }
       100% { transform: scale(0.9); opacity: 0.8; }
     }
+    @keyframes pulseGlow {
+      0% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 245, 118, 0.4); }
+      100% { transform: scale(1.04); box-shadow: 0 0 24px rgba(0, 245, 118, 0.95); }
+    }
 
     /* ESTÚDIO DO CRIADOR DE PERSONAGEM EM TEMPO REAL */
     .customizer-overlay {
@@ -2914,7 +2918,7 @@
   </div>
 
   <!-- MODAL: PODIUM FINAL E TIER LIST -->
-  <div id="modalFinalPodium" class="modal-overlay" style="display:none;">
+  <div id="modalFinalPodium" class="modal-overlay" style="display:none; z-index:3000;">
     <div class="modal-box" style="max-width:650px;">
       <h2 class="modal-title">👑 FIM DE JOGO! TEMOS O CAMPEÃO 👑</h2>
       
@@ -2923,8 +2927,10 @@
         <!-- Injetado via JS -->
       </div>
 
+      <div id="podiumHostNotice" style="display:none; text-align:center; font-weight:700; color:#ffdd00; font-size:0.95rem; margin-bottom:8px; padding:6px 12px; background:rgba(255,221,0,0.15); border:2px solid #ffdd00; border-radius:10px;"></div>
+
       <div style="display:flex; justify-content:center; gap:12px; margin-top:16px; flex-wrap:wrap;">
-        <button class="btn btn-green" style="font-size:1.15rem; padding:12px 26px; box-shadow:0 0 18px rgba(0,245,118,0.5);" onclick="GameModule.restartMatchSamePlayers()">
+        <button id="btnPodiumRestart" class="btn btn-green" style="font-size:1.15rem; padding:12px 26px; box-shadow:0 0 18px rgba(0,245,118,0.5);" onclick="GameModule.onPodiumRestartClick()">
           🔁 RECOMEÇAR PARTIDA (MESMAS PESSOAS)
         </button>
         <button class="btn btn-pink" onclick="UIModule.downloadShareCard()">
@@ -4709,11 +4715,24 @@
         // Usa MediaRecorder para captura nativa com 100% de clareza vocal e ganho processado
         if (window.MediaRecorder) {
           try {
-            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-              ? 'audio/webm;codecs=opus'
-              : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
+            let mimeType = '';
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+              mimeType = 'audio/webm;codecs=opus';
+            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+              mimeType = 'audio/webm';
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+              mimeType = 'audio/mp4';
+            }
 
-            mediaRecorder = mimeType ? new MediaRecorder(streamToRecord, { mimeType }) : new MediaRecorder(streamToRecord);
+            const mrOptions = { audioBitsPerSecond: 32000 };
+            if (mimeType) mrOptions.mimeType = mimeType;
+
+            try {
+              mediaRecorder = new MediaRecorder(streamToRecord, mrOptions);
+            } catch (mrOptErr) {
+              mediaRecorder = mimeType ? new MediaRecorder(streamToRecord, { mimeType }) : new MediaRecorder(streamToRecord);
+            }
+
             audioChunks = [];
 
             mediaRecorder.ondataavailable = (e) => {
@@ -6493,6 +6512,8 @@
       async initHostRoom() {
         // LIMPA QUALQUER BOT OU ESTADO ANTERIOR!
         GameModule.cleanupBotsAndReset();
+        GameModule.isOnline = true;
+        GameModule.isSoloBots = false;
         await AudioModule.initMic();
         AudioModule.setVoiceChatActive(true);
         this.activeVoiceCalls = {};
@@ -6574,6 +6595,8 @@
 
       async joinRoom(code) {
         GameModule.cleanupBotsAndReset();
+        GameModule.isOnline = true;
+        GameModule.isSoloBots = false;
         this.activeVoiceCalls = {};
         this.isHost = false;
         let cleanCode = (code || '').toString().trim().toUpperCase();
@@ -6828,7 +6851,11 @@
 
       sendToHost(msg) {
         if (this.hostConnection && this.hostConnection.open) {
-          this.hostConnection.send(msg);
+          try {
+            this.hostConnection.send(msg);
+          } catch (err) {
+            console.warn("Falha no sendToHost:", err);
+          }
         }
       },
 
@@ -6866,7 +6893,15 @@
       },
 
       broadcast(msg) {
-        this.connections.forEach(conn => { if (conn.open) conn.send(msg); });
+        this.connections.forEach(conn => {
+          if (conn && conn.open) {
+            try {
+              conn.send(msg);
+            } catch (err) {
+              console.warn("Falha no broadcast:", err);
+            }
+          }
+        });
       },
 
       sendLobbyChatMessage() {
@@ -6961,6 +6996,10 @@
           GameModule.receiveTakeFromOnlinePlayer(msg, senderConn.peer);
         } else if (msg.type === 'ROUND_ALL_TAKES') {
           GameModule.onReceiveAllTakes(msg.takes);
+        } else if (msg.type === 'ROUND_TAKE_AUDIO') {
+          GameModule.onReceiveTakeAudio(msg.playerId, msg.audioData);
+        } else if (msg.type === 'REQUEST_RESTART' && this.isHost) {
+          GameModule.onHostReceivedRestartRequest(msg.name);
         } else if (msg.type === 'LOBBY_CHAT') {
           this.appendLobbyChatMessage(msg, false);
           if (this.isHost) {
@@ -7094,6 +7133,8 @@
           this.broadcastRoomState();
         }
 
+        GameModule.isOnline = true;
+        GameModule.isSoloBots = false;
         this.broadcast({ type: 'START_GAME', rounds: 5 });
         GameModule.beginMatch(5);
       },
@@ -7106,6 +7147,8 @@
 
       leaveOrCancelRoom() {
         UIModule.closeModal('modalCreateRoom');
+        GameModule.isOnline = false;
+        GameModule.isSoloBots = false;
         if (this.heartbeatTimer) {
           clearInterval(this.heartbeatTimer);
           this.heartbeatTimer = null;
@@ -8211,8 +8254,10 @@
                     sabotage: this.localPlayer.pendingSabotage || null
                   };
                   this.localPlayer.pendingSabotage = null;
+                  this.lastLocalRecordedBuffer = userBuf;
 
-                  if (this.isOnline) {
+                  const isOnlineMatch = this.isOnline || (NetworkModule && (NetworkModule.isHost || (NetworkModule.hostConnection && NetworkModule.hostConnection.open)));
+                  if (isOnlineMatch) {
                     if (NetworkModule.isHost) {
                       this.pendingRoundTakes[this.localPlayer.id] = localTake;
                       this.checkAllTakesCollected();
@@ -8388,17 +8433,31 @@
 
         this.pendingRoundTakes = {};
 
+        // Transmissão para todos os jogadores:
+        // 1. Envia a lista com metadados e áudios
         NetworkModule.broadcast({
           type: 'ROUND_ALL_TAKES',
           takes: takesList
         });
+
+        // 2. Transmite cada áudio individualmente como garantia de integridade
+        for (const t of takesList) {
+          if (t.audioData) {
+            NetworkModule.broadcast({
+              type: 'ROUND_TAKE_AUDIO',
+              playerId: t.playerId,
+              audioData: t.audioData
+            });
+          }
+        }
 
         await this.onReceiveAllTakes(takesList);
       },
 
       async onReceiveAllTakes(takesList) {
         AudioModule.stopCurrentAudio();
-        document.getElementById('soundShowcaseOverlay').style.display = 'none';
+        const showcaseOverlay = document.getElementById('soundShowcaseOverlay');
+        if (showcaseOverlay) showcaseOverlay.style.display = 'none';
 
         this.roundTakes = [];
         for (const item of takesList) {
@@ -8415,7 +8474,11 @@
           }
 
           let decodedBuffer = null;
-          if (item.audioData) {
+
+          // Se for o jogador local e já tivermos o buffer gravado em memória, usa diretamente
+          if (item.playerId === this.localPlayer.id && this.lastLocalRecordedBuffer) {
+            decodedBuffer = this.lastLocalRecordedBuffer;
+          } else if (item.audioData) {
             try {
               const resp = await fetch(item.audioData);
               const arrayBuf = await resp.arrayBuffer();
@@ -8434,6 +8497,7 @@
           }
 
           this.roundTakes.push({
+            playerId: item.playerId,
             player: player,
             audioBuffer: decodedBuffer,
             scoreResult: item.scoreResult || { totalScore: 0, waveScore: 0, pitchScore: 0, rhythmScore: 0, energyScore: 0, penalty: 0 },
@@ -8442,6 +8506,18 @@
         }
 
         this.startTakesShowcase();
+      },
+
+      onReceiveTakeAudio(playerId, audioData) {
+        if (!playerId || !audioData) return;
+        const take = this.roundTakes.find(t => t.playerId === playerId || (t.player && (t.player.id === playerId || t.player.peerId === playerId)));
+        if (take && (!take.audioBuffer || take.audioBuffer.length <= 100)) {
+          fetch(audioData).then(r => r.arrayBuffer()).then(arr => {
+            return AudioModule.ctx.decodeAudioData(arr);
+          }).then(buf => {
+            take.audioBuffer = buf;
+          }).catch(e => console.warn("Erro ao decodificar áudio do take secundário:", e));
+        }
       },
 
       startTakesShowcase() {
@@ -8704,35 +8780,97 @@
       showFinalPodium() {
         AudioModule.setVoiceChatActive(true);
         Scene3DModule.setCameraView('stage_lineup');
-        document.getElementById('modalFinalPodium').style.display = 'flex';
+
+        // Garante fechamento de todos os overlays e HUDs de jogo
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+        const soundOverlay = document.getElementById('soundShowcaseOverlay');
+        if (soundOverlay) soundOverlay.style.display = 'none';
+        const intermission = document.getElementById('intermissionHUD');
+        if (intermission) intermission.style.display = 'none';
+        const banner = document.getElementById('matchIntroBanner');
+        if (banner) banner.style.display = 'none';
+        UIModule.closeModal('modalRoulette');
+        UIModule.hideTomato();
+
+        const modal = document.getElementById('modalFinalPodium');
+        if (modal) modal.style.display = 'flex';
+
+        const restartBtn = document.getElementById('btnPodiumRestart');
+        const hostNotice = document.getElementById('podiumHostNotice');
+        if (hostNotice) { hostNotice.style.display = 'none'; hostNotice.innerText = ''; }
+
+        if (this.isOnline && !NetworkModule.isHost) {
+          if (restartBtn) {
+            restartBtn.innerText = '🔁 PEDIR AO HOST PARA RECOMEÇAR';
+            restartBtn.disabled = false;
+          }
+        } else {
+          if (restartBtn) {
+            restartBtn.innerText = '🔁 RECOMEÇAR PARTIDA (MESMAS PESSOAS)';
+            restartBtn.disabled = false;
+          }
+        }
 
         const sorted = [...this.players].sort((a, b) => b.score - a.score);
         const podBox = document.getElementById('podiumVisualContainer');
-        podBox.innerHTML = '';
+        if (podBox) {
+          podBox.innerHTML = '';
+          const p1 = sorted[0] || { name: 'Campeão', score: 0 };
+          const p2 = sorted[1] || { name: '-', score: 0 };
+          const p3 = sorted[2] || { name: '-', score: 0 };
 
-        const p1 = sorted[0];
-        const p2 = sorted[1] || { name: '-', score: 0 };
-        const p3 = sorted[2] || { name: '-', score: 0 };
-
-        podBox.innerHTML = `
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <strong>${p2.name}</strong>
-            <span style="color:#ffb703; font-weight:900;">${p2.score} pts</span>
-            <div style="width:90px; height:90px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.8rem; color:#000;">2º</div>
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <strong style="color:#ffdd00; font-size:1.2rem;">👑 ${p1.name}</strong>
-            <span style="color:#00f576; font-weight:900;">${p1.score} pts</span>
-            <div style="width:110px; height:130px; background:#ffd700; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2.4rem; color:#000;">1º 🏆</div>
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <strong>${p3.name}</strong>
-            <span style="color:#ffb703; font-weight:900;">${p3.score} pts</span>
-            <div style="width:90px; height:70px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.6rem; color:#000;">3º</div>
-          </div>
-        `;
+          podBox.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <strong>${p2.name}</strong>
+              <span style="color:#ffb703; font-weight:900;">${p2.score} pts</span>
+              <div style="width:90px; height:90px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.8rem; color:#000;">2º</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <strong style="color:#ffdd00; font-size:1.2rem;">👑 ${p1.name}</strong>
+              <span style="color:#00f576; font-weight:900;">${p1.score} pts</span>
+              <div style="width:110px; height:130px; background:#ffd700; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2.4rem; color:#000;">1º 🏆</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <strong>${p3.name}</strong>
+              <span style="color:#ffb703; font-weight:900;">${p3.score} pts</span>
+              <div style="width:90px; height:70px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.6rem; color:#000;">3º</div>
+            </div>
+          `;
+        }
 
         UIModule.startConfetti();
+        AudioModule.playSfx('airhorn');
+      },
+
+      onPodiumRestartClick() {
+        if (this.isOnline && !NetworkModule.isHost) {
+          NetworkModule.sendToHost({
+            type: 'REQUEST_RESTART',
+            name: this.localPlayer.name
+          });
+          const btn = document.getElementById('btnPodiumRestart');
+          if (btn) {
+            btn.innerText = '⏳ PEDIDO ENVIADO! AGUARDANDO HOST...';
+            btn.disabled = true;
+          }
+          return;
+        }
+
+        this.restartMatchSamePlayers(true);
+      },
+
+      onHostReceivedRestartRequest(name) {
+        const hostNotice = document.getElementById('podiumHostNotice');
+        if (hostNotice) {
+          hostNotice.style.display = 'block';
+          hostNotice.innerText = `🔔 ${name || 'Um jogador'} pediu para recomeçar a partida!`;
+        }
+        const restartBtn = document.getElementById('btnPodiumRestart');
+        if (restartBtn) {
+          restartBtn.innerText = `🔁 RECOMEÇAR PARTIDA (PEDIDO DE ${name || 'JOGADOR'}) 🔥`;
+          restartBtn.style.animation = 'pulseGlow 1s infinite alternate';
+        }
         AudioModule.playSfx('airhorn');
       },
 
@@ -8777,7 +8915,11 @@
           this.needleAnimFrame = null;
         }
 
-        if (this.isOnline) {
+        const wasOnline = this.isOnline || (NetworkModule && (NetworkModule.isHost || NetworkModule.hostConnection));
+        this.isOnline = false;
+        this.isSoloBots = false;
+
+        if (wasOnline) {
           NetworkModule.leaveOrCancelRoom();
         }
 
