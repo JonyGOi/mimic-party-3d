@@ -483,6 +483,35 @@
       transform: scale(1.06);
     }
 
+    /* CARDS DE SELEÇÃO: SALA PÚBLICA OU PRIVADA */
+    .room-type-card {
+      background: #161c36;
+      border: 2px solid #3d346b;
+      border-radius: 14px;
+      padding: 14px 16px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.18s ease;
+      font-family: var(--font-main);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .room-type-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    }
+    .room-type-card.type-public:hover {
+      border-color: #00f576;
+      background: #132438;
+    }
+    .room-type-card.type-private:hover {
+      border-color: #ff0077;
+      background: #281734;
+    }
+
     /* BATE-PAPO DA SALA (LOBBY CHAT) */
     .lobby-chat-container {
       background: #111424;
@@ -2012,6 +2041,27 @@
         height: 125px !important;
         font-size: 0.8rem !important;
       }
+      #lobbyVisibilityBox {
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: stretch !important;
+        padding: 8px 10px !important;
+      }
+      #lobbyVisibilityBox > div:first-child {
+        text-align: center !important;
+      }
+      #lobbyVisibilityChipGroup {
+        display: flex !important;
+        width: 100% !important;
+        justify-content: center !important;
+        gap: 6px !important;
+      }
+      #lobbyVisibilityChipGroup .round-chip {
+        flex: 1 !important;
+        text-align: center !important;
+        padding: 7px 4px !important;
+        font-size: 0.8rem !important;
+      }
 
       /* Biblioteca de Pacotes de Sons */
       #modalPacks .modal-box {
@@ -2318,6 +2368,55 @@
        MODAIS E TELAS DO JOGO
        ========================================================================= -->
 
+  <!-- MODAL: ESCOLHER TIPO DE SALA ONLINE (PÚBLICA OU PRIVADA) -->
+  <div id="modalCreateRoomType" class="modal-overlay" style="display:none; z-index:2200;">
+    <div class="modal-box" style="max-width:500px; text-align:center;">
+      <div style="font-size:3rem; margin-bottom:4px; filter:drop-shadow(0 4px 0 #000);">🌐</div>
+      <h2 class="modal-title" style="margin-top:2px; font-size:1.65rem;">CRIAR SALA ONLINE</h2>
+      <p style="font-weight:700; opacity:0.85; font-size:0.9rem; margin-bottom:16px;">
+        Como você deseja configurar a visibilidade da sua sala?
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <!-- Opção Pública -->
+        <button type="button" class="room-type-card type-public" onclick="UIModule.confirmCreateRoom(true)">
+          <div style="font-size:2rem; background:#0c2d20; padding:10px; border-radius:12px; border:2px solid #00f576; display:flex; align-items:center; justify-content:center;">🌐</div>
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:900; font-size:1.05rem; color:#fff;">SALA PÚBLICA</span>
+              <span style="background:#00f576; color:#000; font-size:0.68rem; font-weight:900; padding:2px 6px; border-radius:6px;">ABERTA</span>
+            </div>
+            <div style="font-size:0.8rem; color:#94a3b8; margin-top:3px; line-height:1.2;">
+              Aparece na lista de Salas Públicas para qualquer jogador entrar e jogar com você!
+            </div>
+          </div>
+          <div style="color:#00f576; font-size:1.4rem; font-weight:900;">➔</div>
+        </button>
+
+        <!-- Opção Privada -->
+        <button type="button" class="room-type-card type-private" onclick="UIModule.confirmCreateRoom(false)">
+          <div style="font-size:2rem; background:#211738; padding:10px; border-radius:12px; border:2px solid #ff0077; display:flex; align-items:center; justify-content:center;">🔒</div>
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:900; font-size:1.05rem; color:#fff;">SALA PRIVADA</span>
+              <span style="background:#ff0077; color:#fff; font-size:0.68rem; font-weight:900; padding:2px 6px; border-radius:6px;">FECHADA</span>
+            </div>
+            <div style="font-size:0.8rem; color:#94a3b8; margin-top:3px; line-height:1.2;">
+              Oculta da lista pública. Apenas amigos com o código de 5 letras ou link direto podem entrar.
+            </div>
+          </div>
+          <div style="color:#ff0077; font-size:1.4rem; font-weight:900;">➔</div>
+        </button>
+      </div>
+
+      <div style="display:flex; justify-content:center;">
+        <button type="button" class="btn btn-neutral" onclick="UIModule.closeModal('modalCreateRoomType')" style="padding:8px 24px;">
+          VOLTAR
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: SALA DE ESPERA ONLINE / CRIAR SALA (COM BATE-PAPO AO VIVO) -->
   <div id="modalCreateRoom" class="modal-overlay" style="display:none;">
     <div class="modal-box" style="max-width:680px;">
@@ -2371,6 +2470,26 @@
             <input id="lobbyChatInput" type="text" class="lobby-chat-input" placeholder="Conversar na sala..." maxlength="80" autocomplete="off">
             <button type="submit" class="lobby-chat-send-btn">ENVIAR 🚀</button>
           </form>
+        </div>
+      </div>
+
+      <!-- Visibilidade da Sala Online (Apenas Host altera) -->
+      <div id="lobbyVisibilityBox" style="display:flex; justify-content:space-between; align-items:center; background:#111424; border:2px solid #28214f; border-radius:12px; padding:8px 14px; margin-top:6px;">
+        <div style="text-align:left;">
+          <span style="font-weight:900; font-size:0.82rem; color:#ffdd00; display:flex; align-items:center; gap:6px;">
+            🌐 VISIBILIDADE DA SALA:
+          </span>
+          <span id="lobbyVisibilityDesc" style="font-size:0.75rem; color:#94a3b8; display:block; margin-top:2px;">
+            Aparece na lista de Salas Públicas para qualquer pessoa entrar
+          </span>
+        </div>
+        <div id="lobbyVisibilityChipGroup" style="display:flex; gap:6px;">
+          <button type="button" id="btnVisibilityPublic" class="round-chip active" onclick="NetworkModule.setRoomVisibility(true)">
+            🌐 PÚBLICA
+          </button>
+          <button type="button" id="btnVisibilityPrivate" class="round-chip" onclick="NetworkModule.setRoomVisibility(false)">
+            🔒 PRIVADA
+          </button>
         </div>
       </div>
 
@@ -6920,6 +7039,7 @@
       myPeerId: null,
       roomCode: null,
       isHost: false,
+      isPublicRoom: true,
       connections: [],
       hostConnection: null,
       activeVoiceCalls: {},
@@ -6927,11 +7047,50 @@
       lastSeenPeers: {},
       lastHostPing: 0,
 
-      async initHostRoom() {
+      setRoomVisibility(isPublic, syncToClients = true) {
+        this.isPublicRoom = (typeof isPublic === 'boolean') ? isPublic : true;
+        try {
+          localStorage.setItem('mimic_room_visibility', this.isPublicRoom ? 'public' : 'private');
+        } catch (e) {}
+
+        const pubBtn = document.getElementById('btnVisibilityPublic');
+        const privBtn = document.getElementById('btnVisibilityPrivate');
+        const desc = document.getElementById('lobbyVisibilityDesc');
+
+        if (pubBtn && privBtn) {
+          if (this.isPublicRoom) {
+            pubBtn.classList.add('active');
+            privBtn.classList.remove('active');
+            if (desc) desc.innerText = 'Qualquer pessoa pode encontrar e entrar pela lista de Salas Públicas 🌐';
+          } else {
+            pubBtn.classList.remove('active');
+            privBtn.classList.add('active');
+            if (desc) desc.innerText = 'Sala privada: Apenas amigos com o código ou link de convite podem entrar 🔒';
+          }
+        }
+
+        if (this.isHost && typeof PublicRoomsModule !== 'undefined') {
+          if (this.isPublicRoom) {
+            PublicRoomsModule.startHostAnnouncing(this.roomCode);
+          } else {
+            PublicRoomsModule.stopHostAnnouncing(this.roomCode);
+          }
+        }
+
+        if (syncToClients && this.isHost) {
+          this.broadcast({
+            type: 'ROOM_VISIBILITY_CHANGED',
+            isPublic: this.isPublicRoom
+          });
+        }
+      },
+
+      async initHostRoom(isPublic = true) {
         // LIMPA QUALQUER BOT OU ESTADO ANTERIOR!
         GameModule.cleanupBotsAndReset();
         GameModule.isOnline = true;
         GameModule.isSoloBots = false;
+        this.isPublicRoom = (typeof isPublic === 'boolean') ? isPublic : true;
         await AudioModule.initMic();
         AudioModule.setVoiceChatActive(true);
         this.activeVoiceCalls = {};
@@ -6954,6 +7113,9 @@
         if (startBtn) startBtn.style.display = 'inline-block';
         if (packsBtn) packsBtn.style.display = 'inline-block';
         if (waitingNotice) waitingNotice.style.display = 'none';
+
+        // Atualiza UI de visibilidade conforme escolha (pública ou privada)
+        this.setRoomVisibility(this.isPublicRoom, false);
 
         // Reseta o bate-papo do lobby para o host
         const chatBox = document.getElementById('lobbyChatMessages');
@@ -6978,7 +7140,7 @@
             document.getElementById('displayRoomCode').innerText = this.roomCode;
             this.updateWaitingRoomUI();
             this.startHostHeartbeat();
-            if (typeof PublicRoomsModule !== 'undefined') {
+            if (this.isPublicRoom && typeof PublicRoomsModule !== 'undefined') {
               PublicRoomsModule.startHostAnnouncing(this.roomCode);
             }
           });
@@ -7451,7 +7613,12 @@
               if (c.open && c !== senderConn) c.send(msg);
             });
           }
+        } else if (msg.type === 'ROOM_VISIBILITY_CHANGED' && !this.isHost) {
+          this.setRoomVisibility(msg.isPublic, false);
         } else if (msg.type === 'ROOM_STATE') {
+          if (typeof msg.isPublic !== 'undefined' && !this.isHost) {
+            this.setRoomVisibility(msg.isPublic, false);
+          }
           if (msg.rounds && !this.isHost) {
             GameModule.setMatchRounds(msg.rounds, false);
           }
@@ -7509,6 +7676,7 @@
         if (!this.isHost) return;
         const state = {
           type: 'ROOM_STATE',
+          isPublic: this.isPublicRoom,
           rounds: GameModule.matchRounds || 5,
           packsConfig: PacksModule.exportState(),
           players: GameModule.players.map(p => ({
@@ -7542,6 +7710,14 @@
           const isLocal = p.id === GameModule.localPlayer.id || (this.myPeerId && p.peerId === this.myPeerId);
           item.innerHTML = `<span ${isLocal ? 'onclick="UIModule.openNicknameModal()" style="cursor:pointer;" title="Clique para alterar seu apelido"' : ''}>👤 ${escapeHtml(p.name)} ${isLocal ? '<span style="font-size:0.75rem; color:#ffdd00; text-decoration:underline;">(VOCÊ ✏️)</span>' : ''}</span> <span style="color:#00f576; font-size:0.75rem;">PRONTO</span>`;
           list.appendChild(item);
+        });
+
+        // Configura chips de visibilidade da sala no lobby: apenas o host altera, cliente apenas observa
+        const visChips = document.querySelectorAll('#lobbyVisibilityChipGroup .round-chip');
+        visChips.forEach(c => {
+          c.style.pointerEvents = this.isHost ? 'auto' : 'none';
+          c.style.opacity = this.isHost ? '1' : '0.85';
+          c.title = this.isHost ? 'Escolha se a sala é Pública ou Privada' : 'Apenas o Host pode alterar a visibilidade da sala';
         });
 
         // Configura chips de rodadas no lobby: apenas o host altera, cliente apenas observa
@@ -7749,11 +7925,12 @@
       },
 
       startHostAnnouncing(roomCode) {
+        if (!NetworkModule.isPublicRoom) return;
         if (!this.client) this.init();
         if (this.broadcastTimer) clearInterval(this.broadcastTimer);
 
         const sendAnnounce = () => {
-          if (!NetworkModule.isHost || !this.client || !this.client.connected) return;
+          if (!NetworkModule.isHost || !NetworkModule.isPublicRoom || !this.client || !this.client.connected) return;
           const realPlayers = GameModule.players.filter(p => !p.isBot);
           const msg = {
             roomCode: roomCode,
@@ -7772,7 +7949,7 @@
       },
 
       triggerAnnounce(roomCode) {
-        if (!NetworkModule.isHost || !this.client || !this.client.connected) return;
+        if (!NetworkModule.isHost || !NetworkModule.isPublicRoom || !this.client || !this.client.connected) return;
         const realPlayers = GameModule.players.filter(p => !p.isBot);
         const msg = {
           roomCode: roomCode,
@@ -7799,7 +7976,11 @@
       },
 
       openModal() {
-        UIModule.openModal('modalPublicRooms');
+        const modal = document.getElementById('modalPublicRooms');
+        if (modal) {
+          modal.style.display = 'flex';
+          AudioModule.playSfx('tick');
+        }
         if (!this.client) this.init();
         this.cleanExpiredRooms();
         this.renderRoomsList();
@@ -7886,7 +8067,7 @@
 
       createPublicRoom() {
         this.closeModal();
-        UIModule.openCreateRoomModal();
+        UIModule.confirmCreateRoom(true);
       },
 
       quickMatch() {
@@ -10102,11 +10283,23 @@
       },
 
       openCreateRoomModal() {
+        const modal = document.getElementById('modalCreateRoomType');
+        if (modal) {
+          modal.style.display = 'flex';
+          AudioModule.playSfx('tick');
+        } else {
+          this.confirmCreateRoom(true);
+        }
+      },
+
+      confirmCreateRoom(isPublic = true) {
+        this.closeModal('modalCreateRoomType');
+        this.closeModal('modalPublicRooms');
         GameModule.cleanupBotsAndReset();
         AudioModule.initMic();
         PacksModule.updateCounts();
         document.getElementById('modalCreateRoom').style.display = 'flex';
-        NetworkModule.initHostRoom();
+        NetworkModule.initHostRoom(isPublic);
       },
 
       openJoinRoomModal() {
@@ -10118,7 +10311,11 @@
       openSoloBotsModal() {
         const saved = parseInt(localStorage.getItem('mimic_bot_count') || '3', 10);
         this.selectBotCount(saved, false);
-        this.openModal('modalSoloBots');
+        const modal = document.getElementById('modalSoloBots');
+        if (modal) {
+          modal.style.display = 'flex';
+          AudioModule.playSfx('tick');
+        }
       },
 
       selectBotCount(count, playSfx = true) {
@@ -10215,6 +10412,14 @@
         AudioModule.setMicGain(AudioModule.micGain);
         AudioModule.updateEQDisplay();
         AudioModule.playSfx('tick');
+      },
+
+      openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+          modal.style.display = 'flex';
+          AudioModule.playSfx('tick');
+        }
       },
 
       closeModal(id) {
