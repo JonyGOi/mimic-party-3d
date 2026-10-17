@@ -1643,7 +1643,7 @@
   </div>
 
   <!-- MODAL: BIBLIOTECA DE PACOTES DE SONS (SCREENSHOTS DO USUÁRIO) -->
-  <div id="modalPacks" class="modal-overlay" style="display:none;">
+  <div id="modalPacks" class="modal-overlay" style="display:none; z-index:2500;">
     <div class="modal-box" style="max-width:860px; width:95%;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -1706,7 +1706,7 @@
   </div>
 
   <!-- MODAL: DETALHES E PREVIEW DOS SONS DE UM PACOTE -->
-  <div id="modalPackDetail" class="modal-overlay" style="display:none; z-index:90;">
+  <div id="modalPackDetail" class="modal-overlay" style="display:none; z-index:2600;">
     <div class="modal-box" style="max-width:580px;">
       <h2 id="packDetailTitle" class="modal-title">PACOTE: MEME BR</h2>
       <p id="packDetailSubtitle" style="font-weight:700; opacity:0.85;">Ouça a prévia de cada som antes de jogar:</p>
@@ -2029,7 +2029,7 @@
       <div class="wave-comp-header">
         <span class="wave-label-ref">🔊 ONDA DO SOM ORIGINAL</span>
         <span id="waveMatchBadge" class="wave-match-badge">SIMILARIDADE: 0%</span>
-        <span class="wave-label-user">🎙️ SUA ONDA FALADA</span>
+        <span id="waveLabelUser" class="wave-label-user">🎙️ SUA ONDA FALADA</span>
       </div>
       <div class="wave-canvas-wrap">
         <canvas id="canvasWaveComparison" width="480" height="90"></canvas>
@@ -3368,7 +3368,7 @@
         let mediaRecorder = null;
         let audioChunks = [];
 
-        const complete = (buffer) => {
+        const complete = (buffer, blob = null) => {
           if (isDone) return;
           isDone = true;
           if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
@@ -3379,7 +3379,7 @@
           }
 
           if (onProgress) try { onProgress(1.0); } catch (e) {}
-          if (onFinish) try { onFinish(buffer); } catch (e) { console.error("onFinish err:", e); }
+          if (onFinish) try { onFinish(buffer, blob); } catch (e) { console.error("onFinish err:", e); }
         };
 
         progressTimer = setInterval(() => {
@@ -3388,12 +3388,12 @@
         }, 30);
 
         hardTimeout = setTimeout(() => {
-          complete(this.createSilentBuffer(durationSeconds));
+          complete(this.createSilentBuffer(durationSeconds), null);
         }, durationMs + 400);
 
         if (!this.micStream || !this.micStream.active) {
           console.warn("Nenhum stream de mic ativo, aguardando...");
-          setTimeout(() => complete(this.createSilentBuffer(durationSeconds)), durationMs);
+          setTimeout(() => complete(this.createSilentBuffer(durationSeconds), null), durationMs);
           return;
         }
 
@@ -3417,10 +3417,10 @@
                 const arrayBuffer = await blob.arrayBuffer();
                 const decodedBuf = await this.ctx.decodeAudioData(arrayBuffer);
                 const balancedBuf = this.normalizeBuffer(decodedBuf, 0.92);
-                complete(balancedBuf);
+                complete(balancedBuf, blob);
               } catch (decErr) {
                 console.warn("Decode fallback:", decErr);
-                complete(this.createSilentBuffer(durationSeconds));
+                complete(this.createSilentBuffer(durationSeconds), null);
               }
             };
 
@@ -3436,7 +3436,7 @@
           }
         }
 
-        setTimeout(() => complete(this.createSilentBuffer(durationSeconds)), durationMs);
+        setTimeout(() => complete(this.createSilentBuffer(durationSeconds), null), durationMs);
       },
 
       createSilentBuffer(durationSeconds) {
@@ -3965,7 +3965,7 @@
       },
 
       // Desenha o gráfico de comparação direta entre a onda de referência e a onda falada
-      drawWaveComparison(canvas, refBuffer, userBuffer, scoreResult) {
+      drawWaveComparison(canvas, refBuffer, userBuffer, scoreResult, playerName = '') {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width || 480;
@@ -4082,13 +4082,19 @@
         }
         ctx.fillStyle = (score === 0 || isSilence) ? '#ff3366' : (score >= 70 ? '#00f576' : 'rgba(255, 107, 107, 0.9)');
         ctx.font = 'bold 9px Inter, sans-serif';
-        ctx.fillText('🎙️ SUA FALA', 8, midY + 12);
+        const displayLabel = playerName ? `🎙️ ${playerName.toUpperCase()}` : '🎙️ SUA FALA';
+        ctx.fillText(displayLabel, 8, midY + 12);
       },
 
-      renderWaveComparisonUI(refBuffer, userBuffer, scoreResult) {
+      renderWaveComparisonUI(refBuffer, userBuffer, scoreResult, playerName = '') {
         const canvas = document.getElementById('canvasWaveComparison');
         if (canvas) {
-          this.drawWaveComparison(canvas, refBuffer, userBuffer, scoreResult);
+          this.drawWaveComparison(canvas, refBuffer, userBuffer, scoreResult, playerName);
+        }
+
+        const labelUser = document.getElementById('waveLabelUser');
+        if (labelUser) {
+          labelUser.innerText = playerName ? `🎙️ ONDA DE ${playerName.toUpperCase()}` : '🎙️ SUA ONDA FALADA';
         }
 
         const badge = document.getElementById('waveMatchBadge');
@@ -4753,7 +4759,10 @@
           });
         }
 
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+          modal.style.zIndex = '2600';
+          modal.style.display = 'flex';
+        }
       },
 
       playPreview(fileUrl) {
@@ -4828,6 +4837,16 @@
         "'": '&#39;',
         '"': '&quot;'
       }[tag] || tag));
+    }
+
+    function blobToDataURL(blob) {
+      return new Promise((resolve) => {
+        if (!blob) { resolve(null); return; }
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
     }
 
     const NetworkModule = {
@@ -4981,8 +5000,29 @@
         conn.on('data', (data) => this.handleNetworkMessage(data, conn));
         conn.on('close', () => {
           this.connections = this.connections.filter(c => c !== conn);
+          GameModule.removeOnlinePlayer(conn.peer);
+          if (this.isHost) {
+            this.broadcast({ type: 'PLAYER_LEFT', peerId: conn.peer });
+            this.broadcastRoomState();
+          }
           this.updateWaitingRoomUI();
         });
+        conn.on('error', (err) => {
+          console.warn("Conn error:", err);
+          this.connections = this.connections.filter(c => c !== conn);
+          GameModule.removeOnlinePlayer(conn.peer);
+          if (this.isHost) {
+            this.broadcast({ type: 'PLAYER_LEFT', peerId: conn.peer });
+            this.broadcastRoomState();
+          }
+          this.updateWaitingRoomUI();
+        });
+      },
+
+      sendToHost(msg) {
+        if (this.hostConnection && this.hostConnection.open) {
+          this.hostConnection.send(msg);
+        }
       },
 
       setupVoiceCall(remotePeerId) {
@@ -5085,6 +5125,16 @@
           this.broadcast(sysMsg);
 
           setTimeout(() => this.setupVoiceCall(senderConn.peer), 800);
+        } else if (msg.type === 'PLAYER_LEFT') {
+          GameModule.removeOnlinePlayer(msg.peerId);
+          if (this.isHost) {
+            this.broadcast(msg);
+            this.broadcastRoomState();
+          }
+        } else if (msg.type === 'SUBMIT_TAKE' && this.isHost) {
+          GameModule.receiveTakeFromOnlinePlayer(msg, senderConn.peer);
+        } else if (msg.type === 'ROUND_ALL_TAKES') {
+          GameModule.onReceiveAllTakes(msg.takes);
         } else if (msg.type === 'LOBBY_CHAT') {
           this.appendLobbyChatMessage(msg, false);
           if (this.isHost) {
@@ -5160,6 +5210,38 @@
 
       hostStartGame() {
         UIModule.closeModal('modalCreateRoom');
+
+        // Se estiver sozinho na sala online ao iniciar, adiciona 3 bots para 4 participantes no palco
+        if (GameModule.players.length === 1) {
+          const defaultBots = [
+            { name: 'Cap', hair: 'blonde_spiky', shirtColor: '#e63946', pantsColor: '#1d3557', accessory: 'shades', preset: 'custom', skill: 0.8 },
+            { name: 'Sangras', hair: 'black_curly', shirtColor: '#2a9d8f', pantsColor: '#264653', accessory: 'cap', preset: 'custom', skill: 0.6 },
+            { name: 'MrFall', hair: 'brown_parted', shirtColor: '#f4a261', pantsColor: '#e76f51', accessory: 'none', preset: 'custom', skill: 0.7 }
+          ];
+          defaultBots.forEach((b, idx) => {
+            const bChar = new Character3D({
+              id: 'bot_' + idx,
+              name: b.name,
+              hair: b.hair,
+              shirtColor: b.shirtColor,
+              pantsColor: b.pantsColor,
+              accessory: b.accessory,
+              preset: b.preset
+            });
+            Scene3DModule.characters.push(bChar);
+            GameModule.players.push({
+              id: 'bot_' + idx,
+              name: b.name,
+              isBot: true,
+              botSkill: b.skill,
+              score: 0,
+              char3D: bChar
+            });
+          });
+          GameModule.repositionLineup();
+          this.broadcastRoomState();
+        }
+
         this.broadcast({ type: 'START_GAME', rounds: 5 });
         GameModule.beginMatch(5);
       },
@@ -5172,6 +5254,11 @@
 
       leaveOrCancelRoom() {
         UIModule.closeModal('modalCreateRoom');
+        if (!this.isHost && this.hostConnection && this.hostConnection.open) {
+          try {
+            this.hostConnection.send({ type: 'PLAYER_LEFT', peerId: this.myPeerId });
+          } catch (e) {}
+        }
         if (this.peer) {
           try { this.peer.destroy(); } catch (e) {}
           this.peer = null;
@@ -5209,6 +5296,8 @@
       refAudioBuffer: null,
       refAnalysis: null,
       roundTakes: [],
+      pendingRoundTakes: {},
+      takesCollectionTimeout: null,
       currentTurnIndex: 0,
       activePlaybackIndex: 0,
       autoAdvanceTimer: null,
@@ -5588,6 +5677,46 @@
         this.repositionLineup();
       },
 
+      removeOnlinePlayer(peerId) {
+        if (!peerId) return;
+        const playerIdx = this.players.findIndex(p => p.id === peerId || p.peerId === peerId);
+        if (playerIdx === -1) return;
+        const player = this.players[playerIdx];
+
+        // 1. Remove modelo 3D do palco e da lista de animação
+        if (player.char3D) {
+          if (player.char3D.group) {
+            Scene3DModule.scene.remove(player.char3D.group);
+          }
+          Scene3DModule.characters = Scene3DModule.characters.filter(c => c !== player.char3D && c.id !== peerId);
+        }
+
+        // 2. Remove player de áudio do chat de voz
+        const audioEl = document.getElementById(`voice_${peerId}`);
+        if (audioEl) {
+          try { audioEl.srcObject = null; audioEl.remove(); } catch (e) {}
+        }
+
+        // 3. Encerra chamada de voz P2P ativa
+        if (NetworkModule.activeVoiceCalls && NetworkModule.activeVoiceCalls[peerId]) {
+          try { NetworkModule.activeVoiceCalls[peerId].close(); } catch (e) {}
+          delete NetworkModule.activeVoiceCalls[peerId];
+        }
+
+        // 4. Remove da lista de jogadores
+        this.players.splice(playerIdx, 1);
+
+        // 5. Reposiciona personagens restantes e atualiza placar/lobby
+        this.repositionLineup();
+        this.updateTopBarCards();
+        NetworkModule.updateWaitingRoomUI();
+
+        // 6. Remove de takes da rodada se estiver no meio do showcase
+        if (this.roundTakes && this.roundTakes.length > 0) {
+          this.roundTakes = this.roundTakes.filter(t => t.player && t.player.id !== peerId && t.player.peerId !== peerId);
+        }
+      },
+
       syncOnlinePlayers(playersData) {
         if (!Array.isArray(playersData)) return;
 
@@ -5597,7 +5726,7 @@
             this.localPlayer.score = pData.score || 0;
             return;
           }
-          let existing = this.players.find(p => p.id === pData.id);
+          let existing = this.players.find(p => p.id === pData.id || (pData.peerId && p.peerId === pData.peerId));
           if (!existing) {
             const char = new Character3D({
               id: pData.id,
@@ -5634,19 +5763,19 @@
           }
         });
 
-        // Remove jogadores que saíram
-        this.players = this.players.filter(p => {
-          if (p.id === this.localPlayer.id) return true;
-          const found = playersData.find(pd => pd.id === p.id);
-          if (!found && p.char3D && p.char3D.group) {
-            Scene3DModule.scene.remove(p.char3D.group);
-            Scene3DModule.characters = Scene3DModule.characters.filter(c => c.id !== p.id);
-            return false;
+        // Remove jogadores que saíram da sala
+        const toRemove = [];
+        this.players.forEach(p => {
+          if (p.id === this.localPlayer.id || p.isBot) return;
+          const found = playersData.find(pd => pd.id === p.id || (pd.peerId && pd.peerId === p.peerId));
+          if (!found) {
+            toRemove.push(p.peerId || p.id);
           }
-          return true;
         });
+        toRemove.forEach(id => this.removeOnlinePlayer(id));
 
         this.repositionLineup();
+        this.updateTopBarCards();
       },
 
       repositionLineup() {
@@ -6078,7 +6207,7 @@
                   this.localPlayer.char3D.audioAmplitude = 0.5 + Math.random() * 0.4;
                 }
               },
-              (userBuf) => {
+              async (userBuf, audioBlob) => {
                 try {
                   countBadge.style.display = 'none';
 
@@ -6092,35 +6221,61 @@
                   const userAnalysis = ScoringModule.analyzeBuffer(userBuf);
                   const scoreRes = ScoringModule.evaluate(this.refAnalysis, userAnalysis, this.currentSound ? this.currentSound.unpitched : false);
 
-                  this.roundTakes.push({
+                  const audioDataUrl = await blobToDataURL(audioBlob);
+
+                  const localTake = {
                     player: this.localPlayer,
+                    playerId: this.localPlayer.id,
+                    name: this.localPlayer.name,
                     audioBuffer: userBuf,
+                    audioData: audioDataUrl,
                     userAnalysis,
                     scoreResult: scoreRes,
                     sabotage: this.localPlayer.pendingSabotage || null
-                  });
+                  };
                   this.localPlayer.pendingSabotage = null;
 
-                  // Bots geram takes audíveis com variação realista
-                  this.players.forEach(p => {
-                    if (p.isBot) {
-                      const botBuf = this.generateBotAudioBuffer(this.refAudioBuffer, p.botSkill || 0.7);
-                      const botAnalysis = ScoringModule.analyzeBuffer(botBuf);
-                      const botScore = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
-                      this.roundTakes.push({
-                        player: p,
-                        audioBuffer: botBuf,
-                        userAnalysis: botAnalysis,
-                        scoreResult: botScore,
-                        sabotage: p.pendingSabotage || null
+                  if (this.isOnline) {
+                    if (NetworkModule.isHost) {
+                      this.pendingRoundTakes[this.localPlayer.id] = localTake;
+                      this.checkAllTakesCollected();
+                    } else {
+                      NetworkModule.sendToHost({
+                        type: 'SUBMIT_TAKE',
+                        playerId: this.localPlayer.id,
+                        peerId: NetworkModule.myPeerId,
+                        name: this.localPlayer.name,
+                        scoreResult: scoreRes,
+                        audioData: audioDataUrl,
+                        sabotage: localTake.sabotage
                       });
-                      p.pendingSabotage = null;
+                      subtitleEl.innerText = '✅ Take gravado! Aguardando os outros jogadores...';
                     }
-                  });
-
+                  } else {
+                    // Modo Solo / Bots locais
+                    this.roundTakes = [localTake];
+                    this.players.forEach(p => {
+                      if (p.isBot) {
+                        const botBuf = this.generateBotAudioBuffer(this.refAudioBuffer, p.botSkill || 0.7);
+                        const botAnalysis = ScoringModule.analyzeBuffer(botBuf);
+                        const botScore = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
+                        this.roundTakes.push({
+                          player: p,
+                          audioBuffer: botBuf,
+                          userAnalysis: botAnalysis,
+                          scoreResult: botScore,
+                          sabotage: p.pendingSabotage || null
+                        });
+                        p.pendingSabotage = null;
+                      }
+                    });
+                    document.getElementById('soundShowcaseOverlay').style.display = 'none';
+                    setTimeout(() => {
+                      this.startTakesShowcase();
+                    }, 400);
+                  }
                 } catch (err) {
                   console.error("Erro ao finalizar gravação simultânea:", err);
-                } finally {
                   document.getElementById('soundShowcaseOverlay').style.display = 'none';
                   setTimeout(() => {
                     this.startTakesShowcase();
@@ -6175,6 +6330,138 @@
         return outBuf;
       },
 
+      receiveTakeFromOnlinePlayer(msg, peerId) {
+        const pId = msg.playerId || peerId;
+        this.pendingRoundTakes[pId] = {
+          ...msg,
+          playerId: pId,
+          peerId: peerId
+        };
+        this.checkAllTakesCollected();
+      },
+
+      checkAllTakesCollected() {
+        if (this.takesCollectionTimeout) {
+          clearTimeout(this.takesCollectionTimeout);
+          this.takesCollectionTimeout = null;
+        }
+
+        const humanPlayers = this.players.filter(p => !p.isBot);
+        const collectedCount = humanPlayers.filter(p => !!this.pendingRoundTakes[p.id]).length;
+
+        if (collectedCount >= humanPlayers.length) {
+          this.finalizeAndBroadcastTakes();
+        } else {
+          this.takesCollectionTimeout = setTimeout(() => {
+            console.warn("Timeout de takes online atingido, finalizando com os recebidos...");
+            this.finalizeAndBroadcastTakes();
+          }, 4500);
+        }
+      },
+
+      async finalizeAndBroadcastTakes() {
+        if (this.takesCollectionTimeout) {
+          clearTimeout(this.takesCollectionTimeout);
+          this.takesCollectionTimeout = null;
+        }
+
+        const takesList = [];
+
+        for (const p of this.players) {
+          if (p.isBot) {
+            const botBuf = this.generateBotAudioBuffer(this.refAudioBuffer, p.botSkill || 0.7);
+            const botAnalysis = ScoringModule.analyzeBuffer(botBuf);
+            const botScore = ScoringModule.evaluate(this.refAnalysis, botAnalysis, this.currentSound ? this.currentSound.unpitched : false);
+            takesList.push({
+              playerId: p.id,
+              name: p.name,
+              scoreResult: botScore,
+              audioData: null,
+              sabotage: p.pendingSabotage || null,
+              isBot: true,
+              botSkill: p.botSkill || 0.7
+            });
+            p.pendingSabotage = null;
+          } else {
+            const t = this.pendingRoundTakes[p.id];
+            if (t) {
+              takesList.push({
+                playerId: p.id,
+                name: p.name,
+                scoreResult: t.scoreResult,
+                audioData: t.audioData,
+                sabotage: t.sabotage || null,
+                isBot: false
+              });
+            } else {
+              takesList.push({
+                playerId: p.id,
+                name: p.name,
+                scoreResult: { totalScore: 0, waveScore: 0, pitchScore: 0, rhythmScore: 0, energyScore: 0, penalty: 0 },
+                audioData: null,
+                sabotage: null,
+                isBot: false
+              });
+            }
+          }
+        }
+
+        this.pendingRoundTakes = {};
+
+        NetworkModule.broadcast({
+          type: 'ROUND_ALL_TAKES',
+          takes: takesList
+        });
+
+        await this.onReceiveAllTakes(takesList);
+      },
+
+      async onReceiveAllTakes(takesList) {
+        document.getElementById('soundShowcaseOverlay').style.display = 'none';
+
+        this.roundTakes = [];
+        for (const item of takesList) {
+          let player = this.players.find(p => p.id === item.playerId);
+          if (!player) {
+            player = {
+              id: item.playerId,
+              name: item.name,
+              score: 0,
+              isBot: !!item.isBot,
+              char3D: Scene3DModule.characters.find(c => c.id === item.playerId) || this.localPlayer.char3D
+            };
+          }
+
+          let decodedBuffer = null;
+          if (item.audioData) {
+            try {
+              const resp = await fetch(item.audioData);
+              const arrayBuf = await resp.arrayBuffer();
+              decodedBuffer = await AudioModule.ctx.decodeAudioData(arrayBuf);
+            } catch (err) {
+              console.warn("Falha ao decodificar áudio do take:", err);
+            }
+          }
+
+          if (!decodedBuffer) {
+            if (item.isBot) {
+              decodedBuffer = this.generateBotAudioBuffer(this.refAudioBuffer, item.botSkill || 0.7);
+            } else {
+              decodedBuffer = AudioModule.createSilentBuffer(2.0);
+            }
+          }
+
+          this.roundTakes.push({
+            player: player,
+            audioBuffer: decodedBuffer,
+            scoreResult: item.scoreResult || { totalScore: 0, waveScore: 0, pitchScore: 0, rhythmScore: 0, energyScore: 0, penalty: 0 },
+            sabotage: item.sabotage || null
+          });
+        }
+
+        this.startTakesShowcase();
+      },
+
       startTakesShowcase() {
         // Gravação concluída: reativa o bate-papo por voz para todos conversarem e darem risada!
         AudioModule.setVoiceChatActive(true);
@@ -6193,6 +6480,13 @@
 
         const take = this.roundTakes[this.activePlaybackIndex];
         const p = take.player;
+
+        const currentNum = this.activePlaybackIndex + 1;
+        const totalNum = this.roundTakes.length;
+        const subtitleEl = document.getElementById('roundSubtitleText');
+        if (subtitleEl) {
+          subtitleEl.innerText = `JULGAMENTO: IMITAÇÃO DE ${p.name.toUpperCase()} (${currentNum} de ${totalNum})`;
+        }
 
         const scoreOverlay = document.getElementById('takeScoreOverlay');
         const scoreEl = document.getElementById('takeScoreNumber');
@@ -6217,7 +6511,7 @@
           this.highlightActiveCard(p.id);
 
           if (scoreOverlay) scoreOverlay.style.display = 'flex';
-          ScoringModule.renderWaveComparisonUI(this.refAudioBuffer, take.audioBuffer, take.scoreResult);
+          ScoringModule.renderWaveComparisonUI(this.refAudioBuffer, take.audioBuffer, take.scoreResult, p.name);
           let cur = 0;
           const step = Math.max(1, Math.floor(finalScore / 18));
           const t = setInterval(() => {
@@ -6425,9 +6719,17 @@
           clearTimeout(this.autoAdvanceTimer);
           this.autoAdvanceTimer = null;
         }
+        if (this.takesCollectionTimeout) {
+          clearTimeout(this.takesCollectionTimeout);
+          this.takesCollectionTimeout = null;
+        }
         if (this.needleAnimFrame) {
           cancelAnimationFrame(this.needleAnimFrame);
           this.needleAnimFrame = null;
+        }
+
+        if (this.isOnline) {
+          NetworkModule.leaveOrCancelRoom();
         }
 
         this.cleanupBotsAndReset();
@@ -6687,7 +6989,10 @@
         PacksModule.renderPacksGrid();
         PacksModule.updateCounts();
         const modal = document.getElementById('modalPacks');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+          modal.style.zIndex = '2500';
+          modal.style.display = 'flex';
+        }
         AudioModule.playSfx('tick');
       },
 
