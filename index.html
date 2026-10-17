@@ -1643,7 +1643,7 @@
       </button>
 
       <button class="btn btn-neutral btn-menu-sounds" onclick="UIModule.openSoundPacksModal()">
-        📚 PACOTES DE SONS (<span id="menuSoundsCount">157</span>)
+        📚 PACOTES DE SONS (<span id="menuSoundsCount">146</span>)
       </button>
     </div>
 
@@ -1692,7 +1692,7 @@
           </button>
           <!-- Botão para Selecionar Áudios antes de Começar (apenas host) -->
           <button id="btnLobbySoundPacks" class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703; padding:8px 10px;">
-            🎵 MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">157</span>)
+            🎵 MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">146</span>)
           </button>
           <button id="btnLobbyMicAdjust" class="btn btn-neutral btn-sm" onclick="UIModule.openMicAdjusterModal()" style="border-color:#00f576; color:#00f576; padding:8px 10px;">
             🎙️ AJUSTAR MIC, EQUALIZADOR & RETORNO
@@ -1767,7 +1767,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <h2 class="modal-title" style="margin-bottom:2px;">BIBLIOTECA DE PACOTES 📚</h2>
-          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">17 de 17 pacotes instalados (157 sons)</span>
+          <span id="packsCounterText" style="font-weight:900; color:#00f0ff; font-size:0.9rem;">16 de 17 pacotes ativos (146 sons ativos)</span>
         </div>
         <button class="btn btn-neutral btn-sm" onclick="UIModule.closeModal('modalPacks')">
           ✖ FECHAR
@@ -1776,7 +1776,7 @@
 
       <!-- Barra de Filtros por Categoria -->
       <div class="pack-filter-bar" id="packFilterBar">
-        <button class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS (157)</button>
+        <button id="chipFilterTodos" class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MEME BR', this)">🔥 MEME BR</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('TV', this)">📺 TV & RATINHO</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('CHAVES', this)">👦 CHAVES</button>
@@ -2369,11 +2369,6 @@
         <span>Ritmo / Ataques: <b id="statRhythm" style="color:#ffdd00;">0%</b></span>
         <span>Volume / Envelope: <b id="statEnvelope" style="color:#00f576;">0%</b></span>
       </div>
-    </div>
-
-    <button id="btnAdvanceTake" class="btn btn-pink btn-sm" style="margin-top:10px; font-size:0.95rem; padding:8px 20px;" onclick="GameModule.advanceTakePlayback()">
-      PRÓXIMO TAKE ➡️
-    </button>
   </div>
 
   <!-- OVERLAY DO TOMATE NA CARA (QUANDO A NOTA É RUIM) -->
@@ -5495,6 +5490,102 @@
       },
 
       initUI() {
+        this.loadFromStorage();
+        this.renderPacksGrid();
+        this.updateCounts();
+      },
+
+      saveToStorage() {
+        try {
+          const packStates = {};
+          this.packs.forEach(p => {
+            const soundStates = {};
+            p.sounds.forEach(s => {
+              if (s.enabled !== undefined) {
+                soundStates[s.id] = s.enabled;
+              }
+            });
+            packStates[p.id] = {
+              enabled: p.enabled,
+              sounds: soundStates
+            };
+          });
+          localStorage.setItem('mimic_packs_state', JSON.stringify(packStates));
+          localStorage.setItem('mimic_custom_sounds', JSON.stringify(this.customSounds));
+        } catch (e) {
+          console.warn("Erro ao salvar packs no localStorage:", e);
+        }
+      },
+
+      loadFromStorage() {
+        try {
+          const rawCustom = localStorage.getItem('mimic_custom_sounds');
+          if (rawCustom) {
+            const parsed = JSON.parse(rawCustom);
+            if (Array.isArray(parsed)) this.customSounds = parsed;
+          }
+
+          const raw = localStorage.getItem('mimic_packs_state');
+          if (raw) {
+            const packStates = JSON.parse(raw);
+            this.packs.forEach(p => {
+              if (packStates[p.id]) {
+                if (typeof packStates[p.id].enabled === 'boolean') {
+                  p.enabled = packStates[p.id].enabled;
+                }
+                if (packStates[p.id].sounds) {
+                  p.sounds.forEach(s => {
+                    if (typeof packStates[p.id].sounds[s.id] === 'boolean') {
+                      s.enabled = packStates[p.id].sounds[s.id];
+                    }
+                  });
+                }
+              }
+            });
+          }
+        } catch (e) {
+          console.warn("Erro ao carregar packs do localStorage:", e);
+        }
+      },
+
+      exportState() {
+        const state = {};
+        this.packs.forEach(p => {
+          const soundStates = {};
+          p.sounds.forEach(s => {
+            if (s.enabled !== undefined) soundStates[s.id] = s.enabled;
+          });
+          state[p.id] = {
+            enabled: p.enabled,
+            sounds: soundStates
+          };
+        });
+        return {
+          packs: state,
+          customSounds: this.customSounds
+        };
+      },
+
+      importState(config, save = false) {
+        if (!config || !config.packs) return;
+        this.packs.forEach(p => {
+          if (config.packs[p.id]) {
+            if (typeof config.packs[p.id].enabled === 'boolean') {
+              p.enabled = config.packs[p.id].enabled;
+            }
+            if (config.packs[p.id].sounds) {
+              p.sounds.forEach(s => {
+                if (typeof config.packs[p.id].sounds[s.id] === 'boolean') {
+                  s.enabled = config.packs[p.id].sounds[s.id];
+                }
+              });
+            }
+          }
+        });
+        if (Array.isArray(config.customSounds)) {
+          this.customSounds = config.customSounds;
+        }
+        if (save) this.saveToStorage();
         this.renderPacksGrid();
         this.updateCounts();
       },
@@ -5515,28 +5606,42 @@
         const pack = this.packs.find(p => p.id === packId);
         if (pack) {
           pack.enabled = !pack.enabled;
+          this.saveToStorage();
           this.renderPacksGrid();
           this.updateCounts();
-          AudioModule.playSfx('tick');
+          if (typeof AudioModule !== 'undefined' && AudioModule.playSfx) AudioModule.playSfx('tick');
+          if (typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+            NetworkModule.broadcastRoomState();
+          }
         }
       },
 
       toggleAllPacks(status) {
         this.packs.forEach(p => p.enabled = status);
+        this.saveToStorage();
         this.renderPacksGrid();
         this.updateCounts();
-        AudioModule.playSfx('tick');
+        if (typeof AudioModule !== 'undefined' && AudioModule.playSfx) AudioModule.playSfx('tick');
+        if (typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+          NetworkModule.broadcastRoomState();
+        }
       },
 
       updateCounts() {
         const enabledPacks = this.packs.filter(p => p.enabled);
         const enabledSounds = this.getSelectedSounds();
         const totalPacks = this.packs.length;
+        let totalSoundsInAllPacks = 0;
+        this.packs.forEach(p => totalSoundsInAllPacks += p.sounds.length);
+        totalSoundsInAllPacks += this.customSounds.length;
 
         const counterEl = document.getElementById('packsCounterText');
         if (counterEl) {
-          counterEl.innerText = `${enabledPacks.length} de ${totalPacks} pacotes ativos (${enabledSounds.length} sons selecionados)`;
+          counterEl.innerText = `${enabledPacks.length} de ${totalPacks} pacotes ativos (${enabledSounds.length} de ${totalSoundsInAllPacks} sons ativos)`;
         }
+
+        const chipTodos = document.getElementById('chipFilterTodos');
+        if (chipTodos) chipTodos.innerText = `TODOS (${totalSoundsInAllPacks})`;
 
         const c1 = document.getElementById('menuSoundsCount');
         const c2 = document.getElementById('lobbySoundsSelectedCount');
@@ -5577,6 +5682,28 @@
           `;
           container.appendChild(card);
         });
+
+        if (this.customSounds.length > 0 && (this.currentFilter === 'TODOS' || this.currentFilter === 'CUSTOM')) {
+          const customActiveCount = this.customSounds.filter(s => s.enabled !== false).length;
+          const customCard = document.createElement('div');
+          customCard.className = 'pack-card installed';
+          customCard.innerHTML = `
+            <div class="pack-badge-num">⭐ WEB</div>
+            <div class="pack-cover-circle" style="background: radial-gradient(circle, #00f0ff, #120d2d);">
+              <span>🌐</span>
+            </div>
+            <div class="pack-title-ribbon" style="background:#00f0ff; color:#000;">SEUS SONS (WEB)</div>
+            <div class="pack-author">adicionados por link</div>
+            <div class="pack-stats-row">
+              <span>🎵 ${customActiveCount}/${this.customSounds.length} sons</span>
+              <span>🌐 Web</span>
+            </div>
+            <button class="btn btn-neutral btn-sm" style="width:100%; margin-top:5px; font-size:0.75rem; padding:4px;" onclick="PacksModule.openCustomSoundsDetails()">
+              VER SONS 🔍
+            </button>
+          `;
+          container.appendChild(customCard);
+        }
       },
 
       openPackDetails(packId) {
@@ -5603,14 +5730,14 @@
                   <span style="font-size:1.1rem;">${snd.icon || '🎵'}</span>
                   <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.95rem; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
                 </div>
-                <div style="font-size:0.75rem; opacity:0.7; margin-left:24px;">Tag: ${snd.tag || pack.category} ${isSoundActive ? '' : '• <span style="color:#ff6666; font-weight:700;">(DESATIVADO)</span>'}</div>
+                <div style="font-size:0.75rem; opacity:0.7; margin-left:24px;">Tag: ${snd.tag || pack.category} ${isSoundActive ? '' : '• <span style="color:#ff6666; font-weight:700;">(REMOVIDO DA SALA)</span>'}</div>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
                 <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')" title="Ouvir som">
                   🔊 OUVIR
                 </button>
                 <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleSound('${pack.id}', '${snd.id}')" style="min-width:92px; font-size:0.75rem; padding:4px 8px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}" title="Ativar ou desativar este som">
-                  ${isSoundActive ? 'ATIVO ✅' : 'DESLIGADO ❌'}
+                  ${isSoundActive ? 'ATIVO ✅' : 'REMOVIDO ❌'}
                 </button>
               </div>
             `;
@@ -5624,16 +5751,87 @@
         }
       },
 
+      openCustomSoundsDetails() {
+        const modal = document.getElementById('modalPackDetail');
+        const title = document.getElementById('packDetailTitle');
+        const subtitle = document.getElementById('packDetailSubtitle');
+        const list = document.getElementById('packDetailSoundsList');
+
+        if (title) title.innerText = '🌐 SEUS MEMES PERSONALIZADOS';
+        if (subtitle) subtitle.innerText = `${this.customSounds.length} sons adicionados via link web:`;
+        if (list) {
+          list.innerHTML = '';
+          if (this.customSounds.length === 0) {
+            list.innerHTML = '<div style="opacity:0.7; padding:20px; text-align:center;">Nenhum som web adicionado ainda.</div>';
+          }
+          this.customSounds.forEach(snd => {
+            const isSoundActive = snd.enabled !== false;
+            const row = document.createElement('div');
+            row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:${isSoundActive ? 'rgba(255,255,255,0.06)' : 'rgba(255,50,50,0.08)'}; padding:8px 12px; border-radius:10px; border:1px solid ${isSoundActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,50,50,0.25)'};`;
+            row.innerHTML = `
+              <div style="text-align:left; flex:1; margin-right:8px;">
+                <strong style="color:${isSoundActive ? '#00f0ff' : '#888'}; font-size:0.95rem; ${isSoundActive ? '' : 'text-decoration:line-through;'}">${snd.name}</strong>
+                <div style="font-size:0.72rem; opacity:0.6; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:280px;">${snd.file}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <button class="btn btn-neutral btn-sm" onclick="PacksModule.playPreview('${snd.file}')">🔊 OUVIR</button>
+                <button class="btn ${isSoundActive ? 'btn-green' : 'btn-neutral'} btn-sm" onclick="PacksModule.toggleCustomSound('${snd.id}')" style="min-width:92px; font-size:0.75rem; padding:4px 8px; ${isSoundActive ? '' : 'border-color:#ff4444; color:#ff6666;'}">
+                  ${isSoundActive ? 'ATIVO ✅' : 'REMOVIDO ❌'}
+                </button>
+                <button class="btn btn-neutral btn-sm" onclick="PacksModule.removeCustomSound('${snd.id}')" style="color:#ff4444; border-color:#ff4444; font-size:0.75rem; padding:4px 8px;" title="Excluir">
+                  🗑️
+                </button>
+              </div>
+            `;
+            list.appendChild(row);
+          });
+        }
+        if (modal) {
+          modal.style.zIndex = '2600';
+          modal.style.display = 'flex';
+        }
+      },
+
       toggleSound(packId, soundId) {
         const pack = this.packs.find(p => p.id === packId);
         if (!pack) return;
         const sound = pack.sounds.find(s => s.id === soundId);
         if (!sound) return;
         sound.enabled = sound.enabled === false ? true : false;
+        this.saveToStorage();
         this.openPackDetails(packId);
         this.renderPacksGrid();
         this.updateCounts();
         if (typeof AudioModule !== 'undefined' && AudioModule.playSfx) AudioModule.playSfx('tick');
+        if (typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+          NetworkModule.broadcastRoomState();
+        }
+      },
+
+      toggleCustomSound(soundId) {
+        const sound = this.customSounds.find(s => s.id === soundId);
+        if (!sound) return;
+        sound.enabled = sound.enabled === false ? true : false;
+        this.saveToStorage();
+        this.openCustomSoundsDetails();
+        this.updateCounts();
+        if (typeof AudioModule !== 'undefined' && AudioModule.playSfx) AudioModule.playSfx('tick');
+        if (typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+          NetworkModule.broadcastRoomState();
+        }
+      },
+
+      removeCustomSound(soundId) {
+        if (!confirm('Deseja realmente excluir este som da sua biblioteca?')) return;
+        this.customSounds = this.customSounds.filter(s => s.id !== soundId);
+        this.saveToStorage();
+        this.openCustomSoundsDetails();
+        this.renderPacksGrid();
+        this.updateCounts();
+        if (typeof AudioModule !== 'undefined' && AudioModule.playSfx) AudioModule.playSfx('tick');
+        if (typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+          NetworkModule.broadcastRoomState();
+        }
       },
 
       playPreview(fileUrl) {
@@ -5675,12 +5873,18 @@
           tag: 'Link Personalizado',
           icon: '🌐',
           file: url,
-          unpitched: false
+          unpitched: false,
+          enabled: true
         };
         this.customSounds.push(newSound);
         if (input) input.value = '';
+        this.saveToStorage();
+        this.renderPacksGrid();
         this.updateCounts();
         alert('Áudio adicionado com sucesso!');
+        if (typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+          NetworkModule.broadcastRoomState();
+        }
       },
 
       getSelectedSounds() {
@@ -5746,6 +5950,7 @@
 
         this.roomCode = 'MP' + Math.floor(100 + Math.random() * 900);
         this.isHost = true;
+        PacksModule.updateCounts();
 
         const title = document.getElementById('lobbyModalTitle');
         const subtitle = document.getElementById('lobbyModalSubtitle');
@@ -6143,6 +6348,9 @@
             });
           }
         } else if (msg.type === 'ROOM_STATE') {
+          if (msg.packsConfig && !this.isHost) {
+            PacksModule.importState(msg.packsConfig, false);
+          }
           GameModule.syncOnlinePlayers(msg.players);
           this.updateWaitingRoomUI();
           // Conexão em malha (mesh) para que todos os jogadores se ouçam no bate-papo por voz
@@ -6182,6 +6390,7 @@
         if (!this.isHost) return;
         const state = {
           type: 'ROOM_STATE',
+          packsConfig: PacksModule.exportState(),
           players: GameModule.players.map(p => ({
             id: p.id,
             peerId: p.peerId || (p.id === GameModule.localPlayer.id ? this.myPeerId : null),
@@ -6200,6 +6409,7 @@
       },
 
       updateWaitingRoomUI() {
+        PacksModule.updateCounts();
         const list = document.getElementById('waitingPlayersList');
         const count = document.getElementById('waitingPlayerCount');
         if (!list) return;
@@ -7621,11 +7831,6 @@
         UIModule.hideTomato();
         UIModule.stopConfetti();
 
-        const btnAdv = document.getElementById('btnAdvanceTake');
-        if (btnAdv) {
-          btnAdv.style.display = (!this.isOnline || NetworkModule.isHost) ? 'inline-flex' : 'none';
-        }
-
         this.highlightActiveCard(p.id);
 
         p.char3D.walkTo(0, -0.6);
@@ -8184,6 +8389,7 @@
       openCreateRoomModal() {
         GameModule.cleanupBotsAndReset();
         AudioModule.initMic();
+        PacksModule.updateCounts();
         document.getElementById('modalCreateRoom').style.display = 'flex';
         NetworkModule.initHostRoom();
       },
