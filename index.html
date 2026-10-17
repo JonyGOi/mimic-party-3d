@@ -410,6 +410,32 @@
       border-color: var(--accent-cyan);
     }
 
+    /* SELETOR DE QUANTIDADE DE RODADAS DA PARTIDA */
+    .round-chip {
+      background: #1a1738;
+      border: 2px solid #3d346b;
+      color: #cbd5e1;
+      font-weight: 900;
+      font-size: 0.82rem;
+      padding: 5px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: var(--font-main);
+    }
+    .round-chip:hover {
+      background: #2a225a;
+      border-color: #ffdd00;
+      color: #fff;
+    }
+    .round-chip.active {
+      background: #ffb703;
+      border-color: #000;
+      color: #000;
+      box-shadow: 0 0 10px rgba(255, 183, 3, 0.6);
+      transform: scale(1.06);
+    }
+
     /* BATE-PAPO DA SALA (LOBBY CHAT) */
     .lobby-chat-container {
       background: #111424;
@@ -2118,6 +2144,20 @@
       <button class="btn btn-neutral btn-menu-sounds" onclick="UIModule.openSoundPacksModal()">
         📚 PACOTES DE SONS (<span id="menuSoundsCount">146</span>)
       </button>
+
+      <!-- SELETOR DE RODADAS DA PARTIDA -->
+      <div style="background:rgba(18, 14, 34, 0.95); border:2.5px solid #ffb703; border-radius:14px; padding:8px 10px; display:flex; flex-direction:column; gap:6px; box-shadow:3px 3px 0 #000; text-align:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:900; font-size:0.75rem; color:#ffdd00;">🎯 RODADAS DA PARTIDA:</span>
+          <span id="labelMenuCurrentRounds" style="font-family:var(--font-display); font-size:1rem; color:#00f576;">5</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:4px;">
+          <button class="round-chip" data-rounds="3" onclick="GameModule.setMatchRounds(3)">3</button>
+          <button class="round-chip active" data-rounds="5" onclick="GameModule.setMatchRounds(5)">5 ⭐</button>
+          <button class="round-chip" data-rounds="7" onclick="GameModule.setMatchRounds(7)">7</button>
+          <button class="round-chip" data-rounds="10" onclick="GameModule.setMatchRounds(10)">10</button>
+        </div>
+      </div>
     </div>
 
     <!-- CARD INFORMATIVO DO JOGADOR LOCAL NO CANTO COM TESTADOR DE MICROFONE E GANHO -->
@@ -2197,6 +2237,17 @@
             <input id="lobbyChatInput" type="text" class="lobby-chat-input" placeholder="Conversar na sala..." maxlength="80" autocomplete="off">
             <button type="submit" class="lobby-chat-send-btn">ENVIAR 🚀</button>
           </form>
+        </div>
+      </div>
+
+      <!-- Configuração de Rodadas da Sala Online (Apenas Host altera) -->
+      <div id="lobbyRoundsBox" style="display:flex; justify-content:space-between; align-items:center; background:#111424; border:2px solid #28214f; border-radius:12px; padding:8px 14px; margin-top:6px;">
+        <span style="font-weight:900; font-size:0.82rem; color:#ffdd00;">🎯 NÚMERO DE RODADAS DA PARTIDA:</span>
+        <div id="lobbyRoundsChipGroup" style="display:flex; gap:6px;">
+          <button class="round-chip" data-rounds="3" onclick="GameModule.setMatchRounds(3)">3</button>
+          <button class="round-chip active" data-rounds="5" onclick="GameModule.setMatchRounds(5)">5 ⭐</button>
+          <button class="round-chip" data-rounds="7" onclick="GameModule.setMatchRounds(7)">7</button>
+          <button class="round-chip" data-rounds="10" onclick="GameModule.setMatchRounds(10)">10</button>
         </div>
       </div>
 
@@ -2820,16 +2871,12 @@
   <div id="modalRoulette" class="modal-overlay" style="display:none;">
     <div class="modal-box wheel-modal-content">
       <h2 class="modal-title">SUA ROLETA DA DISCÓRDIA! 🎡</h2>
-      <p style="font-weight:700;">Cada jogador gira sua própria roleta! Bônus, escudos, multiplicadores ou sabotagem!</p>
+      <p style="font-weight:700; color:#00f576; font-size:1.05rem;">🎰 Girando automaticamente para você... Boa sorte!</p>
 
       <div class="wheel-wrap">
         <div class="wheel-pointer"></div>
         <canvas id="wheelCanvas" width="320" height="320"></canvas>
       </div>
-
-      <button id="btnSpinWheel" class="btn btn-play" onclick="WheelModule.spin()">
-        GIRAR MINHA ROLETA! 🎰
-      </button>
 
       <div id="wheelResultBox" style="display:none; background:#ffdd00; color:#000; border:3px solid #000; border-radius:12px; padding:12px; font-weight:900;">
         <h3 id="wheelResultTitle" style="font-family:var(--font-display); font-size:1.5rem;">+20 PONTOS!</h3>
@@ -2926,27 +2973,34 @@
     </div>
   </div>
 
-  <!-- MODAL: PODIUM FINAL E TIER LIST -->
-  <div id="modalFinalPodium" class="modal-overlay" style="display:none; z-index:3000;">
-    <div class="modal-box" style="max-width:650px;">
-      <h2 class="modal-title">👑 FIM DE JOGO! TEMOS O CAMPEÃO 👑</h2>
+  <!-- MODAL: PODIUM FINAL E TIER LIST (COM BOTÕES CLAROS DE RECOMEÇAR E FECHAR) -->
+  <div id="modalFinalPodium" class="modal-overlay" style="display:none; z-index:9999;">
+    <div class="modal-box" style="max-width:640px; position:relative; padding:16px 18px; max-height:92vh; overflow-y:auto;">
+      <!-- Botão Fechar X no topo -->
+      <button class="btn btn-neutral btn-sm" onclick="GameModule.returnToMenu()" style="position:absolute; top:12px; right:14px; padding:6px 14px; font-size:1rem; border-color:#ff4444; color:#fff;" title="Fechar e Voltar ao Menu">
+        ✖ FECHAR
+      </button>
+
+      <h2 class="modal-title" style="font-size:1.7rem; margin-top:4px;">👑 FIM DE JOGO! TEMOS O CAMPEÃO 👑</h2>
+      <p style="font-size:0.85rem; font-weight:800; color:#cbd5e1; margin-top:-6px;">A partida foi concluída! Escolha uma opção abaixo:</p>
       
       <!-- Podium Visual 1º, 2º e 3º -->
-      <div id="podiumVisualContainer" style="display:flex; align-items:flex-end; justify-content:center; gap:14px; min-height:220px; margin:16px 0;">
+      <div id="podiumVisualContainer" style="display:flex; align-items:flex-end; justify-content:center; gap:8px; margin:6px 0; min-height:120px;">
         <!-- Injetado via JS -->
       </div>
 
       <div id="podiumHostNotice" style="display:none; text-align:center; font-weight:700; color:#ffdd00; font-size:0.95rem; margin-bottom:8px; padding:6px 12px; background:rgba(255,221,0,0.15); border:2px solid #ffdd00; border-radius:10px;"></div>
 
-      <div style="display:flex; justify-content:center; gap:12px; margin-top:16px; flex-wrap:wrap;">
-        <button id="btnPodiumRestart" class="btn btn-green" style="font-size:1.15rem; padding:12px 26px; box-shadow:0 0 18px rgba(0,245,118,0.5);" onclick="GameModule.onPodiumRestartClick()">
-          🔁 RECOMEÇAR PARTIDA (MESMAS PESSOAS)
+      <!-- Ações Imediatas: Recomeçar ou Voltar ao Menu -->
+      <div style="display:flex; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button id="btnPodiumRestart" class="btn btn-green" style="font-size:1.1rem; padding:12px 22px; box-shadow:0 0 16px rgba(0,245,118,0.5);" onclick="GameModule.onPodiumRestartClick()">
+          🔁 RECOMEÇAR PARTIDA
         </button>
-        <button class="btn btn-pink" onclick="UIModule.downloadShareCard()">
-          📸 BAIXAR CARD DO CAMPEÃO (PNG)
-        </button>
-        <button class="btn btn-neutral" onclick="GameModule.returnToMenu()">
+        <button class="btn btn-neutral" style="font-size:1.05rem; padding:12px 20px;" onclick="GameModule.returnToMenu()">
           🏠 MENU PRINCIPAL
+        </button>
+        <button class="btn btn-pink btn-sm" onclick="UIModule.downloadShareCard()" style="font-size:0.82rem; padding:8px 14px;">
+          📸 BAIXAR CARD (PNG)
         </button>
       </div>
     </div>
@@ -4264,7 +4318,7 @@
           const rms = Math.sqrt(sumSq / timeData.length);
 
           const totalSegs = segWrap ? segWrap.children.length : 24;
-          const normLevel = Math.min(1.0, rms * 3.5);
+          const normLevel = Math.min(1.0, rms * 2.2);
           const activeCount = Math.round(normLevel * totalSegs);
 
           if (normLevel > this.peakHoldValue) {
@@ -4441,7 +4495,7 @@
         source.start(0);
       },
 
-      normalizeBuffer(buffer, targetPeak = 0.92) {
+      normalizeBuffer(buffer, targetPeak = 0.70) {
         if (!buffer || !this.ctx) return buffer;
         let maxPeak = 0;
         for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -4451,17 +4505,17 @@
             if (v > maxPeak) maxPeak = v;
           }
         }
-        // Se o áudio tiver sinal de voz audível (maxPeak > 0.048), equaliza
-        if (maxPeak > 0.048) {
-          const gainScale = Math.max(0.4, Math.min(1.8, (this.micGain || 1.2) / 1.2));
-          const effectiveTarget = Math.min(0.98, targetPeak * gainScale);
-          const gain = Math.min(5.0, effectiveTarget / maxPeak);
+        // Se o áudio tiver sinal de voz audível (maxPeak > 0.02), equaliza suavemente sem estourar no limite
+        if (maxPeak > 0.02) {
+          const gainScale = Math.max(0.6, Math.min(1.4, (this.micGain || 1.0) / 1.0));
+          const effectiveTarget = Math.min(0.80, targetPeak * gainScale);
+          const gain = Math.min(2.5, Math.max(0.5, effectiveTarget / maxPeak));
           const normBuf = this.ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
           for (let c = 0; c < buffer.numberOfChannels; c++) {
             const src = buffer.getChannelData(c);
             const dst = normBuf.getChannelData(c);
             for (let i = 0; i < src.length; i++) {
-              dst[i] = Math.max(-1.0, Math.min(1.0, src[i] * gain));
+              dst[i] = Math.max(-0.85, Math.min(0.85, src[i] * gain));
             }
           }
           return normBuf;
@@ -5158,7 +5212,7 @@
       },
 
       evaluate(refData, userData, isUnpitched = false) {
-        // 1. Verificação rigorosa de sinal e silêncio (VAD - Voice Activity Detection)
+        // 1. Verificação de sinal e detecção de silêncio (VAD realista para fala normal)
         if (!userData || !userData.rmsEnvelope || userData.rmsEnvelope.length === 0) {
           return {
             totalScore: 0,
@@ -5167,6 +5221,7 @@
             envelopeScore: 0,
             pitchScore: 0,
             isSilence: true,
+            isRuim: true,
             reason: 'silence'
           };
         }
@@ -5174,7 +5229,7 @@
         let maxRms = 0;
         let sumRms = 0;
         let voicedFrames = 0;
-        const voiceThreshold = 0.042;
+        const voiceThreshold = 0.016;
         for (let i = 0; i < userData.rmsEnvelope.length; i++) {
           const v = userData.rmsEnvelope[i];
           if (v > maxRms) maxRms = v;
@@ -5182,11 +5237,9 @@
           if (v >= voiceThreshold) voicedFrames++;
         }
         const avgRms = userData.rmsEnvelope.length > 0 ? (sumRms / userData.rmsEnvelope.length) : 0;
-        const contrast = avgRms > 0.0008 ? (maxRms / avgRms) : 1;
 
-        // Se o usuário não falou nada ou foi apenas ruído elétrico/fã de PC/fundo:
-        // Exige volume de voz real (maxRms >= 0.048), ao menos 3 quadros audíveis e contraste dinâmico de fala >= 2.0
-        if (maxRms < 0.048 || voicedFrames < 3 || contrast < 2.0) {
+        // Se o microfone captou apenas silêncio real (sem voz humana):
+        if (maxRms < 0.016 || voicedFrames < 2) {
           return {
             totalScore: 0,
             waveShapeScore: 0,
@@ -5194,6 +5247,7 @@
             envelopeScore: 0,
             pitchScore: 0,
             isSilence: true,
+            isRuim: true,
             reason: 'silence'
           };
         }
@@ -5226,21 +5280,18 @@
         const den = Math.sqrt(denR * denU);
         const pearsonR = den > 0.0001 ? (num / den) : 0;
 
-        // Pearson R mede o alinhamento das cristas e vales da onda ao longo do tempo:
-        // R <= 0.22: Desalinhado / fala fora do tempo (shapeMatch = 0)
-        // R >= 0.88: Muito bom / excelente alinhamento temporal
-        let shapeMatch = 0;
-        if (pearsonR > 0.22) {
-          shapeMatch = Math.min(1.0, (pearsonR - 0.22) / (0.88 - 0.22));
-        }
-
-        // MAE avalia a discrepância absoluta entre volumes normalizados
-        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.5) * 100)));
-        const waveShapeScore = Math.max(0, Math.min(100, Math.round(shapeMatch * 75 + maeScore * 0.25)));
-        const envelopeScore = Math.max(0, Math.min(100, Math.round((1 - mae) * 100)));
+        // Mapeamento justo e contínuo da correlação de Pearson:
+        // -0.25 a 0.15: correlação baixa -> 25 a 45%
+        // 0.20 a 0.50: padrão rítmico bom -> 60 a 78%
+        // 0.55 a 0.90: imitação muito bem alinhada -> 80 a 95%
+        const rClamped = Math.max(-0.25, Math.min(1.0, pearsonR));
+        const shapeFactor = Math.min(1.0, Math.max(0, (rClamped + 0.25) / 1.15));
+        const maeScore = Math.max(0, Math.min(100, Math.round((1 - mae * 1.05) * 100)));
+        const waveShapeScore = Math.max(20, Math.min(100, Math.round(shapeFactor * 65 + maeScore * 35)));
+        const envelopeScore = Math.max(15, Math.min(100, Math.round((1 - mae) * 100)));
 
         // 3. Ritmo e Ataques dos Picos da Onda (Syllables & Attacks)
-        let rhythmScore = 15;
+        let rhythmScore = 45;
         const refOnsets = refData.onsets || [];
         const userOnsets = userData.onsets || [];
         const durRef = refData.duration || 2.0;
@@ -5256,16 +5307,16 @@
               const diff = Math.abs(roNorm - uoNorm);
               if (diff < closest) closest = diff;
             });
-            // Tolerância acústica humana estrita (~8% da duração, cerca de 160ms por sílaba)
-            onsetMatches += Math.exp(-Math.pow(closest / 0.08, 2));
+            // Janela humana generosa (~200ms de tolerância por ataque/sílaba)
+            onsetMatches += Math.exp(-Math.pow(closest / 0.14, 2));
           });
           const matchRatio = onsetMatches / refOnsets.length;
           const countRatio = Math.min(refOnsets.length, userOnsets.length) / Math.max(refOnsets.length, userOnsets.length);
-          rhythmScore = Math.max(0, Math.min(100, Math.round(matchRatio * 75 + countRatio * 25)));
-        } else if (refOnsets.length === 0 && userOnsets.length <= 1) {
-          rhythmScore = 60;
+          rhythmScore = Math.max(25, Math.min(100, Math.round(matchRatio * 70 + countRatio * 30)));
+        } else if (refOnsets.length === 0) {
+          rhythmScore = 70;
         } else {
-          rhythmScore = 10;
+          rhythmScore = 35;
         }
 
         // 4. Melodia / Pitch (se musical)
@@ -5283,38 +5334,35 @@
               voicedCount++;
             }
           }
-          if (voicedCount >= 4) {
+          if (voicedCount >= 3) {
             const avgSemiDist = pitchDiffSum / voicedCount;
-            pitchScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-avgSemiDist / 3.0))));
+            pitchScore = Math.max(20, Math.min(100, Math.round(100 * Math.exp(-avgSemiDist / 4.2))));
           } else {
-            pitchScore = Math.round(waveShapeScore * 0.7);
+            pitchScore = Math.round(waveShapeScore * 0.85);
           }
         }
 
-        // 5. Pontuação Final Composta e Curva Estrita Anti-Generosidade
-        let rawScore = Math.round(waveShapeScore * 0.52 + rhythmScore * 0.32 + pitchScore * 0.16);
+        // 5. Pontuação Final Composta Condizente com o Desempenho
+        let rawScore = Math.round(waveShapeScore * 0.45 + rhythmScore * 0.35 + pitchScore * 0.20);
 
-        // SE FOR RUIM -> NOTA 0 (Leva tomatada na cara e pum de meme)
-        // Critérios de performance ruim:
-        // - Correlação de forma acústica fraca (waveShapeScore < 38 ou pearsonR < 0.22)
-        // - Ritmo fora do tempo (rhythmScore < 28) se o som original tiver ataques
-        // - Pontuação composta crua < 45%
-        const isRuim = rawScore < 45 || waveShapeScore < 38 || (refOnsets.length >= 2 && rhythmScore < 28) || pearsonR < 0.22;
-
-        let totalScore = 0;
-        if (isRuim) {
-          totalScore = 0;
+        // Pontuação realista e recompensadora:
+        // - Tentativa muito fraca/desconectada: 25 a 45 (não zera à toa!)
+        // - Desempenho regular/médio: 50 a 70
+        // - Bom desempenho (boa imitação): 72 a 86
+        // - Desempenho excelente (muito fiel): 88 a 97
+        let totalScore = rawScore;
+        if (rawScore >= 80) {
+          totalScore = Math.min(98, Math.round(78 + (rawScore - 78) * 0.95));
+        } else if (rawScore >= 50) {
+          totalScore = Math.round(rawScore * 1.02);
         } else {
-          // Curva estrita: aumenta drasticamente a chance de nota baixa (12 a 45).
-          // NOTAS ALTAS (>= 70) SOMENTE quando a performance for verdadeiramente MUITO BOA!
-          const normalized = (rawScore - 45) / (100 - 45); // [0, 1]
-          const curved = Math.pow(normalized, 1.65);
-          totalScore = Math.round(12 + curved * 88);
-          totalScore = Math.max(12, Math.min(100, totalScore));
+          totalScore = Math.max(22, Math.round(rawScore));
         }
 
+        const isRuim = totalScore < 25; // Tomatada só se for realmente péssimo (< 25) ou silêncio
+
         return {
-          totalScore,
+          totalScore: Math.min(100, Math.max(0, totalScore)),
           rawScore,
           waveShapeScore,
           rhythmScore,
@@ -5446,7 +5494,7 @@
               if (v > max) max = v;
             }
             const amp = Math.max(0.04, (max - min) / 2);
-            const barH = amp * topMaxAmp * 1.85;
+            const barH = Math.min(topMaxAmp * 1.7, Math.max(1, amp * topMaxAmp * 0.92));
             ctx.fillRect(i, topMidY - barH / 2, 1, Math.max(1, barH));
           }
         }
@@ -5480,14 +5528,14 @@
           const uStep = Math.ceil(uData.length / W);
 
           // Cores por faixa:
-          // 0: Vermelho tomate #ff0055 (Ruim)
-          // 1 a 39: Coral #ff6b6b (Nota baixa)
-          // 40 a 69: Amarelo ouro #ffdd00 (Regular)
-          // >= 70: Verde neon #00f576 (Muito bom!)
+          // 0 a 24: Vermelho tomate #ff0055 (Tentativa muito fraca)
+          // 25 a 49: Coral #ff6b6b (Nota de esforço inicial)
+          // 50 a 74: Amarelo ouro #ffdd00 (Regular/Boa tentativa)
+          // >= 75: Verde neon #00f576 (Excelente imitação!)
           let waveColor = '#ff0055';
-          if (score >= 70) waveColor = '#00f576';
-          else if (score >= 40) waveColor = '#ffdd00';
-          else if (score > 0) waveColor = '#ff6b6b';
+          if (score >= 75) waveColor = '#00f576';
+          else if (score >= 50) waveColor = '#ffdd00';
+          else if (score >= 25) waveColor = '#ff6b6b';
 
           ctx.fillStyle = waveColor;
           for (let i = 0; i < W; i++) {
@@ -5500,7 +5548,7 @@
               if (v > max) max = v;
             }
             const amp = Math.max(0.04, (max - min) / 2);
-            const barH = amp * botMaxAmp * 1.85;
+            const barH = Math.min(botMaxAmp * 1.7, Math.max(1, amp * botMaxAmp * 0.92));
             ctx.fillRect(i, botMidY - barH / 2, 1, Math.max(1, barH));
           }
 
@@ -5508,7 +5556,7 @@
             ctx.fillStyle = '#ff3366';
             ctx.font = 'bold 10px Inter, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('❌ IMITAÇÃO RUIM / DESALINHADA (0 PONTOS) 🍅', W / 2, botMidY + 14);
+            ctx.fillText('❌ TENTATIVA MUITO FRACA (0 PONTOS) 🍅', W / 2, botMidY + 14);
             ctx.textAlign = 'left';
           }
         }
@@ -7116,6 +7164,9 @@
             });
           }
         } else if (msg.type === 'ROOM_STATE') {
+          if (msg.rounds && !this.isHost) {
+            GameModule.setMatchRounds(msg.rounds, false);
+          }
           if (msg.packsConfig && !this.isHost) {
             PacksModule.importState(msg.packsConfig, false);
           }
@@ -7170,6 +7221,7 @@
         if (!this.isHost) return;
         const state = {
           type: 'ROOM_STATE',
+          rounds: GameModule.matchRounds || 5,
           packsConfig: PacksModule.exportState(),
           players: GameModule.players.map(p => ({
             id: p.id,
@@ -7202,6 +7254,14 @@
           const isLocal = p.id === GameModule.localPlayer.id || (this.myPeerId && p.peerId === this.myPeerId);
           item.innerHTML = `<span ${isLocal ? 'onclick="UIModule.openNicknameModal()" style="cursor:pointer;" title="Clique para alterar seu apelido"' : ''}>👤 ${escapeHtml(p.name)} ${isLocal ? '<span style="font-size:0.75rem; color:#ffdd00; text-decoration:underline;">(VOCÊ ✏️)</span>' : ''}</span> <span style="color:#00f576; font-size:0.75rem;">PRONTO</span>`;
           list.appendChild(item);
+        });
+
+        // Configura chips de rodadas no lobby: apenas o host altera, cliente apenas observa
+        const chips = document.querySelectorAll('#lobbyRoundsChipGroup .round-chip');
+        chips.forEach(c => {
+          c.style.pointerEvents = this.isHost ? 'auto' : 'none';
+          c.style.opacity = this.isHost ? '1' : '0.85';
+          c.title = this.isHost ? 'Escolha quantas rodadas a partida terá' : 'Apenas o Host pode alterar o número de rodadas';
         });
       },
 
@@ -7254,8 +7314,9 @@
 
         GameModule.isOnline = true;
         GameModule.isSoloBots = false;
-        this.broadcast({ type: 'START_GAME', rounds: 5 });
-        GameModule.beginMatch(5);
+        const rounds = GameModule.matchRounds || 5;
+        this.broadcast({ type: 'START_GAME', rounds });
+        GameModule.beginMatch(rounds);
       },
 
       joinRoomFromInput() {
@@ -7353,6 +7414,7 @@
       isSoloBots: false,
       currentRound: 1,
       totalRounds: 5,
+      matchRounds: 5,
       players: [],
       localPlayer: {
         id: 'host_p1',
@@ -7407,6 +7469,25 @@
           btn.innerText = this.autoRotatePreview ? '💫 AUTO-GIRAR: LIGADO' : '⏸️ AUTO-GIRAR: PAUSADO';
           btn.style.borderColor = this.autoRotatePreview ? '#00f576' : '#ffdd00';
           btn.style.color = this.autoRotatePreview ? '#00f576' : '#ffdd00';
+        }
+      },
+
+      setMatchRounds(rounds, updateUi = true) {
+        const r = parseInt(rounds) || 5;
+        this.matchRounds = r;
+        this.totalRounds = r;
+        try { localStorage.setItem('mimic_match_rounds', r); } catch (e) {}
+
+        document.querySelectorAll('.round-chip').forEach(c => {
+          const chipRounds = parseInt(c.getAttribute('data-rounds'));
+          c.classList.toggle('active', chipRounds === r);
+        });
+
+        const label = document.getElementById('labelMenuCurrentRounds');
+        if (label) label.innerText = r;
+
+        if (updateUi && this.isOnline && typeof NetworkModule !== 'undefined' && NetworkModule.isHost) {
+          NetworkModule.broadcastRoomState();
         }
       },
 
@@ -7468,6 +7549,8 @@
         PacksModule.initUI();
         this.syncCustomizationUI();
         AudioModule.setMicGain(AudioModule.micGain);
+        const savedRounds = parseInt(localStorage.getItem('mimic_match_rounds')) || 5;
+        this.setMatchRounds(savedRounds, false);
 
         // CONTROLE DE ROTAÇÃO 360° ARRASTANDO COM O MOUSE NA ÁREA DO PERSONAGEM
         let isDraggingPreview = false;
@@ -7741,7 +7824,7 @@
           });
         });
 
-        this.beginMatch(5);
+        this.beginMatch(this.matchRounds || 5);
       },
 
       startOnlineClientMode() {
@@ -7977,11 +8060,13 @@
           }
         });
 
+        const rounds = this.matchRounds || this.totalRounds || 5;
+        this.totalRounds = rounds;
         if (broadcast && this.isOnline && NetworkModule.isHost) {
-          NetworkModule.broadcast({ type: 'RESTART_GAME', rounds: this.totalRounds });
+          NetworkModule.broadcast({ type: 'RESTART_GAME', rounds });
         }
 
-        this.beginMatch(this.totalRounds);
+        this.beginMatch(rounds);
       },
 
       animateNeedle(durationSeconds, onComplete) {
@@ -8038,13 +8123,13 @@
             const rms = Math.sqrt(sumSq / timeData.length);
 
             // Calibração de sensibilidade:
-            // Volume baixo / sussurro -> barra curta próxima da linha rosa central
-            // Volume alto / grito -> barra comprida ocupando a caixa (alto vs baixo)
-            const raw = Math.max(0, rms - 0.008);
-            amp = Math.min(1.0, Math.max(0.03, raw * 4.2));
+            // Volume normal de fala -> onda limpa e dinâmica a ~45-65% de altura (sem colar no teto)
+            // Volume alto / grito -> barra mais ampla sem estourar os limites
+            const raw = Math.max(0, rms - 0.005);
+            amp = Math.min(1.0, Math.max(0.03, Math.pow(raw * 2.2, 0.95)));
           }
 
-          const barHeight = Math.max(3, amp * (H * 0.92));
+          const barHeight = Math.max(3, amp * (H * 0.72));
           samples.push({ x: currentX, barHeight, amp });
 
           ctx.clearRect(0, 0, W, H);
@@ -9101,7 +9186,11 @@
         }
 
         const modal = document.getElementById('modalFinalPodium');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+          modal.style.display = 'flex';
+          const box = modal.querySelector('.modal-box');
+          if (box) box.scrollTop = 0;
+        }
 
         const restartBtn = document.getElementById('btnPodiumRestart');
         const hostNotice = document.getElementById('podiumHostNotice');
@@ -9114,7 +9203,7 @@
           }
         } else {
           if (restartBtn) {
-            restartBtn.innerText = '🔁 RECOMEÇAR PARTIDA (MESMAS PESSOAS)';
+            restartBtn.innerText = '🔁 RECOMEÇAR PARTIDA';
             restartBtn.disabled = false;
           }
         }
@@ -9129,19 +9218,19 @@
 
           podBox.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center;">
-              <strong>${p2.name}</strong>
-              <span style="color:#ffb703; font-weight:900;">${p2.score} pts</span>
-              <div style="width:90px; height:90px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.8rem; color:#000;">2º</div>
+              <strong style="font-size:0.95rem;">${p2.name}</strong>
+              <span style="color:#ffb703; font-weight:900; font-size:0.85rem;">${p2.score} pts</span>
+              <div style="width:80px; height:68px; background:#c0c0c0; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.5rem; color:#000;">2º</div>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center;">
-              <strong style="color:#ffdd00; font-size:1.2rem;">👑 ${p1.name}</strong>
-              <span style="color:#00f576; font-weight:900;">${p1.score} pts</span>
-              <div style="width:110px; height:130px; background:#ffd700; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2.4rem; color:#000;">1º 🏆</div>
+              <strong style="color:#ffdd00; font-size:1.1rem;">👑 ${p1.name}</strong>
+              <span style="color:#00f576; font-weight:900; font-size:0.95rem;">${p1.score} pts</span>
+              <div style="width:95px; height:95px; background:#ffd700; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2rem; color:#000;">1º 🏆</div>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center;">
-              <strong>${p3.name}</strong>
-              <span style="color:#ffb703; font-weight:900;">${p3.score} pts</span>
-              <div style="width:90px; height:70px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.6rem; color:#000;">3º</div>
+              <strong style="font-size:0.95rem;">${p3.name}</strong>
+              <span style="color:#ffb703; font-weight:900; font-size:0.85rem;">${p3.score} pts</span>
+              <div style="width:80px; height:48px; background:#cd7f32; border:3px solid #000; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:1.3rem; color:#000;">3º</div>
             </div>
           `;
         }
@@ -9277,23 +9366,20 @@
         const btnSpin = document.getElementById('btnSpinWheel');
         if (box) box.style.display = 'none';
         if (btnNext) btnNext.style.display = 'none';
-        if (btnSpin) {
-          btnSpin.style.display = 'inline-flex';
-          btnSpin.innerText = 'GIRAR MINHA ROLETA! 🎰';
-          btnSpin.disabled = false;
-        }
+        if (btnSpin) btnSpin.style.display = 'none';
         this.isSpinning = false;
         this.hasSpunThisRound = false;
         this.draw();
 
         AudioModule.setVoiceChatActive(true);
 
+        // Giro 100% automático para o jogador: inicia suavemente em 350ms
         if (this.autoSpinTimer) clearTimeout(this.autoSpinTimer);
         this.autoSpinTimer = setTimeout(() => {
           if (!this.isSpinning && !this.hasSpunThisRound) {
             this.spin();
           }
-        }, 1800);
+        }, 350);
       },
 
       draw() {
