@@ -1640,23 +1640,390 @@
       transition: width 0.04s linear;
     }
 
-    /* Responsividade */
+    /* Estilos Base da Sala Online / Lobby */
+    .lobby-top-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .lobby-room-code-box {
+      background: #111;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .lobby-top-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .lobby-content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 12px;
+      text-align: left;
+      margin-top: 4px;
+    }
+    .lobby-players-column {
+      display: flex;
+      flex-direction: column;
+    }
+    #waitingPlayersList {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      background: #111424;
+      padding: 8px;
+      border-radius: 10px;
+      border: 2px solid #000;
+    }
+
+    /* ==========================================================================
+       RESPONSIVIDADE E OTIMIZAÇÃO COMPLETA PARA CELULAR / MOBILE (<= 768px)
+       ========================================================================== */
     @media (max-width: 768px) {
-      .main-menu-overlay {
-        right: 50%;
-        transform: translate(50%, -50%);
-        width: 90%;
-        max-width: 360px;
+      /* Top Bar */
+      .top-bar {
+        padding: 6px 10px !important;
+        gap: 4px !important;
       }
+      .top-bar .btn-sm {
+        padding: 4px 7px !important;
+        font-size: 0.76rem !important;
+      }
+      #voiceChatStatusBadge {
+        padding: 4px 6px !important;
+        font-size: 0.68rem !important;
+      }
+      #voiceBadgeText {
+        display: none !important;
+      }
+
+      /* Logo Mimic Party no Topo */
       .logo-container {
-        left: 50%;
-        transform: translateX(-50%);
-        align-items: center;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        top: 46px !important;
+        align-items: center !important;
       }
-      .logo-text { font-size: 2.2rem; }
-      .players-top-row { overflow-x: auto; justify-content: flex-start; }
-      .player-card-top { min-width: 65px; }
-      .countdown-huge { font-size: 5rem; }
+      .logo-box {
+        padding: 4px 14px !important;
+        border-width: 3px !important;
+        border-radius: 12px !important;
+      }
+      .logo-text {
+        font-size: 1.65rem !important;
+        letter-spacing: 1px !important;
+      }
+      .logo-sub {
+        font-size: 0.7rem !important;
+      }
+
+      /* Card de Perfil do Jogador como Pill no Topo (não colide com o menu) */
+      #localPlayerProfileCard {
+        position: absolute !important;
+        left: 50% !important;
+        right: auto !important;
+        top: 102px !important;
+        bottom: auto !important;
+        transform: translateX(-50%) !important;
+        padding: 4px 12px !important;
+        max-width: 92vw !important;
+        background: rgba(15, 12, 34, 0.92) !important;
+        border: 2px solid #332766 !important;
+        border-radius: 30px !important;
+        gap: 8px !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.6) !important;
+      }
+      #localAvatarFaceIcon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 1.3rem !important;
+      }
+      #localPlayerNameDisplay {
+        font-size: 0.85rem !important;
+      }
+      #localPlayerProfileCard .btn-sm {
+        font-size: 0.68rem !important;
+        padding: 3px 7px !important;
+      }
+
+      /* Menu Principal Ancorado no Rodapé (Thumb-Friendly, 2 colunas, não tampa o personagem 3D) */
+      .main-menu-overlay {
+        position: absolute !important;
+        left: 50% !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: 12px !important;
+        transform: translateX(-50%) !important;
+        width: 94% !important;
+        max-width: 400px !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        margin: 0 !important;
+      }
+      .main-menu-overlay .btn-play {
+        grid-column: 1 / -1 !important;
+        padding: 12px !important;
+        font-size: 1.15rem !important;
+      }
+      .main-menu-overlay .btn {
+        padding: 10px 6px !important;
+        font-size: 0.82rem !important;
+        letter-spacing: 0px !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        justify-content: center !important;
+      }
+
+      /* Modais Gerais */
+      .modal-overlay {
+        padding: 8px !important;
+        align-items: center !important;
+      }
+      .modal-box {
+        padding: 14px 12px !important;
+        border-radius: 16px !important;
+        max-height: 94vh !important;
+        width: 96vw !important;
+        border-width: 3px !important;
+      }
+      .modal-title {
+        font-size: 1.35rem !important;
+        margin-bottom: 6px !important;
+      }
+
+      /* Modal de Espera / Lobby Online */
+      .lobby-top-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+      }
+      .lobby-room-code-box {
+        padding: 8px !important;
+        width: 100% !important;
+        text-align: center !important;
+      }
+      #displayRoomCode {
+        font-size: 2rem !important;
+        letter-spacing: 2px !important;
+      }
+      .lobby-top-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .lobby-top-actions .btn-create {
+        grid-column: 1 / -1 !important;
+        padding: 10px !important;
+        font-size: 0.88rem !important;
+      }
+      .lobby-top-actions .btn-sm {
+        font-size: 0.72rem !important;
+        padding: 6px 4px !important;
+      }
+      .lobby-content-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      .lobby-players-column {
+        width: 100% !important;
+      }
+      #waitingPlayersList {
+        max-height: 80px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        gap: 6px !important;
+        padding: 6px !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      #waitingPlayersList > div {
+        flex-shrink: 0 !important;
+        min-width: 105px !important;
+        padding: 4px 8px !important;
+        font-size: 0.76rem !important;
+      }
+      .lobby-chat-container {
+        height: 180px !important;
+      }
+      .lobby-chat-messages {
+        height: 125px !important;
+        font-size: 0.8rem !important;
+      }
+
+      /* Biblioteca de Pacotes de Sons */
+      #modalPacks .modal-box {
+        width: 98vw !important;
+        height: 94vh !important;
+        max-height: 96vh !important;
+        padding: 10px 8px !important;
+        border-radius: 14px !important;
+        gap: 6px !important;
+      }
+      .pack-filter-bar {
+        gap: 4px !important;
+        padding-bottom: 2px !important;
+      }
+      .pack-filter-chip {
+        padding: 4px 8px !important;
+        font-size: 0.72rem !important;
+      }
+      .packs-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+      .pack-card {
+        padding: 8px 6px !important;
+        border-radius: 12px !important;
+      }
+      .pack-cover-circle {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 1.25rem !important;
+      }
+      .pack-title-ribbon {
+        font-size: 0.68rem !important;
+        padding: 3px 4px !important;
+      }
+      .pack-author {
+        font-size: 0.62rem !important;
+      }
+      .pack-stats-row {
+        font-size: 0.65rem !important;
+      }
+      .pack-actions-row {
+        gap: 4px !important;
+      }
+      .pack-btn-toggle, .pack-btn-details {
+        font-size: 0.68rem !important;
+        padding: 5px 2px !important;
+        min-height: 30px !important;
+      }
+      #modalPackDetail .modal-box {
+        width: 98vw !important;
+        height: 92vh !important;
+        padding: 12px 10px !important;
+      }
+      .pack-sound-row {
+        padding: 6px 8px !important;
+      }
+
+      /* Painel de Customização de Personagem */
+      .customize-drawer {
+        width: 100% !important;
+        height: 58vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        padding: 14px 12px !important;
+      }
+      .preset-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
+      }
+      .preset-btn {
+        padding: 6px 4px !important;
+      }
+      .preset-icon {
+        font-size: 1.35rem !important;
+      }
+      .preset-name {
+        font-size: 0.66rem !important;
+      }
+
+      /* In-Game HUD & Overlays */
+      .showcase-box {
+        padding: 14px 12px !important;
+        width: 95% !important;
+        max-width: 350px !important;
+      }
+      .showcase-title {
+        font-size: 1.3rem !important;
+        line-height: 1.1 !important;
+      }
+      .waveform-box {
+        width: 94vw !important;
+        max-width: 340px !important;
+        height: 80px !important;
+      }
+      #waveformCanvas, #pitchTrailCanvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+      .showcase-countdown-badge {
+        font-size: 3.5rem !important;
+      }
+      .take-score-hud {
+        bottom: 12px !important;
+        width: 95vw !important;
+      }
+      .take-score-number {
+        font-size: 3.6rem !important;
+      }
+      .take-narrator-meme {
+        font-size: 0.95rem !important;
+        padding: 4px 10px !important;
+      }
+      .wave-comparison-card {
+        width: 100% !important;
+        max-width: 350px !important;
+        padding: 8px !important;
+      }
+      .wave-canvas-wrap {
+        width: 100% !important;
+      }
+      #canvasWaveComparison {
+        width: 100% !important;
+        height: 60px !important;
+      }
+      .wave-comp-header {
+        font-size: 0.68rem !important;
+        gap: 4px !important;
+      }
+      .wave-comp-stats {
+        font-size: 0.7rem !important;
+        gap: 6px !important;
+      }
+      .intermission-hud {
+        width: 92% !important;
+        max-width: 350px !important;
+        padding: 12px !important;
+        bottom: 15px !important;
+      }
+      .intermission-title {
+        font-size: 1.2rem !important;
+      }
+      .intermission-subtitle {
+        font-size: 0.8rem !important;
+      }
+      .players-top-row {
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        gap: 4px !important;
+        padding: 4px !important;
+      }
+      .player-card-top {
+        min-width: 50px !important;
+        padding: 3px 5px !important;
+      }
+      .player-card-top .p-avatar {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 1rem !important;
+      }
+      .player-card-top .p-name {
+        font-size: 0.65rem !important;
+        max-width: 48px !important;
+      }
+      .player-card-top .p-score {
+        font-size: 0.72rem !important;
+      }
     }
   </style>
 </head>
@@ -1772,20 +2139,20 @@
         Passe o código ou link para seus amigos no WhatsApp ou Discord!
       </p>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:center;">
-        <div style="background:#111; border:3px solid #000; border-radius:12px; padding:10px;">
+      <div class="lobby-top-grid">
+        <div class="lobby-room-code-box">
           <span style="font-size:0.75rem; font-weight:800; color:#ffdd00;">CÓDIGO DA SALA:</span>
           <div id="displayRoomCode" style="font-family:var(--font-display); font-size:2.4rem; color:#00f576; letter-spacing:3px; line-height:1.1;">
             CONECTANDO...
           </div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px;">
+        <div class="lobby-top-actions">
           <button class="btn btn-create" style="padding:10px 14px; font-size:0.9rem;" onclick="NetworkModule.copyRoomLink()">
             📋 COPIAR LINK DE CONVITE
           </button>
           <!-- Botão para Selecionar Áudios antes de Começar (apenas host) -->
           <button id="btnLobbySoundPacks" class="btn btn-neutral btn-sm" onclick="UIModule.openSoundPacksModal()" style="border-color:#ffb703; color:#ffb703; padding:8px 10px;">
-            🎵 MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">146</span>)
+            🎵 MEMES DA PARTIDA (<span id="lobbySoundsSelectedCount">183</span>)
           </button>
           <button id="btnLobbyMicAdjust" class="btn btn-neutral btn-sm" onclick="UIModule.openMicAdjusterModal()" style="border-color:#00f576; color:#00f576; padding:8px 10px;">
             🎙️ AJUSTAR MIC, EQUALIZADOR & RETORNO
@@ -1793,13 +2160,13 @@
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1.3fr; gap:12px; text-align:left; margin-top:4px;">
+      <div class="lobby-content-grid">
         <!-- Coluna da Esquerda: Jogadores Conectados -->
-        <div style="display:flex; flex-direction:column;">
+        <div class="lobby-players-column">
           <span style="font-weight:900; font-size:0.85rem; margin-bottom:6px; color:#ffdd00;">
             AMIGOS NA SALA (<span id="waitingPlayerCount">1</span>/5):
           </span>
-          <div id="waitingPlayersList" style="display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; background:#111424; padding:8px; border-radius:10px; border:2px solid #000;">
+          <div id="waitingPlayersList">
             <!-- Lista de jogadores conectados -->
           </div>
         </div>
@@ -2530,9 +2897,9 @@
   <!-- MODAL: BOAS-VINDAS / PERGUNTAR NICKNAME AO ENTRAR -->
   <div id="modalNickname" class="modal-overlay" style="display:none; z-index:9999;">
     <div class="modal-box" style="max-width:440px; text-align:center;">
-      <div style="font-size:3.5rem; filter:drop-shadow(0 4px 0 #000); animation: entrancePop 0.5s ease;">🎤</div>
-      <h2 class="modal-title" style="margin-top:6px; font-size:1.8rem;">QUAL É SEU NICKNAME?</h2>
-      <p style="font-weight:700; color:#ddd; font-size:0.95rem; margin-bottom:18px;">
+      <div id="modalNicknameIcon" style="font-size:3.5rem; filter:drop-shadow(0 4px 0 #000); animation: entrancePop 0.5s ease;">🎤</div>
+      <h2 id="modalNicknameTitle" class="modal-title" style="margin-top:6px; font-size:1.8rem;">QUAL É SEU NICKNAME?</h2>
+      <p id="modalNicknameSub" style="font-weight:700; color:#ddd; font-size:0.95rem; margin-bottom:18px;">
         Digite seu nome de guerra para entrar na festa e imitar os memes!
       </p>
 
@@ -2540,7 +2907,7 @@
         <input type="text" id="inputInitialNickname" class="input-box" placeholder="Ex: Tigrezo, Calabreso..." maxlength="14" style="text-align:center; font-size:1.4rem; padding:12px; font-weight:900;" onkeydown="if(event.key==='Enter') GameModule.saveNicknameFromModal()">
       </div>
 
-      <button class="btn btn-play" style="width:100%; font-size:1.2rem; padding:14px;" onclick="GameModule.saveNicknameFromModal()">
+      <button id="btnSaveNickname" class="btn btn-play" style="width:100%; font-size:1.2rem; padding:14px;" onclick="GameModule.saveNicknameFromModal()">
         ENTRAR NA FESTA! 🔥
       </button>
     </div>
@@ -6141,7 +6508,10 @@
         const packsBtn = document.getElementById('btnLobbySoundPacks');
         const waitingNotice = document.getElementById('clientWaitingNotice');
         if (title) title.innerText = 'CRIAR SALA ONLINE 🌐';
-        if (subtitle) subtitle.innerText = 'Passe o código ou link para seus amigos no WhatsApp ou Discord!';
+        if (subtitle) {
+          subtitle.innerText = 'Passe o código ou link para seus amigos no WhatsApp ou Discord!';
+          subtitle.style.color = '';
+        }
         if (startBtn) startBtn.style.display = 'inline-block';
         if (packsBtn) packsBtn.style.display = 'inline-block';
         if (waitingNotice) waitingNotice.style.display = 'none';
@@ -6152,68 +6522,138 @@
           chatBox.innerHTML = '<div class="lobby-chat-msg system">👋 Sala criada! Passe o código para seus amigos e conversem aqui no bate-papo.</div>';
         }
 
-        const peerId = `mimicparty-${this.roomCode}`;
-        this.peer = new Peer(peerId, { debug: 1 });
-
-        this.peer.on('open', (id) => {
-          this.myPeerId = id;
-          if (GameModule.localPlayer) {
-            GameModule.localPlayer.id = id;
-            GameModule.localPlayer.peerId = id;
-            if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
+        const initHostPeer = () => {
+          if (this.peer && !this.peer.destroyed) {
+            try { this.peer.destroy(); } catch (e) {}
           }
-          document.getElementById('displayRoomCode').innerText = this.roomCode;
-          this.updateWaitingRoomUI();
-          this.startHostHeartbeat();
-        });
+          const peerId = `mimicparty-${this.roomCode}`;
+          this.peer = new Peer(peerId, { debug: 1 });
 
-        this.peer.on('call', (call) => {
-          try {
-            this.activeVoiceCalls[call.peer] = call;
-            call.answer(AudioModule.micStream || undefined);
-            call.on('stream', (remoteStream) => {
-              this.handleIncomingVoiceStream(remoteStream, call.peer);
-            });
-            call.on('close', () => { delete this.activeVoiceCalls[call.peer]; });
-            call.on('error', () => { delete this.activeVoiceCalls[call.peer]; });
-          } catch (e) {
-            console.warn("Peer on call error:", e);
-          }
-        });
+          this.peer.on('open', (id) => {
+            this.myPeerId = id;
+            if (GameModule.localPlayer) {
+              GameModule.localPlayer.id = id;
+              GameModule.localPlayer.peerId = id;
+              if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
+            }
+            document.getElementById('displayRoomCode').innerText = this.roomCode;
+            this.updateWaitingRoomUI();
+            this.startHostHeartbeat();
+          });
 
-        this.peer.on('connection', (conn) => {
-          this.connections.push(conn);
-          this.setupConnectionHandlers(conn);
-        });
+          this.peer.on('call', (call) => {
+            try {
+              this.activeVoiceCalls[call.peer] = call;
+              call.answer(AudioModule.micStream || undefined);
+              call.on('stream', (remoteStream) => {
+                this.handleIncomingVoiceStream(remoteStream, call.peer);
+              });
+              call.on('close', () => { delete this.activeVoiceCalls[call.peer]; });
+              call.on('error', () => { delete this.activeVoiceCalls[call.peer]; });
+            } catch (e) {
+              console.warn("Peer on call error:", e);
+            }
+          });
 
-        this.peer.on('error', (err) => {
-          if (err.type === 'unavailable-id') {
-            this.peer = new Peer();
-            this.peer.on('open', (id) => {
-              this.myPeerId = id;
-              if (GameModule.localPlayer) {
-                GameModule.localPlayer.id = id;
-                GameModule.localPlayer.peerId = id;
-                if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
-              }
-              this.roomCode = id.substring(0, 5).toUpperCase();
-              document.getElementById('displayRoomCode').innerText = this.roomCode;
-              this.startHostHeartbeat();
-            });
-          }
-        });
+          this.peer.on('connection', (conn) => {
+            this.connections.push(conn);
+            this.setupConnectionHandlers(conn);
+          });
+
+          this.peer.on('error', (err) => {
+            console.warn("Peer host error:", err);
+            if (err.type === 'unavailable-id') {
+              this.roomCode = 'MP' + Math.floor(100 + Math.random() * 900);
+              initHostPeer();
+            }
+          });
+        };
+
+        initHostPeer();
       },
 
       async joinRoom(code) {
         GameModule.cleanupBotsAndReset();
-        await AudioModule.initMic();
-        AudioModule.setVoiceChatActive(true);
         this.activeVoiceCalls = {};
         this.isHost = false;
-        this.roomCode = code.trim().toUpperCase();
+        let cleanCode = (code || '').toString().trim().toUpperCase();
+        if (cleanCode && !cleanCode.startsWith('MP') && !isNaN(cleanCode)) {
+          cleanCode = 'MP' + cleanCode;
+        }
+        this.roomCode = cleanCode;
         const targetPeerId = `mimicparty-${this.roomCode}`;
 
-        this.peer = new Peer();
+        // Inicia captura de microfone em background sem travar a conexão inicial
+        AudioModule.initMic().then(() => {
+          AudioModule.setVoiceChatActive(true);
+        }).catch(e => console.warn("Mic init background:", e));
+
+        // ABRE A TELA DA SALA IMEDIATAMENTE COM STATUS DE CONEXÃO TRANSPARENTE
+        UIModule.closeModal('modalJoinRoom');
+        UIModule.closeModal('modalNickname');
+        document.getElementById('modalCreateRoom').style.display = 'flex';
+        const title = document.getElementById('lobbyModalTitle');
+        const subtitle = document.getElementById('lobbyModalSubtitle');
+        const startBtn = document.getElementById('btnStartOnlineGame');
+        const packsBtn = document.getElementById('btnLobbySoundPacks');
+        const waitingNotice = document.getElementById('clientWaitingNotice');
+        const codeDisplay = document.getElementById('displayRoomCode');
+        const chatBox = document.getElementById('lobbyChatMessages');
+
+        if (title) title.innerText = `CONECTANDO À SALA ${this.roomCode}... 🔄`;
+        if (subtitle) {
+          subtitle.innerText = `Localizando o Host da sala ${this.roomCode}...`;
+          subtitle.style.color = '#ffdd00';
+        }
+        if (codeDisplay) codeDisplay.innerText = this.roomCode;
+        if (startBtn) startBtn.style.display = 'none';
+        if (packsBtn) packsBtn.style.display = 'none';
+        if (waitingNotice) {
+          waitingNotice.style.display = 'inline-flex';
+          waitingNotice.style.color = '#ffdd00';
+          waitingNotice.innerText = '⏳ Estabelecendo conexão direta com o Host...';
+        }
+        if (chatBox) {
+          chatBox.innerHTML = `<div class="lobby-chat-msg system">🔄 Conectando à sala <strong>${this.roomCode}</strong>... Aguarde alguns instantes.</div>`;
+        }
+        this.updateWaitingRoomUI();
+
+        // Destrói instância anterior de Peer se existir
+        if (this.peer && !this.peer.destroyed) {
+          try { this.peer.destroy(); } catch (e) {}
+        }
+
+        let isConnected = false;
+        const connectTimeout = setTimeout(() => {
+          if (!isConnected) {
+            if (title) title.innerText = `SALA ${this.roomCode} NÃO ENCONTRADA ❌`;
+            if (subtitle) {
+              subtitle.innerText = `Não foi possível conectar à sala ${this.roomCode}. O Host pode estar offline ou o código expirou.`;
+              subtitle.style.color = '#ff4444';
+            }
+            if (waitingNotice) {
+              waitingNotice.innerHTML = `⚠️ Tempo limite esgotado. <button class="btn btn-neutral btn-sm" onclick="NetworkModule.joinRoom('${this.roomCode}')" style="margin-left:6px; padding:3px 8px; font-size:0.75rem;">🔄 Tentar Novamente</button>`;
+              waitingNotice.style.color = '#ff6666';
+            }
+            if (chatBox) {
+              chatBox.innerHTML += `<div class="lobby-chat-msg system" style="color:#ff6666;">❌ Falha na conexão: o Host não respondeu.</div>`;
+            }
+          }
+        }, 12000);
+
+        this.peer = new Peer({ debug: 1 });
+
+        this.peer.on('error', (err) => {
+          console.warn("Peer client error:", err);
+          if (!isConnected) {
+            if (title) title.innerText = `ERRO NA SALA ${this.roomCode} ❌`;
+            if (subtitle) {
+              subtitle.innerText = `Erro de conexão: ${err.type === 'peer-unavailable' ? 'A sala não existe ou o Host saiu' : err.type || 'Host inacessível'}.`;
+              subtitle.style.color = '#ff4444';
+            }
+          }
+        });
+
         this.peer.on('open', (id) => {
           this.myPeerId = id;
           if (GameModule.localPlayer) {
@@ -6221,11 +6661,13 @@
             GameModule.localPlayer.peerId = id;
             if (GameModule.localPlayer.char3D) GameModule.localPlayer.char3D.id = id;
           }
-          const conn = this.peer.connect(targetPeerId);
+          const conn = this.peer.connect(targetPeerId, { reliable: true });
           this.hostConnection = conn;
           this.setupConnectionHandlers(conn);
 
           conn.on('open', () => {
+            isConnected = true;
+            clearTimeout(connectTimeout);
             this.startClientHeartbeatWatcher();
 
             conn.send({
@@ -6237,30 +6679,27 @@
               accessory: GameModule.localPlayer.accessory,
               preset: GameModule.localPlayer.preset
             });
-            UIModule.closeModal('modalJoinRoom');
             GameModule.startOnlineClientMode();
 
-            // Abre o modal de espera com chat para o cliente
-            document.getElementById('modalCreateRoom').style.display = 'flex';
-            const title = document.getElementById('lobbyModalTitle');
-            const subtitle = document.getElementById('lobbyModalSubtitle');
-            const startBtn = document.getElementById('btnStartOnlineGame');
-            const packsBtn = document.getElementById('btnLobbySoundPacks');
-            const waitingNotice = document.getElementById('clientWaitingNotice');
             if (title) title.innerText = 'SALA DE ESPERA ONLINE 🌐';
-            if (subtitle) subtitle.innerText = 'Conectado à sala! Aguarde o Host selecionar os memes e iniciar a partida.';
-            if (startBtn) startBtn.style.display = 'none';
-            if (packsBtn) packsBtn.style.display = 'none';
-            if (waitingNotice) waitingNotice.style.display = 'inline-flex';
-            document.getElementById('displayRoomCode').innerText = this.roomCode;
-
-            const chatBox = document.getElementById('lobbyChatMessages');
+            if (subtitle) {
+              subtitle.innerText = 'Conectado com sucesso! Aguarde o Host selecionar os memes e iniciar a partida.';
+              subtitle.style.color = '';
+            }
+            if (waitingNotice) {
+              waitingNotice.innerText = '⏳ Aguardando o Host iniciar a partida...';
+              waitingNotice.style.color = '#ffdd00';
+            }
             if (chatBox) {
-              chatBox.innerHTML = '<div class="lobby-chat-msg system">👋 Você entrou na sala! Diga um oi no bate-papo.</div>';
+              chatBox.innerHTML = `<div class="lobby-chat-msg system">👋 Você entrou na sala <strong>${this.roomCode}</strong>! Diga um oi no bate-papo.</div>`;
             }
 
             this.updateWaitingRoomUI();
             setTimeout(() => this.setupVoiceCall(targetPeerId), 800);
+          });
+
+          conn.on('error', (err) => {
+            console.warn("Connection error:", err);
           });
         });
 
@@ -6610,9 +7049,15 @@
 
       copyRoomLink() {
         const url = `${window.location.origin}${window.location.pathname}?sala=${this.roomCode}`;
-        navigator.clipboard.writeText(url).then(() => {
-          alert(`Link da sala copiado! Envie para seus amigos:\n${url}`);
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(() => {
+            alert(`Link da sala copiado! Envie para seus amigos:\n${url}`);
+          }).catch(() => {
+            prompt('Copie o link da sala abaixo para enviar aos amigos:', url);
+          });
+        } else {
+          prompt('Copie o link da sala abaixo para enviar aos amigos:', url);
+        }
       },
 
       hostStartGame() {
@@ -6883,16 +7328,35 @@
           isDraggingPreview = false;
         });
 
+        const existingNick = localStorage.getItem('mimic_nickname');
         const urlParams = new URLSearchParams(window.location.search);
-        const salaParam = urlParams.get('sala');
+        const salaParam = urlParams.get('sala') || urlParams.get('room') || urlParams.get('code');
         if (salaParam) {
-          this.pendingJoinSala = salaParam;
+          const roomToJoin = salaParam.trim().toUpperCase();
+          this.pendingJoinSala = roomToJoin;
+          if (existingNick && existingNick.trim()) {
+            // Se já tem apelido salvo, entra DIRETO NA SALA sem enrolação!
+            this.updateLocalPlayerName(existingNick.trim());
+            setTimeout(() => {
+              this.pendingJoinSala = null;
+              NetworkModule.joinRoom(roomToJoin);
+            }, 300);
+            return;
+          } else {
+            // Primeiro acesso: abre modal de boas-vindas focado no convite da sala
+            setTimeout(() => {
+              UIModule.openNicknameModal(roomToJoin);
+            }, 250);
+            return;
+          }
         }
 
-        // PERGUNTA O NICKNAME ASSIM QUE ENTRA NO SITE!
-        setTimeout(() => {
-          UIModule.openNicknameModal();
-        }, 250);
+        // Sem link de sala: se nunca definiu nickname antes, pergunta uma vez
+        if (!existingNick) {
+          setTimeout(() => {
+            UIModule.openNicknameModal();
+          }, 350);
+        }
       },
 
       saveNicknameFromModal() {
@@ -8556,9 +9020,24 @@
         ]
       },
 
-      openNicknameModal() {
+      openNicknameModal(targetRoom = null) {
         const modal = document.getElementById('modalNickname');
         const input = document.getElementById('inputInitialNickname');
+        const icon = document.getElementById('modalNicknameIcon');
+        const title = document.getElementById('modalNicknameTitle');
+        const sub = document.getElementById('modalNicknameSub');
+        const btn = document.getElementById('btnSaveNickname');
+        if (targetRoom) {
+          if (icon) icon.innerText = '💌';
+          if (title) title.innerText = `CONVITE DA SALA ${targetRoom}! 🎮`;
+          if (sub) sub.innerText = `Você foi convidado para jogar na sala ${targetRoom}! Digite seu apelido para entrar na festa:`;
+          if (btn) btn.innerText = `ENTRAR NA SALA ${targetRoom} 🚀`;
+        } else {
+          if (icon) icon.innerText = '🎤';
+          if (title) title.innerText = 'QUAL É SEU NICKNAME?';
+          if (sub) sub.innerText = 'Digite seu nome de guerra para entrar na festa e imitar os memes!';
+          if (btn) btn.innerText = 'ENTRAR NA FESTA! 🔥';
+        }
         if (modal) modal.style.display = 'flex';
         if (input) {
           input.value = GameModule.localPlayer.name || localStorage.getItem('mimic_nickname') || 'Tigrezo';
