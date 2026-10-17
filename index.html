@@ -4857,6 +4857,9 @@
       connections: [],
       hostConnection: null,
       activeVoiceCalls: {},
+      heartbeatTimer: null,
+      lastSeenPeers: {},
+      lastHostPing: 0,
 
       async initHostRoom() {
         // LIMPA QUALQUER BOT OU ESTADO ANTERIOR!
@@ -4864,6 +4867,7 @@
         await AudioModule.initMic();
         AudioModule.setVoiceChatActive(true);
         this.activeVoiceCalls = {};
+        this.lastSeenPeers = {};
 
         this.roomCode = 'MP' + Math.floor(100 + Math.random() * 900);
         this.isHost = true;
@@ -4893,6 +4897,7 @@
           if (GameModule.localPlayer) GameModule.localPlayer.peerId = id;
           document.getElementById('displayRoomCode').innerText = this.roomCode;
           this.updateWaitingRoomUI();
+          this.startHostHeartbeat();
         });
 
         this.peer.on('call', (call) => {
@@ -4922,6 +4927,7 @@
               if (GameModule.localPlayer) GameModule.localPlayer.peerId = id;
               this.roomCode = id.substring(0, 5).toUpperCase();
               document.getElementById('displayRoomCode').innerText = this.roomCode;
+              this.startHostHeartbeat();
             });
           }
         });
@@ -4945,6 +4951,8 @@
           this.setupConnectionHandlers(conn);
 
           conn.on('open', () => {
+            this.startClientHeartbeatWatcher();
+
             conn.send({
               type: 'PLAYER_JOIN',
               name: GameModule.localPlayer.name,
@@ -4996,27 +5004,112 @@
         });
       },
 
-      setupConnectionHandlers(conn) {
-        conn.on('data', (data) => this.handleNetworkMessage(data, conn));
-        conn.on('close', () => {
-          this.connections = this.connections.filter(c => c !== conn);
-          GameModule.removeOnlinePlayer(conn.peer);
-          if (this.isHost) {
-            this.broadcast({ type: 'PLAYER_LEFT', peerId: conn.peer });
-            this.broadcastRoomState();
+      startHostHeartbeat() {
+        if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+        this.lastSeenPeers = {};
+
+        this.heartbeatTimer = setInterval(() => {
+          if (!this.isHost || !this.peer) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+            return;
           }
-          this.updateWaitingRoomUI();
+
+          const now = Date.now();
+          // Dispara PING para todos os clientes conectados
+          this.broadcast({ type: 'PING', timestamp: now });
+
+          // Detecta clientes que fecharam o navegador ou caíram (sem resposta há mais de 4.5 segundos)
+          const conns = [...this.connections];
+          conns.forEach(conn => {
+            const pId = conn.peer;
+            const last = this.lastSeenPeers[pId] || conn._openedTime || now;
+            if (now - last > 4500) {
+              console.warn(`[Heartbeat] Peer ${pId} inativo/fechou navegador. Removendo...`);
+              this.handleConnectionLost(conn);
+            }
+          });
+        }, 1800);
+      },
+
+      startClientHeartbeatWatcher() {
+        if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+        this.lastHostPing = Date.now();
+
+        this.heartbeatTimer = setInterval(() => {
+          if (this.isHost || !this.hostConnection) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+            return;
+          }
+
+          const now = Date.now();
+          if (now - this.lastHostPing > 6500) {
+            console.warn("[Heartbeat] Host parou de responder/fechou o navegador.");
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+            this.leaveOrCancelRoom();
+            alert("A partida foi encerrada porque o Dono da Sala fechou o navegador ou desconectou.");
+          }
+        }, 2000);
+      },
+
+      handleConnectionLost(conn) {
+        if (!conn) return;
+        const peerId = conn.peer;
+        try { conn.close(); } catch (e) {}
+        this.connections = this.connections.filter(c => c !== conn && c.peer !== peerId);
+        delete this.lastSeenPeers[peerId];
+        GameModule.removeOnlinePlayer(peerId);
+
+        if (this.isHost) {
+          this.broadcast({ type: 'PLAYER_LEFT', peerId: peerId });
+          this.broadcastRoomState();
+        }
+        this.updateWaitingRoomUI();
+      },
+
+      setupConnectionHandlers(conn) {
+        conn._openedTime = Date.now();
+        this.lastSeenPeers[conn.peer] = Date.now();
+
+        conn.on('open', () => {
+          this.lastSeenPeers[conn.peer] = Date.now();
+        });
+        conn.on('data', (data) => {
+          this.lastSeenPeers[conn.peer] = Date.now();
+          this.handleNetworkMessage(data, conn);
+        });
+        conn.on('close', () => {
+          this.handleConnectionLost(conn);
         });
         conn.on('error', (err) => {
           console.warn("Conn error:", err);
-          this.connections = this.connections.filter(c => c !== conn);
-          GameModule.removeOnlinePlayer(conn.peer);
-          if (this.isHost) {
-            this.broadcast({ type: 'PLAYER_LEFT', peerId: conn.peer });
-            this.broadcastRoomState();
-          }
-          this.updateWaitingRoomUI();
+          this.handleConnectionLost(conn);
         });
+
+        // Monitora o estado WebRTC diretamente no RTCPeerConnection caso o SCTP não feche limpo
+        const setupPeerConnWatcher = () => {
+          const pc = conn.peerConnection;
+          if (!pc) return;
+          pc.addEventListener('connectionstatechange', () => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+              this.handleConnectionLost(conn);
+            }
+          });
+          pc.addEventListener('iceconnectionstatechange', () => {
+            if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+              this.handleConnectionLost(conn);
+            }
+          });
+        };
+
+        if (conn.peerConnection) {
+          setupPeerConnWatcher();
+        } else {
+          setTimeout(setupPeerConnWatcher, 400);
+          setTimeout(setupPeerConnWatcher, 1200);
+        }
       },
 
       sendToHost(msg) {
@@ -5111,7 +5204,26 @@
       },
 
       handleNetworkMessage(msg, senderConn) {
-        if (msg.type === 'PLAYER_JOIN' && this.isHost) {
+        if (senderConn && senderConn.peer) {
+          this.lastSeenPeers[senderConn.peer] = Date.now();
+        }
+
+        if (msg.type === 'PING') {
+          this.lastHostPing = Date.now();
+          if (this.hostConnection && this.hostConnection.open) {
+            this.hostConnection.send({ type: 'PONG', peerId: this.myPeerId });
+          }
+          return;
+        } else if (msg.type === 'PONG') {
+          if (msg.peerId) {
+            this.lastSeenPeers[msg.peerId] = Date.now();
+          }
+          return;
+        } else if (msg.type === 'HOST_DISCONNECTED') {
+          this.leaveOrCancelRoom();
+          alert("O Dono da Sala fechou o jogo ou encerrou a partida.");
+          return;
+        } else if (msg.type === 'PLAYER_JOIN' && this.isHost) {
           GameModule.addOnlinePlayer(msg.name, msg.hair, msg.shirtColor, msg.pantsColor, msg.accessory, senderConn.peer, msg.preset);
           this.broadcastRoomState();
 
@@ -5254,10 +5366,27 @@
 
       leaveOrCancelRoom() {
         UIModule.closeModal('modalCreateRoom');
+        if (this.heartbeatTimer) {
+          clearInterval(this.heartbeatTimer);
+          this.heartbeatTimer = null;
+        }
+        this.lastSeenPeers = {};
+
         if (!this.isHost && this.hostConnection && this.hostConnection.open) {
           try {
             this.hostConnection.send({ type: 'PLAYER_LEFT', peerId: this.myPeerId });
           } catch (e) {}
+        }
+        if (this.isHost) {
+          try {
+            this.broadcast({ type: 'HOST_DISCONNECTED', roomCode: this.roomCode });
+          } catch (e) {}
+        }
+        if (this.activeVoiceCalls) {
+          Object.values(this.activeVoiceCalls).forEach(call => {
+            try { call.close(); } catch (e) {}
+          });
+          this.activeVoiceCalls = {};
         }
         if (this.peer) {
           try { this.peer.destroy(); } catch (e) {}
@@ -5270,6 +5399,37 @@
         Scene3DModule.setCameraView('menu');
         document.getElementById('mainMenuOverlay').style.display = 'flex';
         document.getElementById('mainLogoContainer').style.display = 'flex';
+      },
+
+      handleWindowUnload() {
+        if (this.heartbeatTimer) {
+          clearInterval(this.heartbeatTimer);
+          this.heartbeatTimer = null;
+        }
+
+        if (this.isHost) {
+          try {
+            this.broadcast({ type: 'HOST_DISCONNECTED', roomCode: this.roomCode });
+            this.connections.forEach(c => {
+              try { c.close(); } catch (e) {}
+            });
+          } catch (e) {}
+        } else if (this.hostConnection && this.hostConnection.open) {
+          try {
+            this.hostConnection.send({ type: 'PLAYER_LEFT', peerId: this.myPeerId });
+            this.hostConnection.close();
+          } catch (e) {}
+        }
+
+        if (this.activeVoiceCalls) {
+          Object.values(this.activeVoiceCalls).forEach(call => {
+            try { call.close(); } catch (e) {}
+          });
+        }
+
+        if (this.peer) {
+          try { this.peer.destroy(); } catch (e) {}
+        }
       }
     };
 
@@ -5711,9 +5871,18 @@
         this.updateTopBarCards();
         NetworkModule.updateWaitingRoomUI();
 
-        // 6. Remove de takes da rodada se estiver no meio do showcase
+        // 6. Se o host estava aguardando takes, remove dos pendentes e reavalia
+        if (this.isOnline && NetworkModule.isHost && this.pendingRoundTakes) {
+          delete this.pendingRoundTakes[peerId];
+          this.checkAllTakesCollected();
+        }
+
+        // 7. Remove de takes da rodada se estiver no meio do showcase
         if (this.roundTakes && this.roundTakes.length > 0) {
           this.roundTakes = this.roundTakes.filter(t => t.player && t.player.id !== peerId && t.player.peerId !== peerId);
+          if (this.activePlaybackIndex >= this.roundTakes.length) {
+            this.openRoundRoulette();
+          }
         }
       },
 
@@ -7135,6 +7304,14 @@
     window.addEventListener('DOMContentLoaded', () => {
       Scene3DModule.init();
       GameModule.init();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      NetworkModule.handleWindowUnload();
+    });
+
+    window.addEventListener('pagehide', () => {
+      NetworkModule.handleWindowUnload();
     });
   </script>
 </body>
