@@ -3589,11 +3589,13 @@
 
       throwTomatoesAt(targetChar3D, count = 4) {
         if (!targetChar3D || !targetChar3D.headGroup) return;
+        if (typeof GameModule !== 'undefined' && (GameModule.currentPhase === 'RECORDING' || GameModule.currentPhase === 'COUNTDOWN' || !GameModule.isMatchActive)) return;
         const targetWorldPos = new THREE.Vector3();
         targetChar3D.headGroup.getWorldPosition(targetWorldPos);
 
         for (let i = 0; i < count; i++) {
           setTimeout(() => {
+            if (typeof GameModule !== 'undefined' && (GameModule.currentPhase === 'RECORDING' || GameModule.currentPhase === 'COUNTDOWN' || !GameModule.isMatchActive)) return;
             const camPos = this.camera.position.clone();
             const spawnPos = camPos.clone().add(new THREE.Vector3(
               (Math.random() - 0.5) * 2.8,
@@ -4393,10 +4395,15 @@
       testPlaySource: null,
       oscilloscopeAnimFrame: null,
       peakHoldValue: 0,
-      peakHoldDecayTimer: 0,
       currentPlayingSource: null,
+      currentPlayingTimeout: null,
+      currentHtml5Audio: null,
 
       stopCurrentAudio() {
+        if (this.currentPlayingTimeout) {
+          clearTimeout(this.currentPlayingTimeout);
+          this.currentPlayingTimeout = null;
+        }
         if (this.currentPlayingSource) {
           try {
             this.currentPlayingSource.onended = null;
@@ -4404,6 +4411,16 @@
             this.currentPlayingSource.disconnect();
           } catch (e) {}
           this.currentPlayingSource = null;
+        }
+        if (this.currentHtml5Audio) {
+          try {
+            this.currentHtml5Audio.pause();
+            this.currentHtml5Audio.currentTime = 0;
+            this.currentHtml5Audio.src = '';
+            this.currentHtml5Audio.onended = null;
+            this.currentHtml5Audio.onerror = null;
+          } catch (e) {}
+          this.currentHtml5Audio = null;
         }
       },
 
@@ -4875,32 +4892,64 @@
         source.start(0);
       },
 
-      normalizeBuffer(buffer, targetPeak = 0.70) {
+      normalizeBuffer(buffer, targetPeak = 0.75) {
+        return this.applyNoiseGateAndNormalize(buffer, targetPeak);
+      },
+
+      applyNoiseGateAndNormalize(buffer, targetPeak = 0.75) {
         if (!buffer || !this.ctx) return buffer;
+        const sr = buffer.sampleRate;
+        const chCount = buffer.numberOfChannels;
+        const len = buffer.length;
+
         let maxPeak = 0;
-        for (let c = 0; c < buffer.numberOfChannels; c++) {
+        for (let c = 0; c < chCount; c++) {
           const data = buffer.getChannelData(c);
-          for (let i = 0; i < data.length; i++) {
+          for (let i = 0; i < len; i++) {
             const v = Math.abs(data[i]);
             if (v > maxPeak) maxPeak = v;
           }
         }
-        // Se o áudio tiver sinal de voz audível (maxPeak > 0.02), equaliza suavemente sem estourar no limite
-        if (maxPeak > 0.02) {
-          const gainScale = Math.max(0.6, Math.min(1.4, (this.micGain || 1.0) / 1.0));
-          const effectiveTarget = Math.min(0.80, targetPeak * gainScale);
-          const gain = Math.min(2.5, Math.max(0.5, effectiveTarget / maxPeak));
-          const normBuf = this.ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
-          for (let c = 0; c < buffer.numberOfChannels; c++) {
-            const src = buffer.getChannelData(c);
-            const dst = normBuf.getChannelData(c);
-            for (let i = 0; i < src.length; i++) {
-              dst[i] = Math.max(-0.85, Math.min(0.85, src[i] * gain));
-            }
-          }
-          return normBuf;
+
+        // Se for silêncio absoluto ou ruído de fundo residual (< 0.025), zera para evitar chiado
+        if (maxPeak < 0.025) {
+          return this.createSilentBuffer(buffer.duration || 2.0);
         }
-        return buffer;
+
+        const outBuf = this.ctx.createBuffer(chCount, len, sr);
+        const gainScale = Math.max(0.6, Math.min(1.4, (this.micGain || 1.0) / 1.0));
+        const effectiveTarget = Math.min(0.82, targetPeak * gainScale);
+        const gain = Math.min(3.0, Math.max(0.5, effectiveTarget / maxPeak));
+
+        // Noise gate threshold relativo ao pico
+        const gateThreshold = Math.max(0.012, maxPeak * 0.05);
+
+        for (let c = 0; c < chCount; c++) {
+          const src = buffer.getChannelData(c);
+          const dst = outBuf.getChannelData(c);
+          let prevY = 0;
+          let prevX = 0;
+
+          for (let i = 0; i < len; i++) {
+            // 1. DC Blocker
+            const x = src[i];
+            const y = x - prevX + 0.995 * prevY;
+            prevX = x;
+            prevY = y;
+
+            // 2. Soft Noise Gate
+            const absY = Math.abs(y);
+            let sample = y;
+            if (absY < gateThreshold) {
+              const ratio = absY / gateThreshold;
+              sample = y * (ratio * ratio);
+            }
+
+            // 3. Ganho e Limiter suave
+            dst[i] = Math.max(-0.85, Math.min(0.85, sample * gain));
+          }
+        }
+        return outBuf;
       },
 
       vuTestInterval: null,
@@ -4915,23 +4964,32 @@
 
         let stream = null;
         try {
-          // Tenta primeiro sem processamento para máxima pureza acústica
+          // Ativa cancelamento de eco acústico (anti-microfonia) e supressão de ruído (anti-ruído)
           stream = await navigator.mediaDevices.getUserMedia({
             audio: {
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              channelCount: 1
             }
           });
         } catch (e1) {
-          console.warn("Restrições estritas falharam, usando microfone padrão:", e1);
+          console.warn("Restrições avançadas de áudio falharam, tentando com fallback:", e1);
           try {
-            // Fallback essencial para compatibilidade com Chrome / Windows / Realtek
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true
+              }
+            });
           } catch (e2) {
-            console.error("Microfone não autorizado ou desconectado:", e2);
-            alert("⚠️ Microfone bloqueado ou indisponível!\nPor favor, clique no ícone de cadeado/permissões ao lado da barra de endereço do seu navegador e autorize o Microfone para jogar.");
-            return false;
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (e3) {
+              console.error("Microfone não autorizado ou desconectado:", e3);
+              alert("⚠️ Microfone bloqueado ou indisponível!\nPor favor, clique no ícone de cadeado/permissões ao lado da barra de endereço do seu navegador e autorize o Microfone para jogar.");
+              return false;
+            }
           }
         }
 
@@ -4942,6 +5000,12 @@
           this.analyser = this.ctx.createAnalyser();
           this.analyser.fftSize = 1024;
           this.analyser.smoothingTimeConstant = 0.2;
+
+          // 0. Filtro Anti-Rumble / Low-Cut (High-Pass @ 85Hz) - remove ronco de ar e ruído subsônico
+          this.micHighpassFilter = this.ctx.createBiquadFilter();
+          this.micHighpassFilter.type = 'highpass';
+          this.micHighpassFilter.frequency.setValueAtTime(85, this.ctx.currentTime);
+          this.micHighpassFilter.Q.setValueAtTime(0.707, this.ctx.currentTime);
 
           // 1. Equalizador: Graves (lowshelf @ 150Hz)
           this.micBassFilter = this.ctx.createBiquadFilter();
@@ -4962,6 +5026,20 @@
           this.micTrebleFilter.frequency.setValueAtTime(4500, this.ctx.currentTime);
           this.micTrebleFilter.gain.setValueAtTime(this.micTreble, this.ctx.currentTime);
 
+          // 3.5. Filtro Anti-Microfonia / High-Cut (Lowpass @ 11000Hz) - corta chiado agudo e apito de microfonia
+          this.micAntiFeedbackFilter = this.ctx.createBiquadFilter();
+          this.micAntiFeedbackFilter.type = 'lowpass';
+          this.micAntiFeedbackFilter.frequency.setValueAtTime(11000, this.ctx.currentTime);
+          this.micAntiFeedbackFilter.Q.setValueAtTime(0.707, this.ctx.currentTime);
+
+          // 3.8. Compressor / Limiter Anti-Distorção (impede microfone de rachar se gritar)
+          this.micLimiterNode = this.ctx.createDynamicsCompressor();
+          this.micLimiterNode.threshold.setValueAtTime(-6, this.ctx.currentTime);
+          this.micLimiterNode.knee.setValueAtTime(6, this.ctx.currentTime);
+          this.micLimiterNode.ratio.setValueAtTime(12, this.ctx.currentTime);
+          this.micLimiterNode.attack.setValueAtTime(0.003, this.ctx.currentTime);
+          this.micLimiterNode.release.setValueAtTime(0.08, this.ctx.currentTime);
+
           // 4. Ganho geral de microfone
           this.micGainNode = this.ctx.createGain();
           this.micGainNode.gain.setValueAtTime(this.micGain, this.ctx.currentTime);
@@ -4977,12 +5055,15 @@
           }
 
           // Conexão em cascata:
-          // source -> micBassFilter -> micMidFilter -> micTrebleFilter -> micGainNode
+          // source -> micHighpassFilter -> micBassFilter -> micMidFilter -> micTrebleFilter -> micAntiFeedbackFilter -> micLimiterNode -> micGainNode
           const source = this.ctx.createMediaStreamSource(stream);
-          source.connect(this.micBassFilter);
+          source.connect(this.micHighpassFilter);
+          this.micHighpassFilter.connect(this.micBassFilter);
           this.micBassFilter.connect(this.micMidFilter);
           this.micMidFilter.connect(this.micTrebleFilter);
-          this.micTrebleFilter.connect(this.micGainNode);
+          this.micTrebleFilter.connect(this.micAntiFeedbackFilter);
+          this.micAntiFeedbackFilter.connect(this.micLimiterNode);
+          this.micLimiterNode.connect(this.micGainNode);
 
           this.micGainNode.connect(this.analyser);
           this.micGainNode.connect(this.micMonitorGainNode);
@@ -5234,6 +5315,13 @@
         const finish = () => {
           if (endedCalled) return;
           endedCalled = true;
+          if (this.currentPlayingTimeout) {
+            clearTimeout(this.currentPlayingTimeout);
+            this.currentPlayingTimeout = null;
+          }
+          if (this.currentHtml5Audio) {
+            this.currentHtml5Audio = null;
+          }
           if (onEnded) onEnded();
         };
 
@@ -5259,20 +5347,19 @@
 
         // Fallback: reproduz diretamente o áudio gravado via elemento HTML5 Audio
         try {
+          this.stopCurrentAudio();
           const audioEl = new Audio(dataUrl);
           audioEl.volume = 1.0;
-          let safeTimeout = setTimeout(finish, 4000);
+          this.currentHtml5Audio = audioEl;
+          this.currentPlayingTimeout = setTimeout(finish, 4000);
           audioEl.onended = () => {
-            clearTimeout(safeTimeout);
             finish();
           };
           audioEl.onerror = () => {
-            clearTimeout(safeTimeout);
             finish();
           };
           audioEl.play().catch(err => {
             console.warn("HTML5 Audio play falhou, finalizando take:", err);
-            clearTimeout(safeTimeout);
             finish();
           });
         } catch (e) {
@@ -5291,7 +5378,7 @@
           return;
         }
 
-        const normalizedBuffer = this.normalizeBuffer(buffer, 0.92);
+        const normalizedBuffer = this.normalizeBuffer(buffer, 0.90);
         const source = this.ctx.createBufferSource();
         source.buffer = normalizedBuffer;
         this.currentPlayingSource = source;
@@ -5331,6 +5418,10 @@
         const finish = () => {
           if (endedCalled) return;
           endedCalled = true;
+          if (this.currentPlayingTimeout) {
+            clearTimeout(this.currentPlayingTimeout);
+            this.currentPlayingTimeout = null;
+          }
           if (this.currentPlayingSource === source) {
             this.currentPlayingSource = null;
           }
@@ -5338,8 +5429,8 @@
         };
 
         source.onended = finish;
-        // Timeout de segurança absoluto para nunca travar em mobile com AudioContext suspenso
-        setTimeout(finish, Math.max(800, Math.round((durationSec + 0.6) * 1000)));
+        // Timeout de segurança gerenciado que pode ser cancelado por stopCurrentAudio()
+        this.currentPlayingTimeout = setTimeout(finish, Math.max(800, Math.round((durationSec + 0.5) * 1000)));
 
         try {
           source.start();
@@ -7609,19 +7700,18 @@
         } else if (msg.type === 'SUBMIT_TAKE' && this.isHost) {
           GameModule.receiveTakeFromOnlinePlayer(msg, senderConn.peer);
         } else if (msg.type === 'ROUND_ALL_TAKES') {
-          GameModule.onReceiveAllTakes(msg.takes);
+          GameModule.onReceiveAllTakes(msg.takes, msg.roundNumber);
         } else if (msg.type === 'ROUND_TAKE_AUDIO') {
           GameModule.onReceiveTakeAudio(msg.playerId, msg.audioData);
         } else if (msg.type === 'REQUEST_RESTART' && this.isHost) {
           GameModule.onHostReceivedRestartRequest(msg.name);
         } else if (msg.type === 'LOBBY_CHAT') {
           this.appendLobbyChatMessage(msg, false);
-          if (this.isHost) {
-            // Re-transmite a mensagem para todos os outros clientes conectados
-            this.connections.forEach(c => {
-              if (c.open && c !== senderConn) c.send(msg);
-            });
-          }
+        } else if (this.isHost && msg.type === 'LOBBY_CHAT') {
+          // Re-transmite a mensagem para todos os outros clientes conectados
+          this.connections.forEach(c => {
+            if (c.open && c !== senderConn) c.send(msg);
+          });
         } else if (msg.type === 'ROOM_VISIBILITY_CHANGED' && !this.isHost) {
           this.setRoomVisibility(msg.isPublic, false);
         } else if (msg.type === 'ROOM_STATE') {
@@ -7654,9 +7744,9 @@
         } else if (msg.type === 'START_ROUND') {
           GameModule.onOnlineRoundStart(msg.soundId, msg.roundNumber, msg.sound);
         } else if (msg.type === 'START_RECORD_COUNTDOWN') {
-          GameModule.onOnlineStartRecordCountdown(msg.duration);
+          GameModule.onOnlineStartRecordCountdown(msg.duration, msg.roundNumber);
         } else if (msg.type === 'ADVANCE_TAKE') {
-          GameModule.onOnlineAdvanceTake(msg.takeIndex);
+          GameModule.onOnlineAdvanceTake(msg.takeIndex, msg.roundNumber);
         } else if (msg.type === 'OPEN_ROULETTE') {
           AudioModule.stopCurrentAudio();
           AudioModule.setVoiceChatActive(true);
@@ -8175,6 +8265,9 @@
       pendingRoundTakes: {},
       takesCollectionTimeout: null,
       isMatchActive: false,
+      currentPhase: 'IDLE', // 'IDLE', 'MEME_LISTENING', 'COUNTDOWN', 'RECORDING', 'AWAITING_TAKES', 'SHOWCASE', 'ROUND_END', 'PODIUM'
+      isRecordingTake: false,
+      bufferedShowcaseTakes: null,
       hasConfirmedNickInSession: false,
       recordingCountdownInterval: null,
       clientCountdownFallbackTimer: null,
@@ -9097,10 +9190,25 @@
 
       async startNextRound() {
         if (!this.isMatchActive) return;
+        this.currentPhase = 'MEME_LISTENING';
+        this.isRecordingTake = false;
+        this.bufferedShowcaseTakes = null;
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
+        if (this.takesCollectionTimeout) {
+          clearTimeout(this.takesCollectionTimeout);
+          this.takesCollectionTimeout = null;
+        }
         AudioModule.stopCurrentAudio();
         // Silencia chat de voz durante a escuta do meme e gravação
         AudioModule.setVoiceChatActive(false);
         AudioModule.setMicMonitor(false);
+        UIModule.hideTomato();
+        UIModule.stopConfetti();
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
 
         const hud = document.getElementById('intermissionHUD');
         if (hud) hud.style.display = 'none';
@@ -9169,20 +9277,21 @@
 
         // Toca o áudio de referência com a agulha varrendo a tela
         setTimeout(() => {
-          if (!this.isMatchActive) return;
+          if (!this.isMatchActive || this.currentPhase !== 'MEME_LISTENING') return;
           const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
           this.animateNeedle(dur);
           AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
-            if (!this.isMatchActive) return;
+            if (!this.isMatchActive || this.currentPhase !== 'MEME_LISTENING') return;
             // Concluiu a escuta da referência pelo host
             setTimeout(() => {
-              if (!this.isMatchActive) return;
+              if (!this.isMatchActive || this.currentPhase !== 'MEME_LISTENING') return;
               this.roundTakes = [];
               const recDuration = this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0;
               if (this.isOnline && NetworkModule.isHost) {
                 // Broadcast sincronizado: Host avisa TODOS os clientes para começarem a contagem e gravação juntos!
                 NetworkModule.broadcast({
                   type: 'START_RECORD_COUNTDOWN',
+                  roundNumber: this.currentRound,
                   duration: recDuration
                 });
               }
@@ -9194,9 +9303,21 @@
 
       async onOnlineRoundStart(soundId, roundNum, soundData) {
         if (!this.isMatchActive) return;
+        this.currentPhase = 'MEME_LISTENING';
+        this.isRecordingTake = false;
+        this.bufferedShowcaseTakes = null;
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
         AudioModule.stopCurrentAudio();
         AudioModule.setVoiceChatActive(false);
         AudioModule.setMicMonitor(false);
+        UIModule.hideTomato();
+        UIModule.stopConfetti();
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+
         this.currentRound = roundNum;
         this.roundTakes = [];
         this.pendingRoundTakes = {};
@@ -9243,20 +9364,24 @@
         const dur = this.refAudioBuffer ? this.refAudioBuffer.duration : 2.0;
         this.animateNeedle(dur);
         AudioModule.playAudioBuffer(this.refAudioBuffer, null, () => {
-          if (!this.isMatchActive) return;
+          if (!this.isMatchActive || this.currentPhase !== 'MEME_LISTENING') return;
           // Quando terminar de ouvir, aguarda a ordem de contagem sincronizada do Host!
           subtitleEl.innerText = 'Aguardando o Host iniciar a contagem... ⏳';
           if (this.clientCountdownFallbackTimer) clearTimeout(this.clientCountdownFallbackTimer);
           this.clientCountdownFallbackTimer = setTimeout(() => {
-            if (!this.isMatchActive) return;
+            if (!this.isMatchActive || this.currentPhase !== 'MEME_LISTENING') return;
             console.warn("[Client] Fallback de início de gravação disparado.");
             this.startSimultaneousRecording(dur + 0.3);
-          }, 8000);
+          }, 14000);
         });
       },
 
-      onOnlineStartRecordCountdown(duration) {
+      onOnlineStartRecordCountdown(duration, roundNum = null) {
         if (!this.isMatchActive) return;
+        if (roundNum && roundNum !== this.currentRound) {
+          console.warn(`[Client] Ignorando START_RECORD_COUNTDOWN da rodada ${roundNum} (rodada atual: ${this.currentRound})`);
+          return;
+        }
         if (this.clientCountdownFallbackTimer) {
           clearTimeout(this.clientCountdownFallbackTimer);
           this.clientCountdownFallbackTimer = null;
@@ -9269,10 +9394,23 @@
       // Gravação Simultânea: Todos gravam o mesmo áudio ao mesmo tempo, mas ninguém se ouve!
       async startSimultaneousRecording(customDuration = null) {
         if (!this.isMatchActive) return;
+        this.currentPhase = 'COUNTDOWN';
+        this.isRecordingTake = false;
+        this.bufferedShowcaseTakes = null;
         if (this.clientCountdownFallbackTimer) {
           clearTimeout(this.clientCountdownFallbackTimer);
           this.clientCountdownFallbackTimer = null;
         }
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
+        AudioModule.stopCurrentAudio();
+        UIModule.hideTomato();
+        UIModule.stopConfetti();
+        const scoreOverlay = document.getElementById('takeScoreOverlay');
+        if (scoreOverlay) scoreOverlay.style.display = 'none';
+
         await AudioModule.initMic();
 
         // Durante a gravação: ninguém se ouve!
@@ -9316,6 +9454,9 @@
             clearInterval(this.recordingCountdownInterval);
             this.recordingCountdownInterval = null;
 
+            this.currentPhase = 'RECORDING';
+            this.isRecordingTake = true;
+
             subtitleEl.innerText = '🗣️ GRAVANDO TODOS AO MESMO TEMPO! IMITEM O SOM!';
             const duration = customDuration || (this.refAudioBuffer ? (this.refAudioBuffer.duration + 0.3) : 2.0);
 
@@ -9340,6 +9481,8 @@
                 }
               },
               async (userBuf, audioBlob) => {
+                this.isRecordingTake = false;
+                this.currentPhase = 'AWAITING_TAKES';
                 if (!this.isMatchActive) return;
                 try {
                   countBadge.style.display = 'none';
@@ -9384,6 +9527,7 @@
                     } else {
                       NetworkModule.sendToHost({
                         type: 'SUBMIT_TAKE',
+                        roundNumber: this.currentRound,
                         playerId: this.localPlayer.id,
                         peerId: NetworkModule.myPeerId,
                         name: this.localPlayer.name,
@@ -9392,6 +9536,14 @@
                         sabotage: localTake.sabotage
                       });
                       subtitleEl.innerText = '✅ Sua imitação foi gravada! Aguardando os outros jogadores...';
+                    }
+
+                    // Se durante o tempo em que o jogador estava gravando, o pacote ROUND_ALL_TAKES já havia chegado (devido a delay na rede), inicia agora!
+                    if (this.bufferedShowcaseTakes) {
+                      console.log("[Client] Gravação concluída. Processando takes em buffer da rodada...");
+                      const buffered = this.bufferedShowcaseTakes;
+                      this.bufferedShowcaseTakes = null;
+                      await this.onReceiveAllTakes(buffered);
                     }
                   } else {
                     // Modo Solo / Bots locais
@@ -9418,10 +9570,18 @@
                   }
                 } catch (err) {
                   console.error("Erro ao finalizar gravação simultânea:", err);
-                  document.getElementById('soundShowcaseOverlay').style.display = 'none';
-                  setTimeout(() => {
-                    this.startTakesShowcase();
-                  }, 400);
+                  this.isRecordingTake = false;
+                  this.currentPhase = 'AWAITING_TAKES';
+                  if (this.bufferedShowcaseTakes) {
+                    const buffered = this.bufferedShowcaseTakes;
+                    this.bufferedShowcaseTakes = null;
+                    this.onReceiveAllTakes(buffered);
+                  } else {
+                    document.getElementById('soundShowcaseOverlay').style.display = 'none';
+                    setTimeout(() => {
+                      this.startTakesShowcase();
+                    }, 400);
+                  }
                 }
               }
             );
@@ -9473,6 +9633,11 @@
       },
 
       receiveTakeFromOnlinePlayer(msg, peerId) {
+        if (!this.isMatchActive) return;
+        if (msg.roundNumber && msg.roundNumber !== this.currentRound) {
+          console.warn(`[Host] Descartando take atrasado da rodada ${msg.roundNumber} (rodada atual: ${this.currentRound}) de ${msg.name || peerId}`);
+          return;
+        }
         const pId = peerId || msg.peerId || msg.playerId;
         const takeObj = {
           ...msg,
@@ -9483,7 +9648,7 @@
         if (msg.playerId && msg.playerId !== pId) {
           this.pendingRoundTakes[msg.playerId] = takeObj;
         }
-        console.log(`[Host] Take recebido de ${msg.name || pId} (áudio presente: ${!!msg.audioData})`);
+        console.log(`[Host] Take recebido de ${msg.name || pId} para rodada ${this.currentRound} (áudio presente: ${!!msg.audioData})`);
         this.checkAllTakesCollected();
       },
 
@@ -9503,10 +9668,12 @@
           this.finalizeAndBroadcastTakes();
         } else {
           if (!this.takesCollectionTimeout) {
+            const soundDur = (this.refAudioBuffer && this.refAudioBuffer.duration) ? this.refAudioBuffer.duration : 2.5;
+            const waitMs = Math.max(18000, Math.round((soundDur + 14) * 1000));
             this.takesCollectionTimeout = setTimeout(() => {
-              console.warn("[Host] Timeout de 12s para coleta de takes online expirou. Finalizando com os recebidos...");
+              console.warn(`[Host] Timeout de ${waitMs/1000}s para coleta de takes online expirou. Finalizando com os recebidos...`);
               this.finalizeAndBroadcastTakes();
-            }, 12000);
+            }, waitMs);
           }
         }
       },
@@ -9567,6 +9734,7 @@
         // 1. Envia a lista com metadados e áudios
         NetworkModule.broadcast({
           type: 'ROUND_ALL_TAKES',
+          roundNumber: this.currentRound,
           takes: takesList
         });
 
@@ -9575,16 +9743,34 @@
           if (t.audioData) {
             NetworkModule.broadcast({
               type: 'ROUND_TAKE_AUDIO',
+              roundNumber: this.currentRound,
               playerId: t.playerId,
               audioData: t.audioData
             });
           }
         }
 
-        await this.onReceiveAllTakes(takesList);
+        await this.onReceiveAllTakes(takesList, this.currentRound);
       },
 
-      async onReceiveAllTakes(takesList) {
+      async onReceiveAllTakes(takesList, roundNum = null) {
+        if (!this.isMatchActive) return;
+        const msgRound = roundNum || (takesList && takesList._roundNumber) || this.currentRound;
+        if (msgRound !== this.currentRound) {
+          console.warn(`[Client] Descartando ROUND_ALL_TAKES da rodada ${msgRound} (rodada atual: ${this.currentRound})`);
+          return;
+        }
+
+        // Se ainda estiver no meio da gravação do take ou na contagem, NÃO interrompa!
+        // Salva os takes no buffer para abrir o showcase assim que a gravação terminar.
+        if (this.isRecordingTake || this.currentPhase === 'RECORDING' || this.currentPhase === 'COUNTDOWN') {
+          console.log("[Client] ROUND_ALL_TAKES recebido enquanto ainda gravava. Guardando em buffer...");
+          this.bufferedShowcaseTakes = takesList;
+          return;
+        }
+
+        this.currentPhase = 'SHOWCASE';
+        this.bufferedShowcaseTakes = null;
         AudioModule.stopCurrentAudio();
         const showcaseOverlay = document.getElementById('soundShowcaseOverlay');
         if (showcaseOverlay) showcaseOverlay.style.display = 'none';
@@ -9657,6 +9843,7 @@
 
       startTakesShowcase() {
         if (!this.isMatchActive) return;
+        this.currentPhase = 'SHOWCASE';
         AudioModule.stopCurrentAudio();
         // Gravação concluída: reativa o bate-papo por voz para todos conversarem e darem risada!
         AudioModule.setVoiceChatActive(true);
@@ -9671,11 +9858,14 @@
 
       playCurrentTakeShowcase() {
         if (!this.isMatchActive) return;
+        this.currentPhase = 'SHOWCASE';
         if (this.activePlaybackIndex >= this.roundTakes.length) {
           this.openRoundRoulette();
           return;
         }
 
+        const currentRound = this.currentRound;
+        const activeIndex = this.activePlaybackIndex;
         const take = this.roundTakes[this.activePlaybackIndex];
         const p = take.player;
 
@@ -9702,8 +9892,18 @@
         }
         Scene3DModule.setCameraView('close_singer');
 
+        // IMPORTANTE ANTI-MICROFONIA / ANTI-ECO:
+        // Silencia chat de voz durante a reprodução do áudio do take no alto-falante
+        // Isso evita que o som do take saia pelas caixas de som e entre nos microfones dos outros jogadores!
+        AudioModule.setVoiceChatActive(false);
+
         AudioModule.playTake(take.audioBuffer, take.audioData, take.sabotage, () => {
-          if (!this.isMatchActive) return;
+          // Reativa chat de voz assim que a reprodução do take acaba
+          AudioModule.setVoiceChatActive(true);
+
+          if (!this.isMatchActive || this.currentPhase !== 'SHOWCASE' || this.currentRound !== currentRound || this.activePlaybackIndex !== activeIndex) {
+            return;
+          }
           if (p.char3D) {
             p.char3D.isSinging = false;
             p.char3D.audioAmplitude = 0;
@@ -9718,7 +9918,7 @@
           let cur = 0;
           const step = Math.max(1, Math.floor(finalScore / 18));
           const t = setInterval(() => {
-            if (!this.isMatchActive) {
+            if (!this.isMatchActive || this.currentPhase !== 'SHOWCASE' || this.currentRound !== currentRound || this.activePlaybackIndex !== activeIndex) {
               clearInterval(t);
               return;
             }
@@ -9731,24 +9931,26 @@
               if (memeEl) memeEl.innerText = UIModule.getNarratorQuote(finalScore);
 
               // TOMATE QUANDO A NOTA FOR 0/100 (Silêncio ou performance ruim!)
-              if (finalScore === 0) {
-                UIModule.throwTomato();
-                Scene3DModule.throwTomatoesAt(p.char3D, 4);
-                AudioModule.playMemeFart();
-                p.char3D.audioAmplitude = 0;
-              } else if (finalScore >= 70) {
-                // NOTA ALTA (>= 70): Somente quando for MUITO BOM!
-                AudioModule.playSfx('applause');
-                UIModule.startConfetti();
-              } else {
-                // NOTA BAIXA OU MÉDIA (1 a 69): Não leva tomate, som neutro
-                AudioModule.playSfx('tick');
+              if (this.currentPhase === 'SHOWCASE' && this.currentRound === currentRound && this.activePlaybackIndex === activeIndex) {
+                if (finalScore === 0) {
+                  UIModule.throwTomato();
+                  Scene3DModule.throwTomatoesAt(p.char3D, 4);
+                  AudioModule.playMemeFart();
+                  p.char3D.audioAmplitude = 0;
+                } else if (finalScore >= 70) {
+                  // NOTA ALTA (>= 70): Somente quando for MUITO BOM!
+                  AudioModule.playSfx('applause');
+                  UIModule.startConfetti();
+                } else {
+                  // NOTA BAIXA OU MÉDIA (1 a 69): Não leva tomate, som neutro
+                  AudioModule.playSfx('tick');
+                }
               }
 
               if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
               if (!this.isOnline || NetworkModule.isHost) {
                 this.autoAdvanceTimer = setTimeout(() => {
-                  if (!this.isMatchActive) return;
+                  if (!this.isMatchActive || this.currentPhase !== 'SHOWCASE' || this.currentRound !== currentRound) return;
                   this.advanceTakePlayback();
                 }, 4200);
               }
@@ -9784,6 +9986,7 @@
         if (this.isOnline && NetworkModule.isHost) {
           NetworkModule.broadcast({
             type: 'ADVANCE_TAKE',
+            roundNumber: this.currentRound,
             takeIndex: this.activePlaybackIndex
           });
         }
@@ -9791,8 +9994,12 @@
         this.playCurrentTakeShowcase();
       },
 
-      onOnlineAdvanceTake(takeIndex) {
+      onOnlineAdvanceTake(takeIndex, roundNum = null) {
         if (!this.isMatchActive) return;
+        if (roundNum && roundNum !== this.currentRound) {
+          console.warn(`[Client] Ignorando ADVANCE_TAKE da rodada ${roundNum} (rodada atual: ${this.currentRound})`);
+          return;
+        }
         if (this.autoAdvanceTimer) {
           clearTimeout(this.autoAdvanceTimer);
           this.autoAdvanceTimer = null;
@@ -9815,6 +10022,7 @@
 
       openRoundRoulette() {
         if (!this.isMatchActive) return;
+        this.currentPhase = 'ROUND_END';
         const curR = Number(this.currentRound) || 1;
         const totR = Number(this.totalRounds) || 5;
         if (curR >= totR) {
@@ -10032,7 +10240,14 @@
       },
 
       showFinalPodium() {
+        this.currentPhase = 'PODIUM';
         this.isMatchActive = false;
+        this.isRecordingTake = false;
+        this.bufferedShowcaseTakes = null;
+        if (this.autoAdvanceTimer) {
+          clearTimeout(this.autoAdvanceTimer);
+          this.autoAdvanceTimer = null;
+        }
         document.body.classList.remove('in-match');
         AudioModule.setVoiceChatActive(true);
         Scene3DModule.setCameraView('stage_lineup');
@@ -10184,6 +10399,9 @@
 
       returnToMenu() {
         this.isMatchActive = false;
+        this.currentPhase = 'IDLE';
+        this.isRecordingTake = false;
+        this.bufferedShowcaseTakes = null;
         document.body.classList.remove('in-match');
         AudioModule.stopCurrentAudio();
         UIModule.stopConfetti();
@@ -10708,6 +10926,9 @@
       },
 
       throwTomato() {
+        if (typeof GameModule !== 'undefined' && (!GameModule.isMatchActive || GameModule.currentPhase === 'RECORDING' || GameModule.currentPhase === 'COUNTDOWN')) {
+          return;
+        }
         const overlay = document.getElementById('tomatoOverlay');
         const tomato = document.getElementById('flyingTomato');
         const splat = document.getElementById('tomatoSplatGraphic');
