@@ -7179,7 +7179,7 @@
           const item = document.createElement('div');
           item.style.cssText = 'background:#1a2035; padding:6px 10px; border-radius:8px; font-weight:800; display:flex; justify-content:space-between; align-items:center; border-left:3px solid #00f576; font-size:0.85rem;';
           const isLocal = p.id === GameModule.localPlayer.id || (this.myPeerId && p.peerId === this.myPeerId);
-          item.innerHTML = `<span>👤 ${escapeHtml(p.name)} ${isLocal ? '<span style="font-size:0.75rem; color:#ffdd00;">(VOCÊ)</span>' : ''}</span> <span style="color:#00f576; font-size:0.75rem;">PRONTO</span>`;
+          item.innerHTML = `<span ${isLocal ? 'onclick="UIModule.openNicknameModal()" style="cursor:pointer;" title="Clique para alterar seu apelido"' : ''}>👤 ${escapeHtml(p.name)} ${isLocal ? '<span style="font-size:0.75rem; color:#ffdd00; text-decoration:underline;">(VOCÊ ✏️)</span>' : ''}</span> <span style="color:#00f576; font-size:0.75rem;">PRONTO</span>`;
           list.appendChild(item);
         });
       },
@@ -7475,21 +7475,25 @@
           isDraggingPreview = false;
         });
 
-        const sessionConfirmed = sessionStorage.getItem('mimic_session_nick_confirmed') === 'true' || this.hasConfirmedNickInSession;
         const urlParams = new URLSearchParams(window.location.search);
         const salaParam = urlParams.get('sala') || urlParams.get('room') || urlParams.get('code');
 
         if (salaParam) {
           const roomToJoin = salaParam.trim().toUpperCase();
-          this.pendingJoinSala = roomToJoin;
-          // Ao entrar pelo link de convite (?sala=...), sempre abre o modal para confirmar/digitar o nickname!
+          this.pendingJoinSala = null;
+          this.hasConfirmedNickInSession = true;
+          sessionStorage.setItem('mimic_session_nick_confirmed', 'true');
+
+          console.log(`[Link de Convite] Entrando diretamente na sala ${roomToJoin}...`);
+          // Entra DIRETO NA SALA pelo link sem nenhum modal bloqueando!
           setTimeout(() => {
-            UIModule.openNicknameModal(roomToJoin);
-          }, 300);
+            NetworkModule.joinRoom(roomToJoin);
+          }, 200);
           return;
         }
 
-        // Primeira vez que entra no jogo: sempre abre para digitar ou confirmar o apelido!
+        // Primeira vez que entra no jogo sem link de sala: abre modal para digitar o nickname
+        const sessionConfirmed = sessionStorage.getItem('mimic_session_nick_confirmed') === 'true' || this.hasConfirmedNickInSession;
         if (!sessionConfirmed) {
           setTimeout(() => {
             UIModule.openNicknameModal();
@@ -7512,7 +7516,21 @@
         UIModule.closeModal('modalNickname');
         AudioModule.playSfx('beep_go');
 
-        // Se entrou por link de convite (?sala=...), conecta à sala agora
+        // Se estiver conectado em uma sala online como cliente, avisa o host e atualiza a sala da mudança de nome
+        if (this.isOnline && !NetworkModule.isHost && NetworkModule.hostConnection && NetworkModule.hostConnection.open) {
+          NetworkModule.hostConnection.send({
+            type: 'PLAYER_JOIN',
+            name: this.localPlayer.name,
+            hair: this.localPlayer.hair,
+            shirtColor: this.localPlayer.shirtColor,
+            pantsColor: this.localPlayer.pantsColor,
+            accessory: this.localPlayer.accessory,
+            preset: this.localPlayer.preset
+          });
+        }
+        NetworkModule.updateWaitingRoomUI();
+
+        // Se entrou por link de convite e ainda estava pendente, conecta à sala agora
         if (this.pendingJoinSala) {
           const s = this.pendingJoinSala;
           this.pendingJoinSala = null;
