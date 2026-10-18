@@ -2656,6 +2656,8 @@
       <!-- Barra de Filtros por Categoria -->
       <div class="pack-filter-bar" id="packFilterBar">
         <button id="chipFilterTodos" class="pack-filter-chip active" onclick="PacksModule.filterCategory('TODOS', this)">TODOS</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('LIVES', this)">🟣 LIVES & STREAMERS</button>
+        <button class="pack-filter-chip" onclick="PacksModule.filterCategory('VÍDEOS', this)">📹 VÍDEOS VIRAIS</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('TIKTOK', this)">📱 TIKTOK</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('WHATSAPP', this)">💬 WHATSAPP</button>
         <button class="pack-filter-chip" onclick="PacksModule.filterCategory('MEME BR', this)">🔥 MEME BR</button>
@@ -6213,7 +6215,7 @@
     };
 
     /* ==========================================================================
-       5. PACKSMODULE: BIBLIOTECA DE 17 PACOTES (157 SONS VOCAIS DO MYINSTANTS)
+       5. PACKSMODULE: BIBLIOTECA DE 19 PACOTES (190+ SONS VOCAIS DO MYINSTANTS)
        ========================================================================== */
     const PacksModule = {
       currentFilter: 'TODOS',
@@ -6221,6 +6223,71 @@
       previewAudio: null,
 
       packs: [
+        {
+          id: 'pack_lives_streamers',
+          title: 'LIVES & STREAMERS BR',
+          category: 'LIVES',
+          author: '@twitch_youtube_br',
+          rating: '5.0',
+          downloads: '16.8k',
+          color: '#9146ff',
+          icon: '🟣',
+          enabled: true,
+          sounds: [
+            { id: 'valeu_natalina', name: 'Valeu, Natalina! (Diogo Defante) 🎄', shortName: 'VALEU NATALINA', tag: 'Live Defante', icon: '🎄', file: 'sounds/valeu-natalina.mp3', unpitched: false },
+            { id: 'defante_alegria', name: 'ALEGRIA! ALEGRIA! (Diogo Defante) 🤪', shortName: 'ALEGRIA!', tag: 'Live Defante', icon: '🤪', file: 'sounds/defante-alegria.mp3', unpitched: false },
+            { id: 'paulinho_o_loko', name: 'Cadê o Grito da Galera?! (Paulinho o Loko) 📢', shortName: 'PAULINHO O LOKO', tag: 'Paulinho GTA', icon: '📢', file: 'sounds/paulinho-o-loko.mp3', unpitched: false },
+            { id: 'casimiro_aceitas_pix', name: 'Aceitas Pix?! (Casimiro) 💸', shortName: 'ACEITAS PIX', tag: 'CazéTV Live', icon: '💸', file: 'sounds/casimiro-aceitas-pix.mp3', unpitched: false },
+            { id: 'meteu_essa', name: 'Meteu Essa?! (Casimiro) 🤨', shortName: 'METEU ESSA', tag: 'Casimiro Miguel', icon: '🤨', file: 'sounds/meteu-essa.mp3', unpitched: false },
+            { id: 'casimiro_merda', name: 'Gastar Dinheiro com Merda! (Casimiro) 🤬', shortName: 'GASTAR COM MERDA', tag: 'Casimiro Live', icon: '🤬', file: 'sounds/casimiro-dinheiro-merda.wav', unpitched: false },
+            { id: 'alanzoka_chora', name: 'Chora Mais! (Alanzoka) 😭', shortName: 'CHORA MAIS', tag: 'Alanzoka Live', icon: '😭', file: 'sounds/alanzoka-chora-mais.mp3', unpitched: false },
+            { id: 'alanzoka_para_tira', name: 'Para, Tira que Eu Vou! (Alanzoka) 😱', shortName: 'PARA TIRA', tag: 'Alanzoka Live', icon: '😱', file: 'sounds/alanzoka-para-tira.mp3', unpitched: false },
+            { id: 'gaules_marreco', name: 'Toma, Marreco! (Gaules) 🦆', shortName: 'TOMA MARRECO', tag: 'Tribo Gaules', icon: '🦆', file: 'sounds/toma-marreco-gaules.mp3', unpitched: false },
+            { id: 'gaules_naice', name: 'NAICE! É a Tribo! (Gaules) 🎯', shortName: 'NAICE GAU', tag: 'Tribo Gaules', icon: '🎯', file: 'sounds/gaules-naice.mp3', unpitched: false },
+            { id: 'marcia_doida', name: 'Para de Ser Doida! (Márcia Sensitiva) 🔮', shortName: 'PARA DE SER DOIDA', tag: 'Márcia Sensitiva', icon: '🔮', file: 'sounds/para-de-ser-doida.mp3', unpitched: false },
+            { id: 'chico_aquariano', name: 'Aquariano Nato! (Chico Moedas) 🌊', shortName: 'AQUARIANO NATO', tag: 'Chico Moedas Podpah', icon: '🌊', file: 'sounds/aquariano-nato.mp3', unpitched: false },
+            { id: 'naldo_lebron', name: 'O LeBron Olhou pro Meu Tênis (Naldo) 👟', shortName: 'NALDO LEBRON', tag: 'Naldo Benny Live', icon: '👟', file: 'sounds/naldo-lebron.mp3', unpitched: false },
+            { id: 'craque_neto_nao_vai_dar', name: 'NUM VAI DÁ! CÊ TÁ DE BRINCADEIRA! (Neto) 😤', shortName: 'NUM VAI DÁ', tag: 'Craque Neto Live', icon: '😤', file: 'sounds/craque-neto-num-vai-da.mp3', unpitched: false },
+            { id: 'craque_neto_pao', name: 'PÃÃÃO! Pão de Forma! (Craque Neto) 🍞', shortName: 'PÃÃÃO DE FORMA', tag: 'Craque Neto Live', icon: '🍞', file: 'sounds/craque-neto-pao.mp3', unpitched: false },
+            { id: 'cariani_maldito', name: 'Maldito o Homem Que Confia no Homem (Cariani) 🦁', shortName: 'MALDITO HOMEM', tag: 'Renato Cariani', icon: '🦁', file: 'sounds/cariani-maldito-homem.mp3', unpitched: false },
+            { id: 'tiringa_lascar', name: 'Vai Te Lascar! (Tiringa) 🤠', shortName: 'VAI TE LASCAR', tag: 'Tiringa Selvagem', icon: '🤠', file: 'sounds/tiringa-vai-te-lascar.mp3', unpitched: false },
+            { id: 'cellbit_2014', name: 'Grito / Risada Épica (Cellbit) ⚡', shortName: 'CELLBIT 2014', tag: 'Cellbit Live', icon: '⚡', file: 'sounds/cellbit-2014.mp3', unpitched: false },
+            { id: 'smzinho_heroi', name: 'Meu Herói Não Usa Capa! (Smzinho) 🦸‍♂️', shortName: 'SMZINHO HERÓI', tag: 'Smzinho Live', icon: '🦸‍♂️', file: 'sounds/smzinho-heroi.mp3', unpitched: false }
+          ]
+        },
+        {
+          id: 'pack_videos_virais_br',
+          title: 'VÍDEOS VIRAIS DA WEB BR',
+          category: 'VÍDEOS',
+          author: '@perolas_da_internet',
+          rating: '5.0',
+          downloads: '18.3k',
+          color: '#ffb703',
+          icon: '📹',
+          enabled: true,
+          sounds: [
+            { id: 'menina_do_bambu', name: 'E o Bambu?! (Menina do Bambu) 🎋', shortName: 'E O BAMBU?!', tag: 'Silvio Santos Viral', icon: '🎋', file: 'sounds/menina-do-bambu.mp3', unpitched: false },
+            { id: 'o_pai_ta_on', name: 'O Pai Tá On! (Neymar Jr) 🤙', shortName: 'O PAI TÁ ON', tag: 'Champions League', icon: '🤙', file: 'sounds/o-pai-ta-on.mp3', unpitched: false },
+            { id: 'galo_cego_ue', name: 'É Ué! Faz Tempo! (Galo Cego) 🐔', shortName: 'É UÉ GALO CEGO', tag: 'Galo Cego Poeta', icon: '🐔', file: 'sounds/galo-cego-e-ue.mp3', unpitched: false },
+            { id: 'no_ceu_tem_pao', name: 'No Céu Tem Pão? E Morreu... 🍞', shortName: 'NO CÉU TEM PÃO', tag: 'Entrevista Viral', icon: '🍞', file: 'sounds/craque-neto-pao.mp3', unpitched: false },
+            { id: 'que_xou_xuxa', name: 'Que Xou da Xuxa é Esse?! 👧', shortName: 'XOU DA XUXA', tag: 'Trend Viral', icon: '👧', file: 'sounds/que-xou-da-xuxa.mp3', unpitched: false },
+            { id: 'amostradinho', name: 'Eu Gosto é Assim, Amostradinho! 💀', shortName: 'AMOSTRADINHO', tag: 'TikTok Viral', icon: '💀', file: 'sounds/amostradinho.mp3', unpitched: false },
+            { id: 'calabreso', name: 'Calma Calabreso! 🗣️', shortName: 'CALABRESO', tag: 'Meme Brasileiro', icon: '🗣️', file: 'sounds/calma-calabreso.mp3', unpitched: false },
+            { id: 'bora_bill', name: 'Bora Bill! Bora Fi do Bill! 📢', shortName: 'BORA BILL', tag: 'Meme Nordeste', icon: '📢', file: 'sounds/bora-bill.mp3', unpitched: false },
+            { id: 'receba', name: 'Receba! Graças a Deus! ⚽', shortName: 'RECEBA', tag: 'Luva de Pedreiro', icon: '⚽', file: 'sounds/receba.mp3', unpitched: false },
+            { id: 'toguro_2022', name: 'Em Pleno 2022... (Toguro) 🏋️', shortName: 'TOGURO 2022', tag: 'Mansão Maromba', icon: '🏋️', file: 'sounds/toguro-2022.wav', unpitched: false },
+            { id: 'fake_natty', name: 'Fake Natty! (Rodrigo Góes) 💉', shortName: 'FAKE NATTY', tag: 'Rodrigo Góes', icon: '💉', file: 'sounds/fake-natty.mp3', unpitched: false },
+            { id: 'forninho_caiu', name: 'Eita Giovana, o Forninho Caiu! 💥', shortName: 'FORNINHO CAIU', tag: 'Giovana do Forninho', icon: '💥', file: 'sounds/forninho-caiu.wav', unpitched: false },
+            { id: 'ja_acabou_jessica', name: 'Já Acabou Jéssica? 🥊', shortName: 'JÉSSICA?', tag: 'Meme Clássico', icon: '🥊', file: 'sounds/ja-acabou-jessica.mp3', unpitched: false },
+            { id: 'achou_errado', name: 'Achou Errado, Otário! 🎬', shortName: 'ACHOU ERRADO', tag: 'Choque de Cultura', icon: '🎬', file: 'sounds/achou-errado.mp3', unpitched: false },
+            { id: 'serjao_berranteiro', name: 'Aqui Tem Coragem! 📯', shortName: 'CORAGEM', tag: 'Serjão Berranteiro', icon: '📯', file: 'sounds/serjao-berranteiro.mp3', unpitched: false },
+            { id: 'e_o_braia', name: 'É o Braia! 🏎️', shortName: 'O BRAIA', tag: 'Velozes & Furiosos BR', icon: '🏎️', file: 'sounds/e-o-braia.mp3', unpitched: false },
+            { id: 'delicia_cara', name: 'Ai que Delícia, Cara! 🍊', shortName: 'QUE DELÍCIA', tag: 'Jailson Mendes', icon: '🍊', file: 'sounds/delicia-cara.mp3', unpitched: false },
+            { id: 'bambam_show', name: 'Hora do Show, Porra! (Bambam) 💪', shortName: 'HORA DO SHOW', tag: 'Kléber Bambam', icon: '💪', file: 'sounds/bambam-show.mp3', unpitched: false },
+            { id: 'fala_zeze', name: 'Fala Zezé, Bom Dia Cara! 📱', shortName: 'FALA ZEZÉ', tag: 'Áudio do Zap', icon: '📱', file: 'sounds/fala-zeze.mp3', unpitched: false },
+            { id: 'caneta_azul', name: 'Caneta Azul, Azul Caneta 🖊️', shortName: 'CANETA AZUL', tag: 'Manoel Gomes', icon: '🖊️', file: 'sounds/caneta-azul.mp3', unpitched: false }
+          ]
+        },
         {
           id: 'pack_tiktok_virais',
           title: 'TIKTOK VIRAIS & TRENDS',
